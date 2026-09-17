@@ -1,0 +1,35 @@
+name: MinecraftBank
+version: '2.0'
+main: kot0328.minecraftBank.MinecraftBank
+api-version: '26.2'
+depend: [Vault]
+softdepend: [PlaceholderAPI]
+description: 個人口座・融資・国営ローン・定期預金・オークションを備えた総合経済プラグイン
+author: kot0328
+
+# ★SQLite移行: プラグイン管理データ(旧config.yml内のプレイヤー/経済データ)の永続化にSQLiteを使うため、
+# Paperのライブラリ機構で実行時にjarを取得・分離クラスローダへ読み込ませる(shadeは行わない)。
+# バージョン文字列はbuild.gradle.ktsのcompileOnly("org.xerial:sqlite-jdbc:...")と必ず一致させること。
+libraries:
+  - org.xerial:sqlite-jdbc:3.53.4.0
+
+commands:
+  meco:
+    description: 経済総合メニューを開く / 経済コマンドを実行する
+    usage: /meco [item|help|log|news|treasury|tutorial|donate|guarantor|admin|bank|market|auction|resource|...] (詳細は /meco help)
+    aliases: [bank]
+    permission: bank.use
+
+permissions:
+  bank.use:
+    description: /bank コマンドおよびGUIの基本機能を利用できる権限
+    default: true
+  bank.admin:
+    description: /bank admin 系の管理者コマンド(残高操作・データリセットなど)を利用できる権限
+    default: op
+  bank.*:
+    description: MinecraftBank の全権限をまとめたワイルドカード
+    default: op
+    children:
+      bank.use: true
+      bank.admin: true
