@@ -1,6 +1,6 @@
 # bank
 
-`minecraft_bank-1_3.jar` を CFR 0.152 でデコンパインしたソースコードです。
+`minecraft_bank-1.jar` を CFR 0.152 でデコンパイルしたソースコードです。
 
 - `src/main/java/kot0328/minecraftBank/MinecraftBank.java`: プラグイン本体（内部クラスを含む）
 - `src/main/java/kot0328/minecraftBank/MinecraftBankAPI.java`
