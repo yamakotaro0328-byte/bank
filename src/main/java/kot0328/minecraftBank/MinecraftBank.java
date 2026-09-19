@@ -593,15 +593,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          double converted = amount / this.cfgCustomMoneyRate;
          String num = Math.abs(converted - Math.round(converted)) < 0.005 ? String.valueOf(Math.round(converted)) : String.format("%.2f", converted);
          return num + this.cfgCustomMoneySymbol;
+      } else if (econ != null) {
+         return econ.format(amount);
       } else {
-         return (long)amount + this.cfgCurrencyUnit;
+         return String.format("%,d", (long) amount) + this.cfgCurrencyUnit;
       }
    }
 
    private String fmtCurPrecise(double amount) {
-      return this.cfgCustomMoneyEnabled
-         ? String.format("%.2f", amount / this.cfgCustomMoneyRate) + this.cfgCustomMoneySymbol
-         : String.format("%.2f", amount) + this.cfgCurrencyUnit;
+      if (this.cfgCustomMoneyEnabled) {
+         return String.format("%.2f", amount / this.cfgCustomMoneyRate) + this.cfgCustomMoneySymbol;
+      } else if (econ != null) {
+         return econ.format(amount);
+      } else {
+         return String.format("%,.2f", amount) + this.cfgCurrencyUnit;
+      }
    }
 
    private void unlockAchievement(UUID u, String id, String displayName) {
@@ -1075,13 +1081,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Player online = Bukkit.getPlayer(u);
             if (penalty > 0.0) {
                if (online != null && online.isOnline()) {
-                  this.msgKey(online, "loan.gov-overdue-penalty", "amount", String.valueOf((long)penalty));
+                  this.msgKey(online, "loan.gov-overdue-penalty", "amount", this.fmtCur(penalty));
                }
 
                this.addLog(u, "国営ローン延滞金 +" + this.fmtCur(penalty));
-               this.sendDiscordWebhook("⚠️ **" + Bukkit.getOfflinePlayer(u).getName() + "** の国営ローンが延滞し、" + (long)penalty + "円 の延滞金が加算されました。");
+               this.sendDiscordWebhook("⚠️ **" + Bukkit.getOfflinePlayer(u).getName() + "** の国営ローンが延滞し、" + this.fmtCur(penalty) + " の延滞金が加算されました。");
             } else if (online != null && online.isOnline()) {
-               this.msgKey(online, "loan.gov-overdue-ceiling", "amount", String.valueOf((long)ceiling));
+               this.msgKey(online, "loan.gov-overdue-ceiling", "amount", this.fmtCur(ceiling));
             }
          }
       }
@@ -1118,7 +1124,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               "item",
                               plan.description,
                               "amount",
-                              String.format("%.2f", plan.installmentAmount),
+                              this.fmtCurPrecise(plan.installmentAmount),
                               "remaining",
                               String.valueOf(plan.installmentsRemaining)
                            );
@@ -1128,7 +1134,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      this.addScore(owner, -this.cfgInstallmentMissedPaymentPenalty);
                      plan.nextDueTime = now + this.cfgInstallmentIntervalHours * 3600000L;
                      if (online != null && online.isOnline()) {
-                        this.msgKey(online, "installment.missed", "item", plan.description, "amount", String.format("%.2f", plan.installmentAmount));
+                        this.msgKey(online, "installment.missed", "item", plan.description, "amount", this.fmtCurPrecise(plan.installmentAmount));
                      }
                   }
                }
@@ -1215,11 +1221,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double minNext = prevBidder != null ? currentBid + this.cfgAuctionMinIncrement : currentBid;
             if (amount < minNext) {
                if (online != null) {
-                  this.msgKey(online, "auction.bid-too-low", "amount", String.valueOf((long)minNext));
+                  this.msgKey(online, "auction.bid-too-low", "amount", this.fmtCur(minNext));
                }
             } else if (pocket < amount) {
                if (online != null) {
-                  this.msgKey(online, "common.insufficient-funds", "amount", String.valueOf((long)pocket));
+                  this.msgKey(online, "common.insufficient-funds", "amount", this.fmtCur(pocket));
                }
             } else {
                Double buyout = this.auctionBuyoutPrice.get(auctionId);
@@ -1246,9 +1252,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.auctionBidder.put(auctionId, u);
                   this.addLog(u, "オークション入札: " + auctionedItem.getType().name() + " -" + this.fmtCur(amount) + (online == null ? "(Web/オフライン)" : ""));
                   if (online != null) {
-                     this.msgKey(online, "auction.bid-placed", "item", auctionedItem.getType().name(), "amount", String.valueOf((long)amount));
+                     this.msgKey(online, "auction.bid-placed", "item", auctionedItem.getType().name(), "amount", this.fmtCur(amount));
                      online.playSound(online.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
-                     this.sendToast(online, "入札成功", auctionedItem.getType().name() + " に " + (long)amount + "円 で入札");
+                     this.sendToast(online, "入札成功", auctionedItem.getType().name() + " に " + this.fmtCur(amount) + " で入札");
                   }
 
                   this.sendDiscordWebhook(
@@ -1259,8 +1265,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         + "** の出品("
                         + auctionedItem.getType().name()
                         + ")に "
-                        + (long)amount
-                        + "円 で入札しました。"
+                        + this.fmtCur(amount)
+                        + " で入札しました。"
                   );
                }
             }
@@ -1275,7 +1281,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void notifyAuctionOutbid(UUID prevBidder, ItemStack auctionedItem, double refundAmount) {
       Player prevOnline = Bukkit.getPlayer(prevBidder);
       if (prevOnline != null && prevOnline.isOnline()) {
-         this.msgKey(prevOnline, "auction.outbid-refund", "item", auctionedItem.getType().name(), "amount", String.valueOf((long)refundAmount));
+         this.msgKey(prevOnline, "auction.outbid-refund", "item", auctionedItem.getType().name(), "amount", this.fmtCur(refundAmount));
          this.sendToast(prevOnline, "入札更新", auctionedItem.getType().name() + " が他の人に入札されました");
          prevOnline.playSound(prevOnline.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 0.7F);
       } else {
@@ -1298,18 +1304,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "item",
             item.getType().name(),
             "amount",
-            String.valueOf((long)finalBid),
+            this.fmtCur(finalBid),
             "fee",
-            String.valueOf((long)fee),
+            this.fmtCur(fee),
             "net",
-            String.valueOf((long)proceeds)
-         );
+            this.fmtCur(proceeds));
          this.sendToast(sellerOnline, "落札成立", item.getType().name() + " / +" + this.fmtCur(proceeds));
       }
 
       Player winnerOnline = Bukkit.getPlayer(winner);
       if (winnerOnline != null && winnerOnline.isOnline()) {
-         this.msgKey(winnerOnline, "auction.won", "item", item.getType().name(), "amount", String.valueOf((long)finalBid));
+         this.msgKey(winnerOnline, "auction.won", "item", item.getType().name(), "amount", this.fmtCur(finalBid));
          this.sendToast(winnerOnline, "落札", item.getType().name() + " が受取箱に届きました！");
       }
 
@@ -1323,8 +1328,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             + "** の出品("
             + item.getType().name()
             + ")を "
-            + (long)finalBid
-            + "円 で落札しました。"
+            + this.fmtCur(finalBid)
+            + " で落札しました。"
       );
       this.broadcastNews(
          "<gold><bold>【オークション】</bold></gold> <white>"
@@ -1334,8 +1339,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             + "</white>が<yellow>"
             + Bukkit.getOfflinePlayer(winner).getName()
             + "</yellow>により<gold>"
-            + (long)finalBid
-            + "円</gold>だ！"
+            + this.fmtCur(finalBid)
+            + "</gold>だ！"
       );
       this.clearAuctionEntry(auctionId);
    }
@@ -1400,7 +1405,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (sep >= 0) {
                String itemTypeName = notice.substring(0, sep);
                String amountStr = notice.substring(sep + 1);
-               this.msgKey(p, "auction.outbid-refund", "item", itemTypeName, "amount", amountStr);
+               this.msgKey(p, "auction.outbid-refund", "item", itemTypeName, "amount", this.fmtCur(Double.parseDouble(amountStr)));
             }
          }
       }
@@ -1420,7 +1425,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (sep >= 0) {
                String borrowerName = notice.substring(0, sep);
                String amountStr = notice.substring(sep + 1);
-               this.msgKey(p, "loan.player-approved-notice", "player", borrowerName, "amount", amountStr);
+               this.msgKey(p, "loan.player-approved-notice", "player", borrowerName, "amount", this.fmtCur(Double.parseDouble(amountStr)));
             }
          }
       }
@@ -1474,7 +1479,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.broadcastNews(line);
       }
 
-      this.sendDiscordWebhook("\ud83d\udcca **週次経済レポート**\n総取引額: " + (long)this.weeklyTradeVolume + "円\n国庫残高: " + this.fmtCur(this.treasury));
+      this.sendDiscordWebhook("\ud83d\udcca **週次経済レポート**\n総取引額: " + this.fmtCur(this.weeklyTradeVolume) + "\n国庫残高: " + this.fmtCur(this.treasury));
       this.weeklyTradeVolume = 0.0;
       this.saveData();
    }
@@ -1517,14 +1522,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          case "黄金ラッシュ" -> this.getMsg("event.boom");
          case "手数料高騰" -> this.getMsg("event.tax");
          case "ボーナス支給デー" -> {
+            double bonus = 5000.0;
             for (Player online : Bukkit.getOnlinePlayers()) {
-               double bonus = 5000.0;
                econ.depositPlayer(online, bonus);
                this.addLog(online.getUniqueId(), "経済イベントボーナス +" + this.fmtCur(bonus));
-               this.sendToast(online, "ボーナス支給", "+5,000円 が支給されました！");
+               this.sendToast(online, "ボーナス支給", "+" + this.fmtCur(bonus) + " が支給されました！");
             }
 
-            yield this.getMsg("event.bonus");
+            yield this.getMsg("event.bonus", "amount", this.fmtCur(bonus));
          }
          default -> this.getMsg("event.recession");
       };
@@ -3454,7 +3459,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double maxAmountPerDay = this.cfgWorldStockMaxAmountPerDay * vipMult;
             if (amountToday + tradeAmount > maxAmountPerDay) {
                if (p != null) {
-                  this.msgKey(p, "worldstock.daily-amount-limit", "amount", String.format("%.2f", maxAmountPerDay));
+                  this.msgKey(p, "worldstock.daily-amount-limit", "amount", this.fmtCurPrecise(maxAmountPerDay));
                   this.errorSound(p);
                }
 
@@ -3598,16 +3603,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   "qty",
                   String.valueOf(qty),
                   "amount",
-                  String.format("%.2f", totalCost),
+                  this.fmtCurPrecise(totalCost),
                   "fee",
-                  String.format("%.2f", totalFee),
+                  this.fmtCurPrecise(totalFee),
                   "native",
                   this.worldStockNativeAmountLabel(q, qty)
                );
             }
 
             if (fund != null) {
-               this.addLog(actorU, "共同投資ファンド「" + fund.name + "」: " + symbol + " を" + qty + "株購入 -" + (long)totalCost + "円(手数料込み、ファンド資金)");
+               this.addLog(actorU, "共同投資ファンド「" + fund.name + "」: " + symbol + " を" + qty + "株購入 -" + this.fmtCur(totalCost) + "(手数料込み、ファンド資金)");
                this.sendDiscordWebhook(
                   "\ud83d\udcca **"
                      + actor.getName()
@@ -3618,13 +3623,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      + "** を"
                      + qty
                      + "株購入しました。価格: "
-                     + String.format("%.2f", totalCost)
-                     + "円(手数料込み)"
+                     + this.fmtCurPrecise(totalCost)
+                     + "(手数料込み)"
                );
             } else {
-               this.addLog(actorU, "世界株式市場: " + symbol + " を" + qty + "株購入 -" + (long)totalCost + "円(手数料込み)" + (online == null ? "(Web/オフライン)" : ""));
+               this.addLog(actorU, "世界株式市場: " + symbol + " を" + qty + "株購入 -" + this.fmtCur(totalCost) + "(手数料込み)" + (online == null ? "(Web/オフライン)" : ""));
                this.sendDiscordWebhook(
-                  "\ud83d\udcc8 **" + actor.getName() + "** が現実株 **" + symbol + "** を" + qty + "株購入しました。価格: " + String.format("%.2f", totalCost) + "円(手数料込み)"
+                  "\ud83d\udcc8 **" + actor.getName() + "** が現実株 **" + symbol + "** を" + qty + "株購入しました。価格: " + this.fmtCurPrecise(totalCost) + "(手数料込み)"
                );
             }
 
@@ -3671,7 +3676,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (!this.enforceWorldStockDailyLimits(actor, trackedUuid, symbol, totalProceeds)) {
                if (bulkProfit > 0.0
                   && this.worldStockProfitToday.getOrDefault(trackedUuid, 0.0) + bulkProfit > this.effectiveWorldStockMaxProfitPerDay(trackedUuid)) {
-                  this.msgKey(actor, "worldstock.daily-profit-limit", "amount", String.format("%.2f", this.effectiveWorldStockMaxProfitPerDay(trackedUuid)));
+                  this.msgKey(actor, "worldstock.daily-profit-limit", "amount", this.fmtCurPrecise(this.effectiveWorldStockMaxProfitPerDay(trackedUuid)));
                   this.errorSound(actor);
                } else {
                   if (fund != null) {
@@ -3698,16 +3703,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      "qty",
                      String.valueOf(qty),
                      "amount",
-                     String.format("%.2f", totalProceeds),
+                     this.fmtCurPrecise(totalProceeds),
                      "pnl",
-                     (bulkProfit >= 0.0 ? "+" : "") + String.format("%.2f", bulkProfit),
+                     (bulkProfit >= 0.0 ? "+" : "") + this.fmtCurPrecise(bulkProfit),
                      "fee",
-                     String.format("%.2f", totalFee),
+                     this.fmtCurPrecise(totalFee),
                      "native",
                      this.worldStockNativeAmountLabel(q, qty)
                   );
                   if (fund != null) {
-                     this.addLog(actorU, "共同投資ファンド「" + fund.name + "」: " + symbol + " を" + qty + "株売却 +" + (long)totalProceeds + "円(手数料込み、ファンド資金)");
+                     this.addLog(actorU, "共同投資ファンド「" + fund.name + "」: " + symbol + " を" + qty + "株売却 +" + this.fmtCur(totalProceeds) + "(手数料込み、ファンド資金)");
                      this.sendDiscordWebhook(
                         "\ud83d\udcca **"
                            + actor.getName()
@@ -3718,11 +3723,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            + "** を"
                            + qty
                            + "株売却しました。売却額: "
-                           + String.format("%.2f", totalProceeds)
-                           + "円(手数料込み)"
+                           + this.fmtCurPrecise(totalProceeds)
+                           + "(手数料込み)"
                      );
                   } else {
-                     this.addLog(actorU, "世界株式市場: " + symbol + " を" + qty + "株売却 +" + (long)totalProceeds + "円(手数料込み)");
+                     this.addLog(actorU, "世界株式市場: " + symbol + " を" + qty + "株売却 +" + this.fmtCur(totalProceeds) + "(手数料込み)");
                      this.sendDiscordWebhook(
                         "\ud83d\udcc9 **"
                            + actor.getName()
@@ -3731,8 +3736,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            + "** を"
                            + qty
                            + "株売却しました。売却額: "
-                           + String.format("%.2f", totalProceeds)
-                           + "円(手数料込み)"
+                           + this.fmtCurPrecise(totalProceeds)
+                           + "(手数料込み)"
                      );
                   }
 
@@ -3860,11 +3865,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.addLog(u, "資源相場ショップ: " + this.resourceDisplayName(mat) + " を" + qty + "個売却 +" + this.fmtCur(total));
          if (qty >= 16) {
             this.sendDiscordWebhook(
-               "\ud83d\udce6 **" + p.getName() + "** が資源相場ショップで **" + this.resourceDisplayName(mat) + "** を" + qty + "個売却しました。（+" + (long)total + "円）"
+               "\ud83d\udce6 **" + p.getName() + "** が資源相場ショップで **" + this.resourceDisplayName(mat) + "** を" + qty + "個売却しました。（+" + this.fmtCur(total) + "）"
             );
          }
 
-         this.msgKey(p, "resourceshop.sold", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", String.format("%.2f", total));
+         this.msgKey(p, "resourceshop.sold", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", this.fmtCurPrecise(total));
          this.clickSound(p);
          this.openResourceShopDetailGUI(p, mat);
       }
@@ -3890,11 +3895,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.addLog(u, "資源相場ショップ: " + this.resourceDisplayName(mat) + " を" + qty + "個購入 -" + this.fmtCur(total));
          if (qty >= 16) {
             this.sendDiscordWebhook(
-               "\ud83d\udce6 **" + p.getName() + "** が資源相場ショップで **" + this.resourceDisplayName(mat) + "** を" + qty + "個購入しました。（-" + (long)total + "円）"
+               "\ud83d\udce6 **" + p.getName() + "** が資源相場ショップで **" + this.resourceDisplayName(mat) + "** を" + qty + "個購入しました。（-" + this.fmtCur(total) + "）"
             );
          }
 
-         this.msgKey(p, "resourceshop.bought", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", String.format("%.2f", total));
+         this.msgKey(p, "resourceshop.bought", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", this.fmtCurPrecise(total));
          this.clickSound(p);
          this.openResourceShopDetailGUI(p, mat);
       }
@@ -3915,10 +3920,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.lotteryTickets.merge(u, qty, Integer::sum);
          this.addLog(u, "宝くじ " + qty + "枚購入 -" + this.fmtCur(totalCost));
          if (qty >= 16) {
-            this.sendDiscordWebhook("\ud83c\udf9f️ **" + p.getName() + "** が宝くじを" + qty + "枚購入しました。（-" + (long)totalCost + "円）");
+            this.sendDiscordWebhook("\ud83c\udf9f️ **" + p.getName() + "** が宝くじを" + qty + "枚購入しました。（-" + this.fmtCur(totalCost) + "）");
          }
 
-         this.msgKey(p, "lottery.ticket-bought", "count", String.valueOf(qty), "amount", String.valueOf((long)totalCost));
+         this.msgKey(p, "lottery.ticket-bought", "count", String.valueOf(qty), "amount", this.fmtCur(totalCost));
          this.clickSound(p);
          this.openLotteryGUI(p);
       }
@@ -3964,9 +3969,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String winnerName = Bukkit.getOfflinePlayer(winnerUuid).getName();
             this.lastLotteryWinnerName = winnerName != null ? winnerName : "unknown";
             this.lastLotteryWinnerAmount = payout;
-            this.broadcastNews("<gold><bold>【宝くじ抽選】</bold> <yellow>" + this.lastLotteryWinnerName + "</yellow> さんが賞金 " + (long)payout + "円 を獲得しました！</gold>");
+            this.broadcastNews("<gold><bold>【宝くじ抽選】</bold> <yellow>" + this.lastLotteryWinnerName + "</yellow> さんが賞金 " + this.fmtCur(payout) + " を獲得しました！</gold>");
             if (jackpotBoosted) {
-               this.broadcastNews("<gold>（今回の賞金には国庫からの特別上乗せ " + (long)this.cfgLotteryJackpotBoostAmount + "円 が含まれています）</gold>");
+               this.broadcastNews("<gold>（今回の賞金には国庫からの特別上乗せ " + this.fmtCur(this.cfgLotteryJackpotBoostAmount) + " が含まれています）</gold>");
             }
 
             this.sendDiscordWebhook(
@@ -3974,7 +3979,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   + this.lastLotteryWinnerName
                   + "** が宝くじに当せんしました！ 賞金: "
                   + this.fmtCur(payout)
-                  + (jackpotBoosted ? "（うち国庫上乗せ " + (long)this.cfgLotteryJackpotBoostAmount + "円）" : "")
+                  + (jackpotBoosted ? "（うち国庫上乗せ " + this.fmtCur(this.cfgLotteryJackpotBoostAmount) + "）" : "")
             );
             this.lotteryTickets.clear();
             this.lotteryPool = 0.0;
@@ -3998,12 +4003,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.treasury -= amount;
                   econ.depositPlayer(p, amount);
                   this.addLog(p.getUniqueId(), "市民配当 +" + this.fmtCur(amount));
-                  this.msgKey(p, "treasury.citizen-dividend", "amount", String.valueOf((long)amount));
+                  this.msgKey(p, "treasury.citizen-dividend", "amount", this.fmtCur(amount));
                   paid++;
                }
 
                if (paid > 0) {
-                  this.broadcastNews("<gold><bold>【市民配当】</bold> 国庫から " + paid + "人のオンラインプレイヤーへ 1人あたり " + (long)amount + "円 を配当しました。</gold>");
+                  this.broadcastNews("<gold><bold>【市民配当】</bold> 国庫から " + paid + "人のオンラインプレイヤーへ 1人あたり " + this.fmtCur(amount) + " を配当しました。</gold>");
                }
             }
          }
@@ -4038,7 +4043,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      econ.depositPlayer(p, amount);
                      this.welfareCountToday.put(u, usedToday + 1);
                      this.addLog(u, "生活支援金 +" + this.fmtCur(amount));
-                     this.msgKey(p, "treasury.welfare", "amount", String.valueOf((long)amount));
+                     this.msgKey(p, "treasury.welfare", "amount", this.fmtCur(amount));
                   }
                }
             }
@@ -4133,7 +4138,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                String symbol = h.getKey();
                MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                double value = this.worldStockPositionValue(q, avgCosts.getOrDefault(symbol, 0.0), h.getValue());
-               sender.sendMessage("  株 " + symbol + ": " + h.getValue() + "株 (評価額 " + (long)value + "円)");
+               sender.sendMessage("  株 " + symbol + ": " + h.getValue() + "株 (評価額 " + this.fmtCur(value) + ")");
             }
          }
 
@@ -4431,10 +4436,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  try {
                                     double amount = Double.parseDouble(args[3]);
                                     econ.depositPlayer(target, amount);
-                                    this.msgKey(p, "admin.give-success", "player", target.getName(), "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "admin.give-success", "player", target.getName(), "amount", this.fmtCur(amount));
                                     this.addLog(tUuid, "[管理者操作] " + p.getName() + " から +" + this.fmtCur(amount));
                                     this.sendDiscordWebhook(
-                                       "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + target.getName() + "** に " + (long)amount + "円 を付与しました。"
+                                       "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + target.getName() + "** に " + this.fmtCur(amount) + " を付与しました。"
                                     );
                                  } catch (NumberFormatException ex) {
                                     this.msgKey(p, "common.invalid-amount-number");
@@ -4450,10 +4455,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  try {
                                     double amount = Double.parseDouble(args[3]);
                                     econ.withdrawPlayer(target, amount);
-                                    this.msgKey(p, "admin.take-success", "player", target.getName(), "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "admin.take-success", "player", target.getName(), "amount", this.fmtCur(amount));
                                     this.addLog(tUuid, "[管理者操作] " + p.getName() + " により -" + this.fmtCur(amount));
                                     this.sendDiscordWebhook(
-                                       "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + target.getName() + "** から " + (long)amount + "円 を没収しました。"
+                                       "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + target.getName() + "** から " + this.fmtCur(amount) + " を没収しました。"
                                     );
                                  } catch (NumberFormatException ex) {
                                     this.msgKey(p, "common.invalid-amount-number");
@@ -4494,10 +4499,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        this.govDebtDueTime.put(tUuid, System.currentTimeMillis() + this.cfgGovLoanDurationMs);
                                     }
 
-                                    this.msgKey(p, "admin.setgovdebt-success", "player", target.getName(), "amount", String.valueOf((long)amount));
-                                    this.addLog(tUuid, "[管理者操作] " + p.getName() + " が国営ローン残債を " + (long)amount + "円 に補正");
+                                    this.msgKey(p, "admin.setgovdebt-success", "player", target.getName(), "amount", this.fmtCur(amount));
+                                    this.addLog(tUuid, "[管理者操作] " + p.getName() + " が国営ローン残債を " + this.fmtCur(amount) + " に補正");
                                     this.sendDiscordWebhook(
-                                       "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + target.getName() + "** の国営ローン残債を " + (long)amount + "円 に補正しました。"
+                                       "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + target.getName() + "** の国営ローン残債を " + this.fmtCur(amount) + " に補正しました。"
                                     );
                                  } catch (NumberFormatException ex) {
                                     this.msgKey(p, "common.invalid-amount-number");
@@ -4648,9 +4653,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     econ.withdrawPlayer(p, amount);
                                     this.treasury += amount;
                                     this.grantDonationCreditScore(u, amount);
-                                    this.msgKey(p, "donate.treasury-thanks", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "donate.treasury-thanks", "amount", this.fmtCur(amount));
                                     this.addLog(u, "国庫へ寄付: -" + this.fmtCur(amount));
-                                    this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** が国庫へ " + (long)amount + "円 を寄付しました。");
+                                    this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** が国庫へ " + this.fmtCur(amount) + " を寄付しました。");
                                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                                     return true;
                                  }
@@ -4688,11 +4693,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     econ.withdrawPlayer(p, amount);
                                     econ.depositPlayer(target, amount);
                                     this.grantDonationCreditScore(u, amount);
-                                    this.msgKey(p, "donate.player-success", "player", target.getName(), "amount", String.valueOf((long)amount));
-                                    this.msgKey(target, "donate.player-received", "player", p.getName(), "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "donate.player-success", "player", target.getName(), "amount", this.fmtCur(amount));
+                                    this.msgKey(target, "donate.player-received", "player", p.getName(), "amount", this.fmtCur(amount));
                                     this.addLog(u, "寄付: " + target.getName() + " へ -" + this.fmtCur(amount));
                                     this.sendDiscordWebhook(
-                                       "\ud83c\udf81 **" + p.getName() + "** が **" + target.getName() + "** へ " + (long)amount + "円 を寄付しました。"
+                                       "\ud83c\udf81 **" + p.getName() + "** が **" + target.getName() + "** へ " + this.fmtCur(amount) + " を寄付しました。"
                                     );
                                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                                     return true;
@@ -5045,16 +5050,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     } else {
                                        double pocket = econ.getBalance(p);
                                        if (pocket < amount) {
-                                          this.msgKey(p, "fund.contribute-funds-insufficient", "amount", String.valueOf((long)pocket));
+                                          this.msgKey(p, "fund.contribute-funds-insufficient", "amount", this.fmtCur(pocket));
                                           return true;
                                        } else {
                                           econ.withdrawPlayer(p, amount);
                                           fund.cashBalance += amount;
                                           fund.contributions.merge(u, amount, Double::sum);
-                                          this.msgKey(p, "fund.contributed", "amount", String.valueOf((long)amount), "fund", fund.name);
+                                          this.msgKey(p, "fund.contributed", "amount", this.fmtCur(amount), "fund", fund.name);
                                           this.addLog(u, "共同投資ファンド「" + fund.name + "」へ出資 -" + this.fmtCur(amount));
                                           this.sendDiscordWebhook(
-                                             "\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」へ " + (long)amount + "円 出資しました。"
+                                             "\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」へ " + this.fmtCur(amount) + " 出資しました。"
                                           );
                                           return true;
                                        }
@@ -5102,7 +5107,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         return true;
                      }
                   } else if (args.length == 1) {
-                     this.msgKey(p, "treasury.balance", "amount", String.valueOf((long)this.treasury));
+                     this.msgKey(p, "treasury.balance", "amount", this.fmtCur(this.treasury));
                      return true;
                   } else if (!p.hasPermission("bank.admin")) {
                      this.msgKey(p, "treasury.admin-required");
@@ -5122,7 +5127,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  econ.depositPlayer(target, each);
                               }
 
-                              this.broadcastNews("<gold><bold>【国庫支出】</bold> 国庫から総額 " + (long)amount + "円を全オンラインプレイヤーへ配布しました。</gold>");
+                              this.broadcastNews("<gold><bold>【国庫支出】</bold> 国庫から総額 " + this.fmtCur(amount) + "を全オンラインプレイヤーへ配布しました。</gold>");
                               return true;
                            }
                         } else {
@@ -5141,8 +5146,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            return true;
                         } else {
                            this.treasury = amount;
-                           this.msgKey(p, "treasury.set", "amount", String.valueOf((long)this.treasury));
-                           this.sendDiscordWebhook("\ud83c\udfdb️ 国庫残高が管理者により " + (long)this.treasury + "円 に設定されました。");
+                           this.msgKey(p, "treasury.set", "amount", this.fmtCur(this.treasury));
+                           this.sendDiscordWebhook("\ud83c\udfdb️ 国庫残高が管理者により " + this.fmtCur(this.treasury) + " に設定されました。");
                            return true;
                         }
                      } catch (NumberFormatException ex) {
@@ -5530,7 +5535,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          double cost = this.cfgGroupAccountCreateCost;
          double pocket = econ.getBalance(p);
          if (pocket < cost) {
-            this.msgKey(p, "group.create-funds-insufficient", "amount", String.valueOf((long)cost));
+            this.msgKey(p, "group.create-funds-insufficient", "amount", this.fmtCur(cost));
             this.errorSound(p);
             return false;
          } else {
@@ -5544,7 +5549,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.groupAccounts.put(acc.id, acc);
             this.playerGroupAccounts.computeIfAbsent(u, k -> new HashSet<>()).add(acc.id);
             this.msgKey(p, "group.created", "name", acc.name, "id", acc.id.toString());
-            this.addLog(u, "グループ貯金箱「" + acc.name + "」を作成 (-" + (long)cost + "円)");
+            this.addLog(u, "グループ貯金箱「" + acc.name + "」を作成 (-" + this.fmtCur(cost) + ")");
             this.sendDiscordWebhook("\ud83d\udc5b **" + p.getName() + "** がグループ貯金箱「" + acc.name + "」を作成しました。");
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
             return true;
@@ -5576,15 +5581,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          Player online = Bukkit.getPlayer(m);
          if (online != null && !online.getUniqueId().equals(u)) {
-            this.msgKey(online, "group.disbanded", "amount", String.valueOf((long)share));
+            this.msgKey(online, "group.disbanded", "amount", this.fmtCur(share));
          }
       }
 
       this.groupAccounts.remove(acc.id);
-      this.msgKey(p, "group.disbanded", "amount", String.valueOf((long)share));
-      this.addLog(u, "グループ貯金箱「" + acc.name + "」を解散 (残高 " + (long)acc.balance + "円 を " + allMembers.size() + "人で均等割り)");
+      this.msgKey(p, "group.disbanded", "amount", this.fmtCur(share));
+      this.addLog(u, "グループ貯金箱「" + acc.name + "」を解散 (残高 " + this.fmtCur(acc.balance) + " を " + allMembers.size() + "人で均等割り)");
       this.sendDiscordWebhook(
-         "\ud83d\udc5b **" + p.getName() + "** がグループ貯金箱「" + acc.name + "」を解散しました。（残高" + (long)acc.balance + "円を" + allMembers.size() + "人で均等割り）"
+         "\ud83d\udc5b **" + p.getName() + "** がグループ貯金箱「" + acc.name + "」を解散しました。（残高" + this.fmtCur(acc.balance) + "を" + allMembers.size() + "人で均等割り）"
       );
    }
 
@@ -5605,7 +5610,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             ItemStack icon = this.createItem(
                Material.CHEST,
                "<gold><bold>" + acc.name + "</bold></gold>",
-               "<gray>残高:</gray> <white>" + (long)acc.balance + "円</white>",
+               "<gray>残高:</gray> <white>" + this.fmtCur(acc.balance) + "</white>",
                "<gray>メンバー数:</gray> <white>" + (1 + acc.members.size()) + "人</white> <dark_gray>(上限" + this.cfgGroupAccountMaxMembers + "人)</dark_gray>",
                isOwner ? "<yellow>あなたはオーナーです</yellow>" : "<aqua>あなたはメンバーです</aqua>",
                "<dark_gray>クリックして開く</dark_gray>"
@@ -5630,7 +5635,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Material.WRITABLE_BOOK,
             "<green><bold>✏ 新しく作る</bold></green>",
             "<gray>チャットに名前を入力して作成します</gray>",
-            "<dark_gray>作成費用: " + (long)this.cfgGroupAccountCreateCost + "円</dark_gray>"
+            "<dark_gray>作成費用: " + this.fmtCur(this.cfgGroupAccountCreateCost) + "</dark_gray>"
          )
       );
       gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>"));
@@ -5662,7 +5667,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.createItem(
                   Material.CHEST,
                   "<gold><bold>" + acc.name + "</bold></gold>",
-                  "<gray>残高:</gray> <white>" + (long)acc.balance + "円</white>",
+                  "<gray>残高:</gray> <white>" + this.fmtCur(acc.balance) + "</white>",
                   "<gray>メンバー:</gray> <white>" + memberList + "</white>",
                   acc.owner.equals(u) ? "<yellow>あなたはオーナーです</yellow>" : "<aqua>あなたはメンバーです</aqua>"
                )
@@ -5829,7 +5834,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          double cost = this.cfgFundCreateCost;
          double pocket = econ.getBalance(p);
          if (pocket < cost) {
-            this.msgKey(p, "fund.create-funds-insufficient", "amount", String.valueOf((long)cost));
+            this.msgKey(p, "fund.create-funds-insufficient", "amount", this.fmtCur(cost));
             this.errorSound(p);
             return false;
          } else {
@@ -5843,7 +5848,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.investmentFunds.put(fund.id, fund);
             this.playerInvestmentFunds.computeIfAbsent(u, k -> new HashSet<>()).add(fund.id);
             this.msgKey(p, "fund.created", "name", fund.name, "id", fund.id.toString());
-            this.addLog(u, "共同投資ファンド「" + fund.name + "」を作成 (-" + (long)cost + "円)");
+            this.addLog(u, "共同投資ファンド「" + fund.name + "」を作成 (-" + this.fmtCur(cost) + ")");
             this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」を作成しました。");
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
             return true;
@@ -5883,9 +5888,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                econ.depositPlayer(p, myShare);
             }
 
-            this.msgKey(p, "fund.redeemed", "amount", String.valueOf((long)myShare));
+            this.msgKey(p, "fund.redeemed", "amount", this.fmtCur(myShare));
             this.addLog(u, "共同投資ファンド「" + fund.name + "」から解約 +" + this.fmtCur(myShare));
-            this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」から解約しました。(+" + (long)myShare + "円)");
+            this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」から解約しました。(+" + this.fmtCur(myShare) + ")");
             p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
          }
       }
@@ -5918,7 +5923,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          Player online = Bukkit.getPlayer(contributor);
          if (online != null && !contributor.equals(u)) {
-            this.msgKey(online, "fund.disbanded", "amount", String.valueOf((long)share));
+            this.msgKey(online, "fund.disbanded", "amount", this.fmtCur(share));
          }
       }
 
@@ -5938,9 +5943,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.worldStockProfitToday.remove(fund.id);
       this.worldStockDailyResetAt.remove(fund.id);
       this.worldStockLastTradeTime.remove(fund.id);
-      this.msgKey(p, "fund.disbanded", "amount", String.valueOf((long)issuerShare));
-      this.addLog(u, "共同投資ファンド「" + fund.name + "」を解散(現金" + (long)totalCash + "円を出資比率で分配)");
-      this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」を解散しました。(現金" + (long)totalCash + "円を出資比率で分配)");
+      this.msgKey(p, "fund.disbanded", "amount", this.fmtCur(issuerShare));
+      this.addLog(u, "共同投資ファンド「" + fund.name + "」を解散(現金" + this.fmtCur(totalCash) + "を出資比率で分配)");
+      this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」を解散しました。(現金" + this.fmtCur(totalCash) + "を出資比率で分配)");
    }
 
    private void openFundListGUI(Player p) {
@@ -5980,14 +5985,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
             List<String> lore = new ArrayList<>();
             lore.add("<gray>マネージャー:</gray> <aqua>" + managerName + "</aqua>");
-            lore.add("<gray>ファンド評価額(NAV):</gray> <gold>" + (long)nav + "円</gold>");
-            lore.add("<gray>現金残高:</gray> <white>" + (long)fund.cashBalance + "円</white>");
+            lore.add("<gray>ファンド評価額(NAV):</gray> <gold>" + this.fmtCur(nav) + "</gold>");
+            lore.add("<gray>現金残高:</gray> <white>" + this.fmtCur(fund.cashBalance) + "</white>");
             if (isManager) {
                lore.add("<yellow>あなたはマネージャーです</yellow>");
                lore.add("<dark_gray>クリックして運用画面を開く</dark_gray>");
             } else {
-               lore.add("<gray>あなたの出資額:</gray> <white>" + (long)myContrib + "円</white>");
-               lore.add("<gray>あなたの持分評価額:</gray> <gold>" + (long)myStakeValue + "円</gold>");
+               lore.add("<gray>あなたの出資額:</gray> <white>" + this.fmtCur(myContrib) + "</white>");
+               lore.add("<gray>あなたの持分評価額:</gray> <gold>" + this.fmtCur(myStakeValue) + "</gold>");
                lore.add("<dark_gray>クリックして情報画面を開く</dark_gray>");
             }
 
@@ -6034,10 +6039,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                Material.NETHER_STAR,
                "<dark_green><bold>" + fund.name + "</bold></dark_green>",
                "<gray>マネージャー:</gray> <aqua>" + managerName + "</aqua>",
-               "<gray>ファンド評価額(NAV):</gray> <gold>" + (long)nav + "円</gold>",
-               "<gray>現金残高:</gray> <white>" + (long)fund.cashBalance + "円</white>",
-               "<gray>あなたの出資額:</gray> <white>" + (long)myContrib + "円</white>",
-               "<gray>あなたの持分評価額:</gray> <gold>" + (long)myStakeValue + "円</gold>"
+               "<gray>ファンド評価額(NAV):</gray> <gold>" + this.fmtCur(nav) + "</gold>",
+               "<gray>現金残高:</gray> <white>" + this.fmtCur(fund.cashBalance) + "</white>",
+               "<gray>あなたの出資額:</gray> <white>" + this.fmtCur(myContrib) + "</white>",
+               "<gray>あなたの持分評価額:</gray> <gold>" + this.fmtCur(myStakeValue) + "</gold>"
             )
          );
          HashMap<String, Integer> holdings = this.playerWorldStocks.getOrDefault(fund.id, new HashMap<>());
@@ -6051,7 +6056,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                double avgCost = avgCosts.getOrDefault(symbol, 0.0);
                List<String> hl = new ArrayList<>();
                hl.add("<gray>保有:</gray> <white>" + h.getValue() + "株</white>");
-               hl.add("<gray>平均取得単価:</gray> <white>" + String.format("%.2f", avgCost) + "円</white>");
+               hl.add("<gray>平均取得単価:</gray> <white>" + this.fmtCurPrecise(avgCost) + "</white>");
                if (q != null) {
                   hl.add(this.worldStockPriceLine("<gray>現在値:</gray> ", q));
                }
@@ -6090,8 +6095,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.NETHER_STAR,
                "<dark_green><bold>【" + fund.name + "・運用】</bold></dark_green>",
-               "<gray>ファンド評価額(NAV):</gray> <gold>" + (long)nav + "円</gold>",
-               "<gray>現金残高:</gray> <white>" + (long)fund.cashBalance + "円</white>",
+               "<gray>ファンド評価額(NAV):</gray> <gold>" + this.fmtCur(nav) + "</gold>",
+               "<gray>現金残高:</gray> <white>" + this.fmtCur(fund.cashBalance) + "</white>",
                "<gray>出資者数:</gray> <white>" + fund.contributions.size() + "人</white>",
                "<gray>実在する銘柄のティッカーシンボルを検索して、ファンドの資金で売買できます。</gray>",
                "<dark_gray>取引回数/取引金額の1日あたり上限は、あなた個人の上限とは別にこのファンド専用でカウントされます。</dark_gray>"
@@ -6110,12 +6115,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                List<String> lore = new ArrayList<>();
                lore.add("<gray>保有:</gray> <white>" + qty + "株</white>");
-               lore.add("<gray>平均取得単価:</gray> <white>" + String.format("%.2f", avgCost) + "円</white>");
+               lore.add("<gray>平均取得単価:</gray> <white>" + this.fmtCurPrecise(avgCost) + "</white>");
                if (q != null) {
                   double value = this.worldStockYenPrice(q) * qty;
                   double pnl = value - avgCost * qty;
                   lore.add(this.worldStockPriceLine("<gray>現在値:</gray> ", q));
-                  lore.add("<gray>評価額:</gray> <gold>" + (long)value + "円</gold>");
+                  lore.add("<gray>評価額:</gray> <gold>" + this.fmtCur(value) + "</gold>");
                   lore.add(this.worldStockPnlLine(pnl));
                } else {
                   lore.add("<gray>現在値: 取得中... クリックして更新</gray>");
@@ -6443,7 +6448,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.GOLD_NUGGET,
             "<gold><bold>\ud83d\udcb0 " + nameA + " の提示金額</bold></gold>",
-            "<gray>現在:</gray> <yellow>" + (long)session.moneyOfferedA + "円</yellow>",
+            "<gray>現在:</gray> <yellow>" + this.fmtCur(session.moneyOfferedA) + "</yellow>",
             "<yellow>クリックしてチャットに金額を入力</yellow>"
          )
       );
@@ -6452,7 +6457,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.GOLD_NUGGET,
             "<gold><bold>\ud83d\udcb0 " + nameB + " の提示金額</bold></gold>",
-            "<gray>現在:</gray> <yellow>" + (long)session.moneyOfferedB + "円</yellow>",
+            "<gray>現在:</gray> <yellow>" + this.fmtCur(session.moneyOfferedB) + "</yellow>",
             "<yellow>クリックしてチャットに金額を入力</yellow>"
          )
       );
@@ -6881,7 +6886,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.createItem(
                   Material.PAPER,
                   "<light_purple><bold>" + plan.description + "</bold></light_purple>",
-                  "<gray>1回あたりの支払額:</gray> <gold>" + String.format("%.2f", plan.installmentAmount) + "円</gold>",
+                  "<gray>1回あたりの支払額:</gray> <gold>" + this.fmtCurPrecise(plan.installmentAmount) + "</gold>",
                   "<gray>残り回数:</gray> <yellow>" + plan.installmentsRemaining + "回</yellow>",
                   "<gray>次回期日:</gray> <white>" + dueStr + "</white> <dark_gray>(あと " + remainH + "h" + remainM + "m)</dark_gray>"
                )
@@ -6970,7 +6975,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          gui.setItem(
             slot++,
             this.createItem(
-               mat, "<gold><bold>#" + rank + " " + name + "</bold></gold>", "<gray>総資産:</gray> <green>" + (long)entry.getValue().doubleValue() + "円</green>"
+               mat, "<gold><bold>#" + rank + " " + name + "</bold></gold>", "<gray>総資産:</gray> <green>" + this.fmtCur(entry.getValue().doubleValue()) + "</green>"
             )
          );
          rank++;
@@ -7040,8 +7045,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             dm.displayName(this.mm("<light_purple><bold>【預けている担保】</bold></light_purple>"));
             dm.lore(
                List.of(
-                  this.mm("<gray>借入額:</gray> <aqua>" + (long)loan + "円</aqua>"),
-                  this.mm("<gray>返済総額:</gray> <gold>" + (long)totalRepay + "円</gold>"),
+                  this.mm("<gray>借入額:</gray> <aqua>" + this.fmtCur(loan) + "</aqua>"),
+                  this.mm("<gray>返済総額:</gray> <gold>" + this.fmtCur(totalRepay) + "</gold>"),
                   this.mm("<gray>期限:</gray> " + timeStr)
                )
             );
@@ -7050,7 +7055,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          gui.setItem(11, display);
          gui.setItem(
-            15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>返済して担保を取り戻す</bold></gold>", "<gray>返済総額:</gray> <gold>" + (long)totalRepay + "円</gold>")
+            15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>返済して担保を取り戻す</bold></gold>", "<gray>返済総額:</gray> <gold>" + this.fmtCur(totalRepay) + "</gold>")
          );
       } else {
          ItemStack selected = this.collateralSelection.get(u);
@@ -7064,8 +7069,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   Material.EMERALD,
                   "<green><bold>選択したアイテムを担保に借りる</bold></green>",
                   "<gray>アイテム:</gray> <white>" + selected.getType().name() + " ×" + selected.getAmount() + "</white>",
-                  "<gray>鑑定評価額:</gray> <gold>" + (long)value + "円</gold>",
-                  "<gray>借入可能額(LTV" + (int)(this.cfgCollateralLtv * 100.0) + "%):</gray> <aqua>" + (long)loan + "円</aqua>",
+                  "<gray>鑑定評価額:</gray> <gold>" + this.fmtCur(value) + "</gold>",
+                  "<gray>借入可能額(LTV" + (int)(this.cfgCollateralLtv * 100.0) + "%):</gray> <aqua>" + this.fmtCur(loan) + "</aqua>",
                   "<gray>金利:</gray> <red>" + (int)this.cfgCollateralInterest + "%</red>",
                   "<gray>返済期限:</gray> <yellow>" + this.cfgCollateralDurationMs / 60000L + "分</yellow>"
                )
@@ -7149,9 +7154,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (dm != null) {
                List<Component> lore = new ArrayList<>();
                lore.add(this.mm("<gray>出品者:</gray> <white>" + Bukkit.getOfflinePlayer(seller).getName() + "</white>"));
-               lore.add(this.mm("<gray>現在価格:</gray> <gold>" + (long)bid + "円</gold>"));
+               lore.add(this.mm("<gray>現在価格:</gray> <gold>" + this.fmtCur(bid) + "</gold>"));
                if (buyout != null) {
-                  lore.add(this.mm("<gray>即決価格:</gray> <light_purple>" + (long)buyout.doubleValue() + "円</light_purple>"));
+                  lore.add(this.mm("<gray>即決価格:</gray> <light_purple>" + this.fmtCur(buyout.doubleValue()) + "</light_purple>"));
                }
 
                lore.add(
@@ -7249,7 +7254,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemMeta dm = display.getItemMeta();
          if (dm != null) {
             List<Component> lore = new ArrayList<>();
-            lore.add(this.mm("<gray>開始/現在価格:</gray> <gold>" + (long)bid + "円</gold>"));
+            lore.add(this.mm("<gray>開始/現在価格:</gray> <gold>" + this.fmtCur(bid) + "</gold>"));
             lore.add(this.mm("<gray>入札者:</gray> <gray>まだいません</gray>"));
             lore.add(this.mm("<gray>残り時間:</gray> <yellow>" + remainStr + "</yellow>"));
             dm.lore(lore);
@@ -7333,7 +7338,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.PLAYER_HEAD,
                openTag + "<bold>" + medal + " " + name + "</bold>" + closeTag,
-               "<gray>累計落札売上:</gray> <green>" + (long)entry.getValue().doubleValue() + "円</green>"
+               "<gray>累計落札売上:</gray> <green>" + this.fmtCur(entry.getValue().doubleValue()) + "</green>"
             )
          );
          rank++;
@@ -7361,7 +7366,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                Material.SHIELD,
                "<blue><bold>保険加入中</bold></blue>",
                "<gray>有効期限:</gray> <green>残り " + remain / 60000L + "分</green>",
-               "<gray>死亡時の補填額:</gray> <gold>" + (long)this.cfgInsurancePayout + "円</gold>",
+               "<gray>死亡時の補填額:</gray> <gold>" + this.fmtCur(this.cfgInsurancePayout) + "</gold>",
                "<gray>※死亡すると1回消費されます</gray>"
             )
          );
@@ -7371,9 +7376,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.GOLDEN_APPLE,
                "<green><bold>保険に加入する</bold></green>",
-               "<gray>保険料:</gray> <red>" + (long)this.cfgInsurancePremium + "円</red>",
+               "<gray>保険料:</gray> <red>" + this.fmtCur(this.cfgInsurancePremium) + "</red>",
                "<gray>有効期間:</gray> <yellow>" + this.cfgInsuranceDurationMs / 60000L + "分</yellow>",
-               "<gray>死亡時の補填額:</gray> <gold>" + (long)this.cfgInsurancePayout + "円</gold>"
+               "<gray>死亡時の補填額:</gray> <gold>" + this.fmtCur(this.cfgInsurancePayout) + "</gold>"
             )
          );
       }
@@ -7419,13 +7424,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.BOOK,
             "<yellow>【現在の財務状況】</yellow>",
-            "<gray>手持ち: </gray><green>" + (long)pocket + "円</green>",
-            "<gray>預金残高: </gray><aqua>" + (long)bank + "円</aqua>"
+            "<gray>手持ち: </gray><green>" + this.fmtCur(pocket) + "</green>",
+            "<gray>預金残高: </gray><aqua>" + this.fmtCur(bank) + "</aqua>"
          )
       );
-      gui.setItem(11, this.createItem(Material.LIME_DYE, "<green>+" + (long)this.cfgDepositStep + "円 預金</green>"));
+      gui.setItem(11, this.createItem(Material.LIME_DYE, "<green>+" + this.fmtCur(this.cfgDepositStep) + " 預金</green>"));
       gui.setItem(12, this.createItem(Material.LIME_GLAZED_TERRACOTTA, "<green><bold>全額預金</bold></green>"));
-      gui.setItem(14, this.createItem(Material.RED_DYE, "<red>-" + (long)this.cfgDepositStep + "円 引出</red>"));
+      gui.setItem(14, this.createItem(Material.RED_DYE, "<red>-" + this.fmtCur(this.cfgDepositStep) + " 引出</red>"));
       gui.setItem(15, this.createItem(Material.RED_GLAZED_TERRACOTTA, "<red><bold>全額引出</bold></red>"));
       gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>金額を指定して預金</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
       gui.setItem(21, this.createItem(Material.PAPER, "<gold><bold>金額を指定して引出</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
@@ -7482,9 +7487,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       ItemStack item = this.createItem(
          Material.PAPER,
          "<green><bold>融資プラン: " + Bukkit.getOfflinePlayer(lenderId).getName() + "銀行 (" + slotNum + "枠目)</bold></green>",
-         "<gray>融資額:</gray> <aqua>" + (long)amount + "円</aqua>",
+         "<gray>融資額:</gray> <aqua>" + this.fmtCur(amount) + "</aqua>",
          "<gray>利息:</gray> <red>" + (long)interest + "%</red>",
-         "<gray>返済総額:</gray> <gold>" + (long)(amount * (1.0 + interest / 100.0)) + "円</gold>",
+         "<gray>返済総額:</gray> <gold>" + this.fmtCur((amount * (1.0 + interest / 100.0))) + "</gold>",
          "",
          "<yellow>クリックして契約成立</yellow>"
       );
@@ -7512,7 +7517,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                Material.ANVIL,
                "<red>【対プレイヤー債務】</red>",
                "<gray>債権者:</gray> " + Bukkit.getOfflinePlayer(UUID.fromString(data[0])).getName(),
-               "<gray>残り:</gray> <red>" + (long)pDebt + "円</red>"
+               "<gray>残り:</gray> <red>" + this.fmtCur(pDebt) + "</red>"
             )
          );
          gui.setItem(10, this.createItem(Material.GOLD_NUGGET, "<yellow>1,000円 返済</yellow>"));
@@ -7536,7 +7541,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (gDebt <= 0.0) {
          gui.setItem(6, this.createItem(Material.SUNFLOWER, "<green>国営公庫からの借金なし</green>"));
       } else {
-         gui.setItem(6, this.createItem(Material.IRON_BARS, "<dark_red>【国営公庫債務】</dark_red>", "<gray>残り:</gray> <red>" + (long)gDebt + "円</red>"));
+         gui.setItem(6, this.createItem(Material.IRON_BARS, "<dark_red>【国営公庫債務】</dark_red>", "<gray>残り:</gray> <red>" + this.fmtCur(gDebt) + "</red>"));
          gui.setItem(15, this.createItem(Material.GOLD_NUGGET, "<yellow>1,000円 返済</yellow>"));
          gui.setItem(16, this.createItem(Material.GOLD_BLOCK, "<gold><bold>全額返済</bold></gold>"));
       }
@@ -7551,7 +7556,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(
          13,
          this.createItem(
-            Material.DIAMOND, "<light_purple><bold>【銀行を設立する】</bold></light_purple>", "<gray>設立費用:</gray> <red>" + (long)this.cfgBankEstablishCost + "円</red>"
+            Material.DIAMOND, "<light_purple><bold>【銀行を設立する】</bold></light_purple>", "<gray>設立費用:</gray> <red>" + this.fmtCur(this.cfgBankEstablishCost) + "</red>"
          )
       );
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>"));
@@ -7563,9 +7568,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       Inventory gui = Bukkit.createInventory(null, 27, this.tBanker);
       UUID u = p.getUniqueId();
       double capital = this.bankCapital.getOrDefault(u, 0.0);
-      gui.setItem(4, this.createItem(Material.BEACON, "<red>【銀行ステータス】</red>", "<gray>資本金プール:</gray> <gold>" + (long)capital + "円</gold>"));
-      gui.setItem(10, this.createItem(Material.DIAMOND, "<aqua>資本金へ +10,000円</aqua>"));
-      gui.setItem(11, this.createItem(Material.COAL, "<gray>資本金から -10,000円</gray>"));
+      gui.setItem(4, this.createItem(Material.BEACON, "<red>【銀行ステータス】</red>", "<gray>資本金プール:</gray> <gold>" + this.fmtCur(capital) + "</gold>"));
+      gui.setItem(10, this.createItem(Material.DIAMOND, "<aqua>資本金へ +" + this.fmtCur(10000.0) + "</aqua>"));
+      gui.setItem(11, this.createItem(Material.COAL, "<gray>資本金から -" + this.fmtCur(10000.0) + "</gray>"));
       if (this.publishedLoans.containsKey(u)) {
          gui.setItem(15, this.createItem(Material.BARRIER, "<red>プラン(1枠目)を取り下げる</red>"));
       } else {
@@ -7600,12 +7605,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.OAK_SIGN,
             "<gold>【設計中: " + slot + "枠目】</gold>",
-            "<gray>融資額:</gray> <aqua>" + (long)amount + "円</aqua>",
+            "<gray>融資額:</gray> <aqua>" + this.fmtCur(amount) + "</aqua>",
             "<gray>利息:</gray> <red>" + (long)interest + "%</red>"
          )
       );
-      gui.setItem(10, this.createItem(Material.SLIME_BALL, "<green>+1,000円</green>"));
-      gui.setItem(11, this.createItem(Material.SLIME_BLOCK, "<green>+10,000円</green>"));
+      gui.setItem(10, this.createItem(Material.SLIME_BALL, "<green>+" + this.fmtCur(1000.0) + "</green>"));
+      gui.setItem(11, this.createItem(Material.SLIME_BLOCK, "<green>+" + this.fmtCur(10000.0) + "</green>"));
       gui.setItem(12, this.createItem(Material.REDSTONE, "<red>額リセット</red>"));
       gui.setItem(14, this.createItem(Material.SUGAR, "<yellow>利息 +5%</yellow>"));
       gui.setItem(15, this.createItem(Material.GLOWSTONE_DUST, "<yellow>利息 +10%</yellow>"));
@@ -7627,15 +7632,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       double currentDebt = this.govDebt.getOrDefault(u, 0.0);
       List<String> lores = new ArrayList<>();
       lores.add("<gray>適用金利:</gray> <red>" + interest + "%</red>");
-      lores.add("<gray>借入上限(信用スコア連動):</gray> <gold>" + (long)cap + "円</gold>");
-      lores.add("<gray>現在の債務残高:</gray> <yellow>" + (long)currentDebt + "円</yellow>");
+      lores.add("<gray>借入上限(信用スコア連動):</gray> <gold>" + this.fmtCur(cap) + "</gold>");
+      lores.add("<gray>現在の債務残高:</gray> <yellow>" + this.fmtCur(currentDebt) + "</yellow>");
       if (this.govDebtDueTime.containsKey(u) && currentDebt > 0.0) {
          long remain = this.govDebtDueTime.get(u) - System.currentTimeMillis();
          lores.add("<gray>返済期限:</gray> " + (remain > 0L ? "<green>残り " + remain / 60000L + "分</green>" : "<red>期限超過（延滞金加算中）</red>"));
       }
 
       gui.setItem(
-         13, this.createItem(Material.EMERALD, "<green><bold>+" + (long)this.cfgGovLoanAmount + "円 国営ローンを組む</bold></green>", lores.toArray(new String[0]))
+         13, this.createItem(Material.EMERALD, "<green><bold>+" + this.fmtCur(this.cfgGovLoanAmount) + " 国営ローンを組む</bold></green>", lores.toArray(new String[0]))
       );
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>"));
       this.fillGlass(gui);
@@ -7725,10 +7730,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(
          4,
          this.createItem(
-            Material.CLOCK, "<gold>【定期預金 1枠目】</gold>", "<gray>現在の預金額:</gray> <yellow>" + (long)amount + "円</yellow>", "<gray>状態:</gray> " + timeStr
+            Material.CLOCK, "<gold>【定期預金 1枠目】</gold>", "<gray>現在の預金額:</gray> <yellow>" + this.fmtCur(amount) + "</yellow>", "<gray>状態:</gray> " + timeStr
          )
       );
-      gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<yellow>手持ちから " + (long)this.cfgFixedDepositAmount + "円 預ける</yellow>"));
+      gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<yellow>手持ちから " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
       gui.setItem(15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>満期引き出し (+" + (int)(this.cfgFixedDepositRate * 100.0) + "%)</bold></gold>"));
       double amount2 = this.fixedDeposit2.getOrDefault(u, 0.0);
       long diff2 = this.fixedDepositUnlockTime2.getOrDefault(u, 0L) - System.currentTimeMillis();
@@ -7736,10 +7741,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(
          3,
          this.createItem(
-            Material.CLOCK, "<aqua>【定期預金 2枠目】</aqua>", "<gray>現在の預金額:</gray> <yellow>" + (long)amount2 + "円</yellow>", "<gray>状態:</gray> " + timeStr2
+            Material.CLOCK, "<aqua>【定期預金 2枠目】</aqua>", "<gray>現在の預金額:</gray> <yellow>" + this.fmtCur(amount2) + "</yellow>", "<gray>状態:</gray> " + timeStr2
          )
       );
-      gui.setItem(12, this.createItem(Material.IRON_INGOT, "<yellow>2枠目へ " + (long)this.cfgFixedDepositAmount + "円 預ける</yellow>"));
+      gui.setItem(12, this.createItem(Material.IRON_INGOT, "<yellow>2枠目へ " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
       gui.setItem(16, this.createItem(Material.IRON_BLOCK, "<aqua><bold>2枠目 満期引き出し</bold></aqua>"));
       double amount3 = this.fixedDeposit3.getOrDefault(u, 0.0);
       long diff3 = this.fixedDepositUnlockTime3.getOrDefault(u, 0L) - System.currentTimeMillis();
@@ -7749,11 +7754,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.CLOCK,
             "<light_purple>【定期預金 3枠目】</light_purple>",
-            "<gray>現在の預金額:</gray> <yellow>" + (long)amount3 + "円</yellow>",
+            "<gray>現在の預金額:</gray> <yellow>" + this.fmtCur(amount3) + "</yellow>",
             "<gray>状態:</gray> " + timeStr3
          )
       );
-      gui.setItem(13, this.createItem(Material.EMERALD, "<yellow>3枠目へ " + (long)this.cfgFixedDepositAmount + "円 預ける</yellow>"));
+      gui.setItem(13, this.createItem(Material.EMERALD, "<yellow>3枠目へ " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
       gui.setItem(17, this.createItem(Material.EMERALD_BLOCK, "<light_purple><bold>3枠目 満期引き出し</bold></light_purple>"));
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>"));
       this.fillGlass(gui);
@@ -7849,13 +7854,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   MinecraftBank.InvestmentFund fund = this.investmentFunds.get(owner);
                   if (fund != null) {
                      fund.cashBalance += totalDividend;
-                     this.addLog(fund.manager, "共同投資ファンド「" + fund.name + "」の世界株配当金 +" + (long)totalDividend + "円(ファンド現金へ計上)");
+                     this.addLog(fund.manager, "共同投資ファンド「" + fund.name + "」の世界株配当金 +" + this.fmtCur(totalDividend) + "(ファンド現金へ計上)");
                   } else {
                      econ.depositPlayer(Bukkit.getOfflinePlayer(owner), totalDividend);
                      this.addLog(owner, "世界株の配当金 +" + this.fmtCur(totalDividend));
                      Player online = Bukkit.getPlayer(owner);
                      if (online != null) {
-                        this.msgKey(online, "worldstock.dividend-paid", "amount", String.format("%.2f", totalDividend));
+                        this.msgKey(online, "worldstock.dividend-paid", "amount", this.fmtCurPrecise(totalDividend));
                      }
                   }
                }
@@ -7922,7 +7927,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.PLAYER_HEAD,
                "<yellow><bold>#" + rank + " " + name + "</bold></yellow>",
-               "<gray>評価額合計: </gray><gold>" + (long)entry.getValue().doubleValue() + "円</gold>",
+               "<gray>評価額合計: </gray><gold>" + this.fmtCur(entry.getValue().doubleValue()) + "</gold>",
                "<gray>保有銘柄数: </gray><white>" + symbols + "</white>"
             )
          );
@@ -8053,8 +8058,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack item = this.createItem(
             mat,
             "<aqua><bold>" + this.resourceDisplayName(mat) + "</bold></aqua>",
-            "<gray>現在価格: </gray><gold>" + String.format("%.2f", price) + "円/個</gold> " + this.resourceTrendIndicator(mat),
-            "<gray>基準価格: </gray><white>" + String.format("%.2f", base) + "円/個</white>",
+            "<gray>現在価格: </gray><gold>" + this.fmtCurPrecise(price) + "/個</gold> " + this.resourceTrendIndicator(mat),
+            "<gray>基準価格: </gray><white>" + this.fmtCurPrecise(base) + "/個</white>",
             "<yellow>クリックして売買画面へ</yellow>"
          );
          this.setResourceMaterialTag(item, mat);
@@ -8075,8 +8080,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       int holding = this.countMaterialInInventory(p, mat);
       List<String> infoLore = new ArrayList<>(
          List.of(
-            "<gray>現在価格: </gray><gold>" + String.format("%.2f", price) + "円/個</gold> " + this.resourceTrendIndicator(mat),
-            "<gray>基準価格: </gray><white>" + String.format("%.2f", base) + "円/個</white>",
+            "<gray>現在価格: </gray><gold>" + this.fmtCurPrecise(price) + "/個</gold> " + this.resourceTrendIndicator(mat),
+            "<gray>基準価格: </gray><white>" + this.fmtCurPrecise(base) + "/個</white>",
             "<gray>所持数: </gray><white>" + holding + "個</white>"
          )
       );
@@ -8096,8 +8101,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack sellItem = this.createItem(
             mat,
             "<red><bold>売る x" + qty + "</bold></red>",
-            "<gray>受取額: </gray><gold>" + String.format("%.2f", sellTotal) + "円</gold>",
-            "<dark_gray>(単価 " + String.format("%.2f", price) + "円 × " + qty + "個)</dark_gray>"
+            "<gray>受取額: </gray><gold>" + this.fmtCurPrecise(sellTotal) + "</gold>",
+            "<dark_gray>(単価 " + this.fmtCurPrecise(price) + " × " + qty + "個)</dark_gray>"
          );
          this.setResourceMaterialTag(sellItem, mat);
          this.setResourceActionTag(sellItem, "sell" + qty);
@@ -8106,8 +8111,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack buyItem = this.createItem(
             mat,
             "<green><bold>買う x" + qty + "</bold></green>",
-            "<gray>支払額: </gray><gold>" + String.format("%.2f", buyTotal) + "円</gold>",
-            "<dark_gray>(単価 " + String.format("%.2f", buyPrice) + "円 × " + qty + "個)</dark_gray>"
+            "<gray>支払額: </gray><gold>" + this.fmtCurPrecise(buyTotal) + "</gold>",
+            "<dark_gray>(単価 " + this.fmtCurPrecise(buyPrice) + " × " + qty + "個)</dark_gray>"
          );
          this.setResourceMaterialTag(buyItem, mat);
          this.setResourceActionTag(buyItem, "buy" + qty);
@@ -8139,28 +8144,28 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.NETHER_STAR,
             "<gold><bold>【定期抽選・宝くじ】</bold></gold>",
-            "<gray>賞金プール:</gray> <gold>" + (long)this.lotteryPool + "円</gold>",
-            "<gray>チケット価格:</gray> <white>" + (long)this.cfgLotteryTicketPrice + "円/枚</white>",
+            "<gray>賞金プール:</gray> <gold>" + this.fmtCur(this.lotteryPool) + "</gold>",
+            "<gray>チケット価格:</gray> <white>" + this.fmtCur(this.cfgLotteryTicketPrice) + "/枚</white>",
             "<gray>あなたの購入枚数:</gray> <yellow>" + myTickets + "枚</yellow>",
             "<gray>現在の当せん確率:</gray> <aqua>" + String.format("%.2f", winChance) + "%</aqua>",
             "<gray>次回抽選まで:</gray> <white>" + this.formatHoursMinutes(remainMs, false) + "</white>",
             "<dark_gray>前回の当せん者:</dark_gray> <light_purple>"
                + this.lastLotteryWinnerName
                + "</light_purple>"
-               + (this.lastLotteryWinnerAmount > 0.0 ? " <dark_gray>(" + (long)this.lastLotteryWinnerAmount + "円)</dark_gray>" : ""),
+               + (this.lastLotteryWinnerAmount > 0.0 ? " <dark_gray>(" + this.fmtCur(this.lastLotteryWinnerAmount) + ")</dark_gray>" : ""),
             "<dark_gray>賞金プールはチケット売上のみが原資です(国庫からの補填はありません)。</dark_gray>"
          )
       );
       double price = this.cfgLotteryTicketPrice;
       gui.setItem(
-         11, this.createItem(Material.PAPER, "<green><bold>\ud83c\udf9f 1枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + (long)(price * 1.0) + "円</gold>")
+         11, this.createItem(Material.PAPER, "<green><bold>\ud83c\udf9f 1枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + this.fmtCur((price * 1.0)) + "</gold>")
       );
       gui.setItem(
-         13, this.createItem(Material.EMERALD, "<green><bold>\ud83c\udf9f 5枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + (long)(price * 5.0) + "円</gold>")
+         13, this.createItem(Material.EMERALD, "<green><bold>\ud83c\udf9f 5枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + this.fmtCur((price * 5.0)) + "</gold>")
       );
       gui.setItem(
          15,
-         this.createItem(Material.DIAMOND, "<green><bold>\ud83c\udf9f 10枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + (long)(price * 10.0) + "円</gold>")
+         this.createItem(Material.DIAMOND, "<green><bold>\ud83c\udf9f 10枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + this.fmtCur((price * 10.0)) + "</gold>")
       );
       gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<aqua><bold>\ud83d\udcd6 数量を指定して購入</bold></aqua>", "<gray>クリックしてチャットに枚数を入力</gray>"));
       gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>"));
@@ -8178,7 +8183,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.BOOK,
                "<gold><bold>【レンタル倉庫】</bold></gold>",
-               "<gray>家賃:</gray> <gold>" + (long)this.cfgStorageRentAmount + "円</gold> / " + this.cfgStorageRentIntervalHours + "時間ごと",
+               "<gray>家賃:</gray> <gold>" + this.fmtCur(this.cfgStorageRentAmount) + "</gold> / " + this.cfgStorageRentIntervalHours + "時間ごと",
                "<gray>収納スロット数:</gray> <white>" + clampedSize + "</white>",
                "<gray>個人口座・エンダーチェストとは別の専用収納が使えます。</gray>",
                "<red>⚠ 家賃の支払いを1回でも滞納すると契約は失効し、</red>",
@@ -8187,7 +8192,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          );
          gui.setItem(
             13,
-            this.createItem(Material.EMERALD, "<green><bold>借りる</bold></green>", "<gray>今すぐ初回家賃 " + (long)this.cfgStorageRentAmount + "円 を支払って契約します。</gray>")
+            this.createItem(Material.EMERALD, "<green><bold>借りる</bold></green>", "<gray>今すぐ初回家賃 " + this.fmtCur(this.cfgStorageRentAmount) + " を支払って契約します。</gray>")
          );
       } else {
          long due = this.storageRentDueTime.get(u);
@@ -8197,7 +8202,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.BOOK,
                "<gold><bold>【レンタル倉庫】契約中</bold></gold>",
-               "<gray>家賃:</gray> <gold>" + (long)this.cfgStorageRentAmount + "円</gold> / " + this.cfgStorageRentIntervalHours + "時間ごと",
+               "<gray>家賃:</gray> <gold>" + this.fmtCur(this.cfgStorageRentAmount) + "</gold> / " + this.cfgStorageRentIntervalHours + "時間ごと",
                "<gray>次回家賃の支払いまで:</gray> <white>" + this.formatHoursMinutes(remainMs, false) + "</white>",
                "<red>⚠ 支払いに失敗すると倉庫の中身は全て没収されます。</red>"
             )
@@ -8208,7 +8213,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.DIAMOND,
                "<light_purple><bold>早めに更新する(次回期日を延長)</bold></light_purple>",
-               "<gray>" + (long)this.cfgStorageRentAmount + "円を支払い、次回期日をそこから" + this.cfgStorageRentIntervalHours + "時間延長します。</gray>"
+               "<gray>" + this.fmtCur(this.cfgStorageRentAmount) + "を支払い、次回期日をそこから" + this.cfgStorageRentIntervalHours + "時間延長します。</gray>"
             )
          );
       }
@@ -8273,7 +8278,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   online,
                   "storage.rented",
                   "amount",
-                  String.valueOf((long)this.cfgStorageRentAmount),
+                  this.fmtCur(this.cfgStorageRentAmount),
                   "hours",
                   String.valueOf(this.cfgStorageRentIntervalHours)
                );
@@ -8284,7 +8289,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             long current = this.storageRentDueTime.get(u);
             this.storageRentDueTime.put(u, current + this.cfgStorageRentIntervalHours * 3600000L);
             if (online != null) {
-               this.msgKey(online, "storage.rent-paid", "amount", String.valueOf((long)this.cfgStorageRentAmount));
+               this.msgKey(online, "storage.rent-paid", "amount", this.fmtCur(this.cfgStorageRentAmount));
             }
 
             this.addLog(u, "レンタル倉庫: 早期更新 -" + this.fmtCur(this.cfgStorageRentAmount));
@@ -8308,7 +8313,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.storageRentDueTime.put(u, now + this.cfgStorageRentIntervalHours * 3600000L);
                this.addLog(u, "レンタル倉庫: 家賃自動引落 -" + this.fmtCur(this.cfgStorageRentAmount));
                if (online != null && online.isOnline()) {
-                  this.msgKey(online, "storage.rent-paid", "amount", String.valueOf((long)this.cfgStorageRentAmount));
+                  this.msgKey(online, "storage.rent-paid", "amount", this.fmtCur(this.cfgStorageRentAmount));
                }
             } else {
                this.storageRentDueTime.remove(u);
@@ -8597,8 +8602,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             ItemStack item = this.createItem(
                deal.material,
                "<aqua><bold>" + this.merchantDisplayName(deal.material) + "</bold></aqua>",
-               "<gray>通常価格: </gray><strikethrough><white>" + (long)deal.normalPrice + "円</white></strikethrough>",
-               "<gray>割引価格: </gray><gold><bold>" + (long)discounted + "円</bold></gold>",
+               "<gray>通常価格: </gray><strikethrough><white>" + this.fmtCur(deal.normalPrice) + "</white></strikethrough>",
+               "<gray>割引価格: </gray><gold><bold>" + this.fmtCur(discounted) + "</bold></gold>",
                "<green>割引率: " + String.format("%.0f", deal.discountPercent) + "%OFF</green>",
                "<gray>在庫: </gray><white>" + deal.stockRemaining + " / " + deal.stockTotal + "</white>",
                "<yellow>クリックして購入</yellow>"
@@ -8634,15 +8639,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                }
 
                deal.stockRemaining--;
-               this.addLog(u, "巡回商人: " + this.merchantDisplayName(deal.material) + " を分割払いで購入 (初回" + (long)plan.installmentAmount + "円)");
+               this.addLog(u, "巡回商人: " + this.merchantDisplayName(deal.material) + " を分割払いで購入 (初回" + this.fmtCur(plan.installmentAmount) + ")");
                this.sendDiscordWebhook(
                   "\ud83e\uddf3 **"
                      + p.getName()
                      + "** が巡回商人から **"
                      + this.merchantDisplayName(deal.material)
                      + "** を分割払いで購入しました。（初回 -"
-                     + (long)plan.installmentAmount
-                     + "円）"
+                     + this.fmtCur(plan.installmentAmount)
+                     + "）"
                );
                this.msgKey(
                   p,
@@ -8650,11 +8655,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   "item",
                   this.merchantDisplayName(deal.material),
                   "first",
-                  String.format("%.2f", plan.installmentAmount),
+                  this.fmtCurPrecise(plan.installmentAmount),
                   "remaining",
                   String.valueOf(plan.installmentsRemaining),
                   "each",
-                  String.format("%.2f", plan.installmentAmount),
+                  this.fmtCurPrecise(plan.installmentAmount),
                   "count",
                   String.valueOf(plan.installmentsRemaining + 1)
                );
@@ -8672,9 +8677,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             deal.stockRemaining--;
             this.addLog(u, "巡回商人: " + this.merchantDisplayName(deal.material) + " を購入 -" + this.fmtCur(price));
             this.sendDiscordWebhook(
-               "\ud83e\uddf3 **" + p.getName() + "** が巡回商人から **" + this.merchantDisplayName(deal.material) + "** を購入しました。（-" + (long)price + "円）"
+               "\ud83e\uddf3 **" + p.getName() + "** が巡回商人から **" + this.merchantDisplayName(deal.material) + "** を購入しました。（-" + this.fmtCur(price) + "）"
             );
-            this.msgKey(p, "merchant.bought", "item", this.merchantDisplayName(deal.material), "amount", String.valueOf((long)price));
+            this.msgKey(p, "merchant.bought", "item", this.merchantDisplayName(deal.material), "amount", this.fmtCur(price));
             this.clickSound(p);
             this.openTravelingMerchantGUI(p);
          }
@@ -8752,7 +8757,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                + String.format("%.0f", (1.0 - this.vipFeeMultiplier(u)) * 100.0)
                + "%OFF</white> <dark_gray>(世界株/ファンド/オークション)</dark_gray>"
          );
-         lore.add("<gray>・日次VIP手当: </gray><white>" + (long)this.vipStipendAmount(tier) + "円 / 24時間</white>");
+         lore.add("<gray>・日次VIP手当: </gray><white>" + this.fmtCur(this.vipStipendAmount(tier)) + " / 24時間</white>");
          lore.add("<gray>・世界株の1日取引枠: </gray><white>x" + String.format("%.1f", this.vipTradeLimitMultiplier(u)) + "</white>");
          lore.add("<gray>・VIP限定ショップの利用</gray>");
       } else {
@@ -8777,7 +8782,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.createItem(
                      Material.GOLD_INGOT,
                      "<gold><bold>日次VIP手当を受け取る</bold></gold>",
-                     "<gray>受取額: </gray><gold>" + (long)amount + "円</gold>",
+                     "<gray>受取額: </gray><gold>" + this.fmtCur(amount) + "</gold>",
                      "<dark_gray>国庫財源。24時間ごとに1回受け取れます。</dark_gray>",
                      "<yellow>クリックして受け取る</yellow>"
                   )
@@ -8823,8 +8828,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                ItemStack card = this.createItem(
                   deal.material,
                   "<light_purple><bold>" + this.merchantDisplayName(deal.material) + "</bold></light_purple>",
-                  "<gray>通常価格: </gray><strikethrough><white>" + (long)deal.normalPrice + "円</white></strikethrough>",
-                  "<gray>VIP割引価格: </gray><gold><bold>" + (long)discounted + "円</bold></gold>",
+                  "<gray>通常価格: </gray><strikethrough><white>" + this.fmtCur(deal.normalPrice) + "</white></strikethrough>",
+                  "<gray>VIP割引価格: </gray><gold><bold>" + this.fmtCur(discounted) + "</bold></gold>",
                   "<green>割引率: " + String.format("%.0f", deal.discountPercent) + "%OFF</green>",
                   "<gray>在庫: </gray><white>" + deal.stockRemaining + " / " + deal.stockTotal + "</white>",
                   "<yellow>クリックして購入</yellow>"
@@ -8873,8 +8878,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                econ.depositPlayer(p, amount);
                this.vipStipendClaimedAt.put(u, now);
                this.addLog(u, "VIP手当(" + this.vipTierName(tier) + ") +" + this.fmtCur(amount));
-               this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** がVIP手当(" + this.vipTierName(tier) + ")として " + (long)amount + "円 を受け取りました。");
-               this.msgKey(p, "vip.stipend-claimed", "amount", String.valueOf((long)amount), "tier", this.vipTierName(tier));
+               this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** がVIP手当(" + this.vipTierName(tier) + ")として " + this.fmtCur(amount) + " を受け取りました。");
+               this.msgKey(p, "vip.stipend-claimed", "amount", this.fmtCur(amount), "tier", this.vipTierName(tier));
                p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
             }
          }
@@ -8904,9 +8909,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             deal.stockRemaining--;
             this.addLog(u, "VIP限定ショップ: " + this.merchantDisplayName(deal.material) + " を購入 -" + this.fmtCur(price));
             this.sendDiscordWebhook(
-               "\ud83d\udc8e **" + p.getName() + "** がVIP限定ショップから **" + this.merchantDisplayName(deal.material) + "** を購入しました。（-" + (long)price + "円）"
+               "\ud83d\udc8e **" + p.getName() + "** がVIP限定ショップから **" + this.merchantDisplayName(deal.material) + "** を購入しました。（-" + this.fmtCur(price) + "）"
             );
-            this.msgKey(p, "vip.shop-bought", "item", this.merchantDisplayName(deal.material), "amount", String.valueOf((long)price));
+            this.msgKey(p, "vip.shop-bought", "item", this.merchantDisplayName(deal.material), "amount", this.fmtCur(price));
             this.clickSound(p);
             this.openVipLoungeGUI(p);
          }
@@ -8955,8 +8960,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Material mat;
          String name;
          if (q.requiredTeamSize > 1) {
-            lores.add("<gray>一人あたり報酬: </gray><gold>" + (long)q.reward + "円</gold>");
-            lores.add("<gray>合計コスト: </gray><gold>" + (long)(q.reward * q.requiredTeamSize) + "円</gold>");
+            lores.add("<gray>一人あたり報酬: </gray><gold>" + this.fmtCur(q.reward) + "</gold>");
+            lores.add("<gray>合計コスト: </gray><gold>" + this.fmtCur((q.reward * q.requiredTeamSize)) + "</gold>");
             lores.add("");
             boolean isMember = q.teamMembers.contains(u);
             if (isPoster) {
@@ -9006,7 +9011,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                name = "<dark_gray>\ud83e\udd1d クールダウン中(残り" + remain + "分)</dark_gray>";
             }
          } else {
-            lores.add("<gray>報酬: </gray><gold>" + (long)q.reward + "円</gold>");
+            lores.add("<gray>報酬: </gray><gold>" + this.fmtCur(q.reward) + "</gold>");
             lores.add("");
             if (isPoster) {
                if (q.state == MinecraftBank.QuestState.AVAILABLE) {
@@ -9102,8 +9107,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack head = this.createItem(
             Material.PLAYER_HEAD,
             "<yellow><bold>" + online.getName() + "</bold></yellow>",
-            "<gray>所持金:</gray> <green>" + (long)pocket + "円</green>",
-            "<gray>預金:</gray> <aqua>" + (long)bank + "円</aqua>",
+            "<gray>所持金:</gray> <green>" + this.fmtCur(pocket) + "</green>",
+            "<gray>預金:</gray> <aqua>" + this.fmtCur(bank) + "</aqua>",
             "<gray>信用スコア:</gray> <light_purple>" + score + "</light_purple>",
             "<yellow>クリックで詳細を開く</yellow>"
          );
@@ -9142,10 +9147,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.PLAYER_HEAD,
             "<yellow><bold>" + name + "</bold></yellow>",
-            "<gray>所持金:</gray> <green>" + (long)pocket + "円</green>",
-            "<gray>預金:</gray> <aqua>" + (long)bank + "円</aqua>",
+            "<gray>所持金:</gray> <green>" + this.fmtCur(pocket) + "</green>",
+            "<gray>預金:</gray> <aqua>" + this.fmtCur(bank) + "</aqua>",
             "<gray>信用スコア:</gray> <light_purple>" + score + "</light_purple>",
-            "<gray>政府債務:</gray> <red>" + (long)gDebt + "円</red>"
+            "<gray>政府債務:</gray> <red>" + this.fmtCur(gDebt) + "</red>"
          )
       );
       gui.setItem(10, this.createItem(Material.GOLD_INGOT, "<green><bold>\ud83d\udcb0 お金を付与する</bold></green>", "<gray>クリックしてチャットに金額を入力</gray>"));
@@ -9593,7 +9598,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                           double refund = q.reward * q.requiredTeamSize;
                                           econ.depositPlayer(p, refund);
                                           this.quests.remove(q.id);
-                                          this.msgKey(p, "quest.withdrawn", "amount", String.valueOf((long)refund));
+                                          this.msgKey(p, "quest.withdrawn", "amount", this.fmtCur(refund));
                                           this.clickSound(p);
                                           this.openQuestBoardGUI(p);
                                        }
@@ -9603,7 +9608,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  } else if (q.state == MinecraftBank.QuestState.AVAILABLE) {
                                     econ.depositPlayer(p, q.reward);
                                     this.quests.remove(q.id);
-                                    this.msgKey(p, "quest.withdrawn", "amount", String.valueOf((long)q.reward));
+                                    this.msgKey(p, "quest.withdrawn", "amount", this.fmtCur(q.reward));
                                     this.clickSound(p);
                                     this.openQuestBoardGUI(p);
                                  } else {
@@ -9926,13 +9931,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  "item",
                                  stored.getType().name(),
                                  "amount",
-                                 String.valueOf((long)loan),
+                                 this.fmtCur(loan),
                                  "minutes",
                                  String.valueOf(this.cfgCollateralDurationMs / 60000L)
                               );
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-                              this.addLog(u, "担保融資 +" + (long)loan + "円 (" + stored.getType().name() + ")");
-                              this.sendDiscordWebhook("\ud83c\udffa **" + p.getName() + "** が " + stored.getType().name() + " を担保に " + (long)loan + "円 を借りました。");
+                              this.addLog(u, "担保融資 +" + this.fmtCur(loan) + " (" + stored.getType().name() + ")");
+                              this.sendDiscordWebhook("\ud83c\udffa **" + p.getName() + "** が " + stored.getType().name() + " を担保に " + this.fmtCur(loan) + " を借りました。");
                            }
                         } else if (mat == Material.GOLD_BLOCK && this.collateralItem.containsKey(u)) {
                            double loan = this.collateralLoanAmount.getOrDefault(u, 0.0);
@@ -9957,7 +9962,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.addLog(u, "担保融資完済 -" + this.fmtCur(totalRepay));
                               this.sendDiscordWebhook("\ud83d\udd13 **" + p.getName() + "** が担保融資を完済しました。返済額: " + this.fmtCur(totalRepay));
                            } else {
-                              this.msgKey(p, "collateral.repay-insufficient", "amount", String.valueOf((long)totalRepay));
+                              this.msgKey(p, "collateral.repay-insufficient", "amount", this.fmtCur(totalRepay));
                               this.errorSound(p);
                            }
                         }
@@ -10321,7 +10326,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.openMyPageGUI(p);
                         } else if (mat != Material.BELL && mat != Material.NOTE_BLOCK) {
                            if (mat == Material.GOLD_BLOCK) {
-                              this.msgKey(p, "treasury.balance-gui", "amount", String.valueOf((long)this.treasury));
+                              this.msgKey(p, "treasury.balance-gui", "amount", this.fmtCur(this.treasury));
                               this.msgKey(p, "treasury.balance-note");
                               this.openMyPageGUI(p);
                            } else {
@@ -10513,7 +10518,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     double currentBid = this.auctionBid.getOrDefault(auctionId, 0.0);
                                     boolean hasBidder = this.auctionBidder.containsKey(auctionId);
                                     double minNext = hasBidder ? currentBid + this.cfgAuctionMinIncrement : currentBid;
-                                    this.msgKey(p, "auction.bid-prompt", "amount", String.valueOf((long)minNext));
+                                    this.msgKey(p, "auction.bid-prompt", "amount", this.fmtCur(minNext));
                                     p.closeInventory();
                                     return;
                                  }
@@ -10588,7 +10593,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.addLog(u, "保険加入 -" + this.fmtCur(this.cfgInsurancePremium));
                               this.sendDiscordWebhook("\ud83d\udee1️ **" + p.getName() + "** が生命保険に加入しました。保険料: " + this.fmtCur(this.cfgInsurancePremium));
                            } else {
-                              this.msgKey(p, "insurance.premium-insufficient", "amount", String.valueOf((long)this.cfgInsurancePremium));
+                              this.msgKey(p, "insurance.premium-insufficient", "amount", this.fmtCur(this.cfgInsurancePremium));
                               this.errorSound(p);
                            }
                         }
@@ -10606,8 +10611,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      if (mat == Material.LIME_DYE && pocket >= this.cfgDepositStep) {
                         econ.withdrawPlayer(p, this.cfgDepositStep);
                         this.personalBank.put(u, bank + this.cfgDepositStep);
-                        this.msgKey(p, "personal.deposit-step", "amount", String.valueOf((long)this.cfgDepositStep));
-                        this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** が個人口座へ " + (long)this.cfgDepositStep + "円 預金しました。");
+                        this.msgKey(p, "personal.deposit-step", "amount", this.fmtCur(this.cfgDepositStep));
+                        this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** が個人口座へ " + this.fmtCur(this.cfgDepositStep) + " 預金しました。");
                      } else if (mat == Material.LIME_GLAZED_TERRACOTTA && pocket > 0.0) {
                         econ.withdrawPlayer(p, pocket);
                         this.personalBank.put(u, bank + pocket);
@@ -10616,8 +10621,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else if (mat == Material.RED_DYE && bank >= this.cfgDepositStep) {
                         this.personalBank.put(u, bank - this.cfgDepositStep);
                         econ.depositPlayer(p, this.cfgDepositStep);
-                        this.msgKey(p, "personal.withdraw-step", "amount", String.valueOf((long)this.cfgDepositStep));
-                        this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から " + (long)this.cfgDepositStep + "円 引き出しました。");
+                        this.msgKey(p, "personal.withdraw-step", "amount", this.fmtCur(this.cfgDepositStep));
+                        this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から " + this.fmtCur(this.cfgDepositStep) + " 引き出しました。");
                      } else if (mat == Material.RED_GLAZED_TERRACOTTA && bank > 0.0) {
                         long confirmedAt = this.pendingConfirmationTime.getOrDefault(u, 0L);
                         boolean expired = System.currentTimeMillis() - confirmedAt > 30000L;
@@ -10632,7 +10637,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.personalBank.put(u, 0.0);
                         econ.depositPlayer(p, bank);
                         this.msgKey(p, "personal.withdraw-full");
-                        this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から全額 " + (long)bank + "円 引き出しました。");
+                        this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から全額 " + this.fmtCur(bank) + " 引き出しました。");
                      } else {
                         if (mat == Material.WRITABLE_BOOK) {
                            this.awaitingChatInput.put(u, "personal_deposit");
@@ -10742,9 +10747,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.activeDebts.put(u, lenderId.toString() + ":" + totalRepay);
                               targetMap.remove(lenderId);
                               this.weeklyTradeVolume += amount;
-                              this.msgKey(p, "loan.player-approved", "amount", String.valueOf((long)amount));
+                              this.msgKey(p, "loan.player-approved", "amount", this.fmtCur(amount));
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-                              this.addLog(u, "融資契約成立 +" + (long)amount + "円 (返済総額" + (long)totalRepay + "円)");
+                              this.addLog(u, "融資契約成立 +" + this.fmtCur(amount) + " (返済総額" + this.fmtCur(totalRepay) + ")");
                               this.sendDiscordWebhook(
                                  "\ud83d\udcb0 **"
                                     + p.getName()
@@ -10758,7 +10763,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.addLog(lenderId, p.getName() + " へ融資 -" + this.fmtCur(amount));
                               Player lender = Bukkit.getPlayer(lenderId);
                               if (lender != null && lender.isOnline()) {
-                                 this.msgKey(lender, "loan.player-approved-notice", "player", p.getName(), "amount", String.valueOf((long)amount));
+                                 this.msgKey(lender, "loan.player-approved-notice", "player", p.getName(), "amount", this.fmtCur(amount));
                                  lender.playSound(lender.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                               } else {
                                  this.queueLoanOfflineNotice(lenderId, p.getName(), amount);
@@ -10794,7 +10799,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.sendDiscordWebhook("\ud83d\udcb3 **" + p.getName() + "** がプレイヤー間融資を完済しました。");
                               } else {
                                  this.activeDebts.put(u, lenderId.toString() + ":" + debt);
-                                 this.msgKey(p, "loan.repay-partial", "amount", String.valueOf((long)pay));
+                                 this.msgKey(p, "loan.repay-partial", "amount", this.fmtCur(pay));
                                  this.addScore(u, 5);
                               }
 
@@ -10838,7 +10843,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.sendDiscordWebhook("\ud83c\udfdb️ **" + p.getName() + "** が国営公庫ローンを完済しました。");
                               } else {
                                  this.govDebt.put(u, gDebt);
-                                 this.msgKey(p, "loan.repay-partial", "amount", String.valueOf((long)pay));
+                                 this.msgKey(p, "loan.repay-partial", "amount", this.fmtCur(pay));
                                  this.addScore(u, 10);
                               }
 
@@ -10883,13 +10888,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.bankCapital.put(u, 0.0);
                               this.msgKey(p, "bank.established");
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-                              this.addLog(u, "銀行を設立 (-" + (long)this.cfgBankEstablishCost + "円)");
+                              this.addLog(u, "銀行を設立 (-" + this.fmtCur(this.cfgBankEstablishCost) + ")");
                               this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** が銀行を設立しました。費用: " + this.fmtCur(this.cfgBankEstablishCost));
                               this.openBankHubGUI(p);
                               return;
                            }
 
-                           this.msgKey(p, "bank.establish-cost-insufficient", "amount", String.valueOf((long)this.cfgBankEstablishCost));
+                           this.msgKey(p, "bank.establish-cost-insufficient", "amount", this.fmtCur(this.cfgBankEstablishCost));
                            this.errorSound(p);
                         }
 
@@ -10905,8 +10910,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            if (pocket >= 10000.0) {
                               econ.withdrawPlayer(p, 10000.0);
                               this.bankCapital.put(u, capital + 10000.0);
-                              this.msgKey(p, "bank.capital-added");
-                              this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** が銀行の資本金へ 10,000円 追加しました。");
+                              this.msgKey(p, "bank.capital-added", "amount", this.fmtCur(10000.0));
+                              this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** が銀行の資本金へ " + this.fmtCur(10000.0) + " 追加しました。");
                            } else {
                               this.msgKey(p, "common.insufficient-funds-simple");
                               this.errorSound(p);
@@ -10915,8 +10920,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            if (capital >= 10000.0) {
                               this.bankCapital.put(u, capital - 10000.0);
                               econ.depositPlayer(p, 10000.0);
-                              this.msgKey(p, "bank.capital-withdrawn");
-                              this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** が銀行の資本金から 10,000円 引き出しました。");
+                              this.msgKey(p, "bank.capital-withdrawn", "amount", this.fmtCur(10000.0));
+                              this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** が銀行の資本金から " + this.fmtCur(10000.0) + " 引き出しました。");
                            } else {
                               this.msgKey(p, "bank.capital-insufficient-pool");
                               this.errorSound(p);
@@ -11015,9 +11020,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                               this.msgKey(p, "bank.plan-published", "slot", String.valueOf(slot));
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-                              this.addLog(u, "融資プラン(" + slot + "枠目)公開: " + (long)amount + "円/" + (long)interest + "%");
+                              this.addLog(u, "融資プラン(" + slot + "枠目)公開: " + this.fmtCur(amount) + "/" + (long)interest + "%");
                               this.sendDiscordWebhook(
-                                 "\ud83d\udccb **" + p.getName() + "** が融資プラン(" + slot + "枠目)を公開しました。融資額: " + (long)amount + "円 / 利息: " + (long)interest + "%"
+                                 "\ud83d\udccb **" + p.getName() + "** が融資プラン(" + slot + "枠目)を公開しました。融資額: " + this.fmtCur(amount) + " / 利息: " + (long)interest + "%"
                               );
                               this.openBankerGUI(p);
                               return;
@@ -11037,7 +11042,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         double addDebt = this.cfgGovLoanAmount * (1.0 + interest / 100.0);
                         double cap = this.getGovLoanCap(score);
                         if (currentGovDebt + addDebt > cap) {
-                           this.msgKey(p, "loan.gov-cap-exceeded", "amount", String.valueOf((long)cap));
+                           this.msgKey(p, "loan.gov-cap-exceeded", "amount", this.fmtCur(cap));
                            this.errorSound(p);
                            this.openGovLoanGUI(p);
                         } else {
@@ -11049,18 +11054,18 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               p,
                               "loan.gov-approved",
                               "amount",
-                              String.valueOf((long)this.cfgGovLoanAmount),
+                              this.fmtCur(this.cfgGovLoanAmount),
                               "rate",
                               String.valueOf(interest),
                               "total",
-                              String.valueOf((long)addDebt),
+                              this.fmtCur(addDebt),
                               "minutes",
                               String.valueOf(this.cfgGovLoanDurationMs / 60000L)
                            );
                            p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-                           this.addLog(u, "国営ローン借入 +" + (long)this.cfgGovLoanAmount + "円 (返済総額" + (long)addDebt + "円)");
+                           this.addLog(u, "国営ローン借入 +" + this.fmtCur(this.cfgGovLoanAmount) + " (返済総額" + this.fmtCur(addDebt) + ")");
                            this.sendDiscordWebhook(
-                              "\ud83c\udfdb️ **" + p.getName() + "** が国営公庫から " + (long)this.cfgGovLoanAmount + "円 を借りました。返済総額: " + this.fmtCur(addDebt)
+                              "\ud83c\udfdb️ **" + p.getName() + "** が国営公庫から " + this.fmtCur(this.cfgGovLoanAmount) + " を借りました。返済総額: " + this.fmtCur(addDebt)
                            );
                            this.openBankHubGUI(p);
                         }
@@ -11086,7 +11091,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  p,
                                  "deposit.slot1-created",
                                  "amount",
-                                 String.valueOf((long)this.cfgFixedDepositAmount),
+                                 this.fmtCur(this.cfgFixedDepositAmount),
                                  "seconds",
                                  String.valueOf(this.cfgFixedDepositDurationMs / 1000L),
                                  "rate",
@@ -11094,9 +11099,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               );
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                               this.addLog(u, "定期預金(1枠) -" + this.fmtCur(this.cfgFixedDepositAmount));
-                              this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** が定期預金1枠目に " + (long)this.cfgFixedDepositAmount + "円 を預けました。");
+                              this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** が定期預金1枠目に " + this.fmtCur(this.cfgFixedDepositAmount) + " を預けました。");
                            } else {
-                              this.msgKey(p, "deposit.funds-insufficient", "amount", String.valueOf((long)this.cfgFixedDepositAmount));
+                              this.msgKey(p, "deposit.funds-insufficient", "amount", this.fmtCur(this.cfgFixedDepositAmount));
                               this.errorSound(p);
                            }
                         } else if (mat == Material.GOLD_BLOCK) {
@@ -11111,7 +11116,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               econ.depositPlayer(p, reward);
                               this.fixedDeposit.put(u, 0.0);
                               this.fixedDepositUnlockTime.put(u, 0L);
-                              this.msgKey(p, "fixed-deposit.matured", "amount", String.valueOf((long)reward));
+                              this.msgKey(p, "fixed-deposit.matured", "amount", this.fmtCur(reward));
                               this.addScore(u, 15);
                               p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
                               this.addLog(u, "定期預金(1枠)満期 +" + this.fmtCur(reward));
@@ -11127,12 +11132,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               econ.withdrawPlayer(p, this.cfgFixedDepositAmount);
                               this.fixedDeposit2.put(u, this.cfgFixedDepositAmount);
                               this.fixedDepositUnlockTime2.put(u, System.currentTimeMillis() + this.cfgFixedDepositDurationMs);
-                              this.msgKey(p, "deposit.slot2-created", "amount", String.valueOf((long)this.cfgFixedDepositAmount));
+                              this.msgKey(p, "deposit.slot2-created", "amount", this.fmtCur(this.cfgFixedDepositAmount));
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                               this.addLog(u, "定期預金(2枠) -" + this.fmtCur(this.cfgFixedDepositAmount));
-                              this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** が定期預金2枠目に " + (long)this.cfgFixedDepositAmount + "円 を預けました。");
+                              this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** が定期預金2枠目に " + this.fmtCur(this.cfgFixedDepositAmount) + " を預けました。");
                            } else {
-                              this.msgKey(p, "deposit.funds-insufficient", "amount", String.valueOf((long)this.cfgFixedDepositAmount));
+                              this.msgKey(p, "deposit.funds-insufficient", "amount", this.fmtCur(this.cfgFixedDepositAmount));
                               this.errorSound(p);
                            }
                         } else if (mat == Material.IRON_BLOCK) {
@@ -11149,7 +11154,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               econ.depositPlayer(p, reward);
                               this.fixedDeposit2.put(u, 0.0);
                               this.fixedDepositUnlockTime2.put(u, 0L);
-                              this.msgKey(p, "fixed-deposit.matured-2", "amount", String.valueOf((long)reward));
+                              this.msgKey(p, "fixed-deposit.matured-2", "amount", this.fmtCur(reward));
                               this.addScore(u, 15);
                               p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
                               this.addLog(u, "定期預金(2枠)満期 +" + this.fmtCur(reward));
@@ -11165,12 +11170,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               econ.withdrawPlayer(p, this.cfgFixedDepositAmount);
                               this.fixedDeposit3.put(u, this.cfgFixedDepositAmount);
                               this.fixedDepositUnlockTime3.put(u, System.currentTimeMillis() + this.cfgFixedDepositDurationMs);
-                              this.msgKey(p, "deposit.slot3-created", "amount", String.valueOf((long)this.cfgFixedDepositAmount));
+                              this.msgKey(p, "deposit.slot3-created", "amount", this.fmtCur(this.cfgFixedDepositAmount));
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                               this.addLog(u, "定期預金(3枠) -" + this.fmtCur(this.cfgFixedDepositAmount));
-                              this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** が定期預金3枠目に " + (long)this.cfgFixedDepositAmount + "円 を預けました。");
+                              this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** が定期預金3枠目に " + this.fmtCur(this.cfgFixedDepositAmount) + " を預けました。");
                            } else {
-                              this.msgKey(p, "deposit.funds-insufficient", "amount", String.valueOf((long)this.cfgFixedDepositAmount));
+                              this.msgKey(p, "deposit.funds-insufficient", "amount", this.fmtCur(this.cfgFixedDepositAmount));
                               this.errorSound(p);
                            }
                         } else if (mat == Material.EMERALD_BLOCK) {
@@ -11187,7 +11192,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               econ.depositPlayer(p, reward);
                               this.fixedDeposit3.put(u, 0.0);
                               this.fixedDepositUnlockTime3.put(u, 0L);
-                              this.msgKey(p, "fixed-deposit.matured-3", "amount", String.valueOf((long)reward));
+                              this.msgKey(p, "fixed-deposit.matured-3", "amount", this.fmtCur(reward));
                               this.addScore(u, 15);
                               p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
                               this.addLog(u, "定期預金(3枠)満期 +" + this.fmtCur(reward));
@@ -11405,11 +11410,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                block.setType(Material.AIR);
                Player p = e.getPlayer();
                econ.depositPlayer(p, reward);
-               this.msgKey(p, "treasure.found", "amount", String.valueOf((long)reward));
+               this.msgKey(p, "treasure.found", "amount", this.fmtCur(reward));
                this.addLog(p.getUniqueId(), "埋蔵金を発見 +" + this.fmtCur(reward));
                p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
-               this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** が埋蔵金チェストを発見し、" + (long)reward + "円 を獲得しました。");
-               this.broadcastNews("<gold><bold>【埋蔵金】</bold> <yellow>" + p.getName() + "</yellow> が埋蔵金 " + (long)reward + "円 を発見しました！</gold>");
+               this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** が埋蔵金チェストを発見し、" + this.fmtCur(reward) + " を獲得しました。");
+               this.broadcastNews("<gold><bold>【埋蔵金】</bold> <yellow>" + p.getName() + "</yellow> が埋蔵金 " + this.fmtCur(reward) + " を発見しました！</gold>");
             }
          }
       }
@@ -11456,7 +11461,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.addLog(member, "チーム依頼達成 +" + this.fmtCur(q.reward));
                                  Player memberOnline = Bukkit.getPlayer(member);
                                  if (memberOnline != null) {
-                                    this.msgKey(memberOnline, "quest.team-completed", "amount", String.valueOf((long)q.reward));
+                                    this.msgKey(memberOnline, "quest.team-completed", "amount", this.fmtCur(q.reward));
                                     this.sendToast(memberOnline, "チーム依頼達成", "+" + this.fmtCur(q.reward));
                                     memberOnline.playSound(memberOnline.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
                                  }
@@ -11489,7 +11494,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   if (!(p.getLocation().distance(new Location(w, q.x, q.y, q.z)) > this.cfgQuestRadius)) {
                      econ.depositPlayer(p, q.reward);
                      this.weeklyTradeVolume = this.weeklyTradeVolume + q.reward;
-                     this.msgKey(p, "quest.completed", "amount", String.valueOf((long)q.reward));
+                     this.msgKey(p, "quest.completed", "amount", this.fmtCur(q.reward));
                      this.sendToast(p, "依頼達成", "+" + this.fmtCur(q.reward));
                      p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0F, 1.0F);
                      this.addLog(u, "依頼達成 +" + this.fmtCur(q.reward));
@@ -11534,7 +11539,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   q.state = MinecraftBank.QuestState.AVAILABLE;
                   Player posterOnline = Bukkit.getPlayer(q.posterId);
                   if (posterOnline != null) {
-                     this.msgKey(posterOnline, "quest.relisted", "amount", String.valueOf((long)totalReward));
+                     this.msgKey(posterOnline, "quest.relisted", "amount", this.fmtCur(totalReward));
                   }
                } else {
                   Player posterOnline = Bukkit.getPlayer(q.posterId);
@@ -11644,7 +11649,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.msgKey(p, "loan.login-seized-full");
             this.unlockAchievement(u, "first_loan_repaid", "初めての完済");
          } else {
-            this.msgKey(p, "loan.login-seized-partial", "amount", String.valueOf((long)seize));
+            this.msgKey(p, "loan.login-seized-partial", "amount", this.fmtCur(seize));
             this.addScore(u, -20);
             UUID guarantorId = this.loanGuarantor.get(u);
             if (guarantorId != null) {
@@ -11656,10 +11661,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.bankCapital.put(lenderId, this.bankCapital.getOrDefault(lenderId, 0.0) + guarantorSeize);
                   debt -= guarantorSeize;
                   this.addScore(guarantorId, -30);
-                  this.addLog(guarantorId, "保証債務の履行: -" + (long)guarantorSeize + "円 (" + p.getName() + "の借金分)");
+                  this.addLog(guarantorId, "保証債務の履行: -" + this.fmtCur(guarantorSeize) + " (" + p.getName() + "の借金分)");
                   Player guarantorOnline = Bukkit.getPlayer(guarantorId);
                   if (guarantorOnline != null) {
-                     this.msgKey(guarantorOnline, "loan.guarantor-seized-notice", "player", p.getName(), "amount", String.valueOf((long)guarantorSeize));
+                     this.msgKey(guarantorOnline, "loan.guarantor-seized-notice", "player", p.getName(), "amount", this.fmtCur(guarantorSeize));
                   }
 
                   this.sendDiscordWebhook(
@@ -11668,8 +11673,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         + " が "
                         + p.getName()
                         + " の借金 "
-                        + (long)guarantorSeize
-                        + "円 を代わりに支払いました。"
+                        + this.fmtCur(guarantorSeize)
+                        + " を代わりに支払いました。"
                   );
                }
             }
@@ -11697,10 +11702,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          } else {
             this.insuranceLastClaim.put(u, System.currentTimeMillis());
             econ.depositPlayer(p, this.cfgInsurancePayout);
-            this.msgKey(p, "insurance.payout", "amount", String.valueOf((long)this.cfgInsurancePayout));
-            this.sendToast(p, "保険金支払い", "+" + (long)this.cfgInsurancePayout + "円 が振り込まれました！");
+            this.msgKey(p, "insurance.payout", "amount", this.fmtCur(this.cfgInsurancePayout));
+            this.sendToast(p, "保険金支払い", "+" + this.fmtCur(this.cfgInsurancePayout) + " が振り込まれました！");
             this.addLog(u, "保険金受給 +" + this.fmtCur(this.cfgInsurancePayout));
-            this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** に生命保険金 " + (long)this.cfgInsurancePayout + "円 が支払われました。");
+            this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** に生命保険金 " + this.fmtCur(this.cfgInsurancePayout) + " が支払われました。");
          }
       }
    }
@@ -12696,8 +12701,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  q.reward = amount;
                                  q.state = MinecraftBank.QuestState.AVAILABLE;
                                  this.quests.put(q.id, q);
-                                 this.msgKey(p, "quest.posted", "amount", String.valueOf((long)amount));
-                                 this.addLog(u, "依頼ボードに掲示 -" + (long)amount + "円(エスクロー)");
+                                 this.msgKey(p, "quest.posted", "amount", this.fmtCur(amount));
+                                 this.addLog(u, "依頼ボードに掲示 -" + this.fmtCur(amount) + "(エスクロー)");
                                  this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** が探索依頼を掲示しました。報酬: " + this.fmtCur(amount));
                               }
                            } else if (type.equals("team_quest_post_reward")) {
@@ -12742,8 +12747,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                           q.requiredTeamSize = teamSize;
                                           q.state = MinecraftBank.QuestState.AVAILABLE;
                                           this.quests.put(q.id, q);
-                                          this.msgKey(p, "quest.posted", "amount", String.valueOf((long)totalEscrow));
-                                          this.addLog(u, "チーム依頼をボードに掲示 -" + (long)totalEscrow + "円(エスクロー、" + teamSize + "人×" + (long)teamReward + "円)");
+                                          this.msgKey(p, "quest.posted", "amount", this.fmtCur(totalEscrow));
+                                          this.addLog(u, "チーム依頼をボードに掲示 -" + this.fmtCur(totalEscrow) + "(エスクロー、" + teamSize + "人×" + this.fmtCur(teamReward) + ")");
                                           this.sendDiscordWebhook(
                                              "\ud83d\udccb **" + p.getName() + "** がチーム探索依頼(" + teamSize + "人)を掲示しました。一人あたり報酬: " + this.fmtCur(teamReward)
                                           );
@@ -12866,10 +12871,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  OfflinePlayer target = Bukkit.getOfflinePlayer(targetId);
                                  econ.depositPlayer(target, amount);
                                  String targetName = target.getName() != null ? target.getName() : targetId.toString();
-                                 this.msgKey(p, "admin.give-success", "player", targetName, "amount", String.valueOf((long)amount));
+                                 this.msgKey(p, "admin.give-success", "player", targetName, "amount", this.fmtCur(amount));
                                  this.addLog(targetId, "[管理者操作] " + p.getName() + " から +" + this.fmtCur(amount));
                                  this.sendDiscordWebhook(
-                                    "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + targetName + "** に " + (long)amount + "円 を付与しました。(GUI)"
+                                    "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + targetName + "** に " + this.fmtCur(amount) + " を付与しました。(GUI)"
                                  );
                                  this.openAdminPlayerDetailGUI(p, targetId);
                               }
@@ -12881,10 +12886,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  OfflinePlayer target = Bukkit.getOfflinePlayer(targetId);
                                  econ.withdrawPlayer(target, amount);
                                  String targetName = target.getName() != null ? target.getName() : targetId.toString();
-                                 this.msgKey(p, "admin.take-success", "player", targetName, "amount", String.valueOf((long)amount));
+                                 this.msgKey(p, "admin.take-success", "player", targetName, "amount", this.fmtCur(amount));
                                  this.addLog(targetId, "[管理者操作] " + p.getName() + " により -" + this.fmtCur(amount));
                                  this.sendDiscordWebhook(
-                                    "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + targetName + "** から " + (long)amount + "円 を没収しました。(GUI)"
+                                    "\ud83d\udee0️ 管理者 **" + p.getName() + "** が **" + targetName + "** から " + this.fmtCur(amount) + " を没収しました。(GUI)"
                                  );
                                  this.openAdminPlayerDetailGUI(p, targetId);
                               }
@@ -12894,11 +12899,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               if (acc == null || !this.isGroupAccountMember(acc, u)) {
                                  this.msgKey(p, "group.not-found");
                               } else if (pocket < amount) {
-                                 this.msgKey(p, "common.insufficient-funds", "amount", String.valueOf((long)pocket));
+                                 this.msgKey(p, "common.insufficient-funds", "amount", this.fmtCur(pocket));
                               } else {
                                  econ.withdrawPlayer(p, amount);
                                  acc.balance += amount;
-                                 this.msgKey(p, "group.deposited", "amount", String.valueOf((long)amount));
+                                 this.msgKey(p, "group.deposited", "amount", this.fmtCur(amount));
                                  this.addLog(u, "グループ貯金箱「" + acc.name + "」へ入金 -" + this.fmtCur(amount));
                                  p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
                               }
@@ -12908,11 +12913,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               if (acc == null || !this.isGroupAccountMember(acc, u)) {
                                  this.msgKey(p, "group.not-found");
                               } else if (acc.balance < amount) {
-                                 this.msgKey(p, "group.withdraw-insufficient", "amount", String.valueOf((long)acc.balance));
+                                 this.msgKey(p, "group.withdraw-insufficient", "amount", this.fmtCur(acc.balance));
                               } else {
                                  acc.balance -= amount;
                                  econ.depositPlayer(p, amount);
-                                 this.msgKey(p, "group.withdrawn", "amount", String.valueOf((long)amount));
+                                 this.msgKey(p, "group.withdrawn", "amount", this.fmtCur(amount));
                                  this.addLog(u, "グループ貯金箱「" + acc.name + "」から引出 +" + this.fmtCur(amount));
                                  p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
                               }
@@ -12941,52 +12946,52 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               switch (type) {
                                  case "personal_deposit":
                                     if (pocket < amount) {
-                                       this.msgKey(p, "common.insufficient-funds", "amount", String.valueOf((long)pocket));
+                                       this.msgKey(p, "common.insufficient-funds", "amount", this.fmtCur(pocket));
                                        return;
                                     }
 
                                     econ.withdrawPlayer(p, amount);
                                     this.personalBank.put(u, bank + amount);
-                                    this.msgKey(p, "personal.deposit-custom", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "personal.deposit-custom", "amount", this.fmtCur(amount));
                                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
                                     this.addLog(u, "個人口座 指定預金 -" + this.fmtCur(amount));
-                                    this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** が個人口座へ " + (long)amount + "円 預金しました。");
+                                    this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** が個人口座へ " + this.fmtCur(amount) + " 預金しました。");
                                     break;
                                  case "personal_withdraw":
                                     if (bank < amount) {
-                                       this.msgKey(p, "personal.withdraw-insufficient", "amount", String.valueOf((long)bank));
+                                       this.msgKey(p, "personal.withdraw-insufficient", "amount", this.fmtCur(bank));
                                        return;
                                     }
 
                                     this.personalBank.put(u, bank - amount);
                                     econ.depositPlayer(p, amount);
-                                    this.msgKey(p, "personal.withdraw-custom", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "personal.withdraw-custom", "amount", this.fmtCur(amount));
                                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
                                     this.addLog(u, "個人口座 指定引出 +" + this.fmtCur(amount));
-                                    this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から " + (long)amount + "円 引き出しました。");
+                                    this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から " + this.fmtCur(amount) + " 引き出しました。");
                                     break;
                                  case "plan_amount":
                                     this.tempLoanAmount.put(u, amount);
-                                    this.msgKey(p, "bank.plan-amount-set", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "bank.plan-amount-set", "amount", this.fmtCur(amount));
                                     this.openPlanGUI(p);
                                     break;
                                  case "plan_interest":
                                     this.tempInterestRate.put(u, amount);
-                                    this.msgKey(p, "bank.plan-interest-set", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "bank.plan-interest-set", "amount", this.fmtCur(amount));
                                     this.openPlanGUI(p);
                                     break;
                                  case "treasury_donate":
                                     if (pocket < amount) {
-                                       this.msgKey(p, "common.insufficient-funds", "amount", String.valueOf((long)pocket));
+                                       this.msgKey(p, "common.insufficient-funds", "amount", this.fmtCur(pocket));
                                        return;
                                     }
 
                                     econ.withdrawPlayer(p, amount);
                                     this.treasury += amount;
                                     this.grantDonationCreditScore(u, amount);
-                                    this.msgKey(p, "donate.treasury-thanks", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "donate.treasury-thanks", "amount", this.fmtCur(amount));
                                     this.addLog(u, "国庫へ寄付: -" + this.fmtCur(amount));
-                                    this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** が国庫へ " + (long)amount + "円 を寄付しました。");
+                                    this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** が国庫へ " + this.fmtCur(amount) + " を寄付しました。");
                                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                                     break;
                                  case "auction_list_price":
@@ -13009,7 +13014,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                                     double buyout = amount;
                                     if (buyout > 0.0 && buyout <= startPrice) {
-                                       this.msgKey(p, "auction.buyout-too-low", "amount", String.valueOf((long)startPrice.doubleValue()));
+                                       this.msgKey(p, "auction.buyout-too-low", "amount", this.fmtCur(startPrice.doubleValue()));
                                        Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{draft});
 
                                        for (ItemStack over : leftover.values()) {
@@ -13035,7 +13040,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        "item",
                                        draft.getType().name(),
                                        "amount",
-                                       String.valueOf((long)startPrice.doubleValue()),
+                                       this.fmtCur(startPrice.doubleValue()),
                                        "buyoutMsg",
                                        buyoutMsg,
                                        "minutes",
@@ -13081,7 +13086,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     session.confirmedA = false;
                                     session.confirmedB = false;
                                     this.refreshTradeGui(session);
-                                    this.msgKey(p, "trade.money-set", "amount", String.valueOf((long)amount));
+                                    this.msgKey(p, "trade.money-set", "amount", this.fmtCur(amount));
                                     this.clickSound(p);
                               }
                            }
@@ -13526,30 +13531,30 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       VIP_SHOP_POOL.put(Material.GOLDEN_APPLE, 800.0);
       DEFAULT_MESSAGES.put("welcome.first-join", "<gold><bold>【経済手帳】</bold> あなたに経済手帳が配布されました。右クリックで経済総合メニューを開けます。</gold>");
       DEFAULT_MESSAGES.put("welcome.no-permission", "<red>このコマンドを使用する権限がありません。</red>");
-      DEFAULT_MESSAGES.put("common.insufficient-funds", "<red>手持ち資金が足りません。（所持金: {amount}円）</red>");
+      DEFAULT_MESSAGES.put("common.insufficient-funds", "<red>手持ち資金が足りません。（所持金: {amount}）</red>");
       DEFAULT_MESSAGES.put("common.invalid-number", "<red>数値を入力してください。（例: 5000）</red>");
       DEFAULT_MESSAGES.put("common.cancelled", "<gray>入力をキャンセルしました。</gray>");
-      DEFAULT_MESSAGES.put("insurance.payout", "<blue><bold>【保険金支払い】 加入していた生命保険から {amount}円 が振り込まれました。</bold></blue>");
-      DEFAULT_MESSAGES.put("auction.won", "<green><bold>【落札】 {item} を {amount}円 で落札しました。（受取箱を確認してください）</bold></green>");
-      DEFAULT_MESSAGES.put("auction.sold", "<green><bold>【落札成立】</bold> {item} が {amount}円 で落札されました。（手数料 {fee}円 差引後 {net}円 を入金）</green>");
-      DEFAULT_MESSAGES.put("auction.outbid-refund", "<yellow>【オークション】 {item} へのあなたの入札は上回られました。入札金 {amount}円 を返金しました。</yellow>");
-      DEFAULT_MESSAGES.put("loan.player-approved", "<green><bold>融資契約が成立しました！ {amount}円 を受領しました。</bold></green>");
-      DEFAULT_MESSAGES.put("loan.gov-approved", "<green><bold>国営公庫から {amount}円 融資を受けました！ (適用金利: {rate}% / 総返済額: {total}円 / 期限: {minutes}分)</bold></green>");
+      DEFAULT_MESSAGES.put("insurance.payout", "<blue><bold>【保険金支払い】 加入していた生命保険から {amount} が振り込まれました。</bold></blue>");
+      DEFAULT_MESSAGES.put("auction.won", "<green><bold>【落札】 {item} を {amount} で落札しました。（受取箱を確認してください）</bold></green>");
+      DEFAULT_MESSAGES.put("auction.sold", "<green><bold>【落札成立】</bold> {item} が {amount} で落札されました。（手数料 {fee} 差引後 {net} を入金）</green>");
+      DEFAULT_MESSAGES.put("auction.outbid-refund", "<yellow>【オークション】 {item} へのあなたの入札は上回られました。入札金 {amount} を返金しました。</yellow>");
+      DEFAULT_MESSAGES.put("loan.player-approved", "<green><bold>融資契約が成立しました！ {amount} を受領しました。</bold></green>");
+      DEFAULT_MESSAGES.put("loan.gov-approved", "<green><bold>国営公庫から {amount} 融資を受けました！ (適用金利: {rate}% / 総返済額: {total} / 期限: {minutes}分)</bold></green>");
       DEFAULT_MESSAGES.put("loan.repaid-full", "<green><bold>プレイヤー間の借金を全額完済しました！</bold></green>");
       DEFAULT_MESSAGES.put("achievement.unlocked", "<gold><bold>\ud83c\udf96 実績「{title}」を解放しました！</bold></gold>");
       DEFAULT_MESSAGES.put("event.boom", "<green><bold>【経済イベント】黄金ラッシュ！</bold> 資源相場ショップの取引価格が一時的に10%上昇します。</green>");
       DEFAULT_MESSAGES.put("event.tax", "<red><bold>【経済イベント】手数料高騰！</bold> 世界株式市場の売買手数料が一時的に2倍になります。</red>");
-      DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 全プレイヤーに5,000円を支給しました。</gold>");
+      DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 全プレイヤーに{amount}を支給しました。</gold>");
       DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>【経済イベント】冬の時代！</bold> 資源相場ショップの取引価格が一時的に10%下落します。</dark_red>");
       DEFAULT_MESSAGES.put("confirm.dissolve-prompt", "<red><bold>会社を本当に解散しますか？</bold></red>");
       DEFAULT_MESSAGES.put("confirm.withdraw-prompt", "<red><bold>預金全額を引き出しますか？</bold></red> <yellow>30秒以内にもう一度クリックで確定します。</yellow>");
       DEFAULT_MESSAGES.put("confirm.expired", "<red>確認の有効期限が切れました。もう一度実行してください。</red>");
-      DEFAULT_MESSAGES.put("fixed-deposit.matured", "<green><bold>定期預金が満期を迎えました！ 報酬 {amount}円 を受領しました。</bold></green>");
-      DEFAULT_MESSAGES.put("fixed-deposit.matured-2", "<aqua><bold>2枠目の定期預金が満期を迎えました！ 報酬 {amount}円 を受領しました。</bold></aqua>");
-      DEFAULT_MESSAGES.put("fixed-deposit.matured-3", "<light_purple><bold>3枠目の定期預金が満期を迎えました！ 報酬 {amount}円 を受領しました。</bold></light_purple>");
+      DEFAULT_MESSAGES.put("fixed-deposit.matured", "<green><bold>定期預金が満期を迎えました！ 報酬 {amount} を受領しました。</bold></green>");
+      DEFAULT_MESSAGES.put("fixed-deposit.matured-2", "<aqua><bold>2枠目の定期預金が満期を迎えました！ 報酬 {amount} を受領しました。</bold></aqua>");
+      DEFAULT_MESSAGES.put("fixed-deposit.matured-3", "<light_purple><bold>3枠目の定期預金が満期を迎えました！ 報酬 {amount} を受領しました。</bold></light_purple>");
       DEFAULT_MESSAGES.put("collateral.seized", "<dark_red><bold>【担保没収】</bold> 担保付き融資の返済期限を過ぎたため、担保( {item} )は質屋に没収されました。</dark_red>");
-      DEFAULT_MESSAGES.put("loan.gov-overdue-penalty", "<dark_red><bold>【延滞】</bold> 国営公庫ローンの返済期限を過ぎたため、延滞金 {amount}円 が加算されました。</dark_red>");
-      DEFAULT_MESSAGES.put("loan.gov-overdue-ceiling", "<dark_red><bold>【延滞】</bold> 国営公庫ローンが延滞上限（{amount}円）に達しています。至急返済してください。</dark_red>");
+      DEFAULT_MESSAGES.put("loan.gov-overdue-penalty", "<dark_red><bold>【延滞】</bold> 国営公庫ローンの返済期限を過ぎたため、延滞金 {amount} が加算されました。</dark_red>");
+      DEFAULT_MESSAGES.put("loan.gov-overdue-ceiling", "<dark_red><bold>【延滞】</bold> 国営公庫ローンが延滞上限（{amount}）に達しています。至急返済してください。</dark_red>");
       DEFAULT_MESSAGES.put("auction.no-bid-returned", "<gray>【オークション終了】 {item} の出品は入札者がおらず、手元に戻ります。（受取箱を確認してください）</gray>");
       DEFAULT_MESSAGES.put("auction.items-received", "<gold><bold>【オークションハウス】</bold> 落札品・返却品 {count}件 をインベントリに受け取りました。</gold>");
       DEFAULT_MESSAGES.put("item.reissue-cooldown", "<red>再発行のクールダウン中です。あと {seconds}秒 お待ちください。</red>");
@@ -13599,15 +13604,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("webpage.password-status-unset", "<gray>(ログイン中のみWebから操作できます。オフラインでも操作したい場合は /meco webpage password でパスワードを設定してください)</gray>");
       DEFAULT_MESSAGES.put("admin.need-playername", "<yellow>プレイヤー名を指定してください。</yellow>");
       DEFAULT_MESSAGES.put("admin.usage-give", "<yellow>使用法: /meco admin give <プレイヤー> <金額></yellow>");
-      DEFAULT_MESSAGES.put("admin.give-success", "<green>{player} に {amount}円 を付与しました。</green>");
+      DEFAULT_MESSAGES.put("admin.give-success", "<green>{player} に {amount} を付与しました。</green>");
       DEFAULT_MESSAGES.put("common.invalid-amount-number", "<red>金額は数値で指定してください。</red>");
       DEFAULT_MESSAGES.put("admin.usage-take", "<yellow>使用法: /meco admin take <プレイヤー> <金額></yellow>");
-      DEFAULT_MESSAGES.put("admin.take-success", "<green>{player} から {amount}円 を没収しました。</green>");
+      DEFAULT_MESSAGES.put("admin.take-success", "<green>{player} から {amount} を没収しました。</green>");
       DEFAULT_MESSAGES.put("admin.usage-setcredit", "<yellow>使用法: /meco admin setcredit <プレイヤー> <スコア></yellow>");
       DEFAULT_MESSAGES.put("admin.setcredit-success", "<green>{player} の信用スコアを {score} に設定しました。</green>");
       DEFAULT_MESSAGES.put("admin.invalid-score-number", "<red>スコアは数値で指定してください。</red>");
       DEFAULT_MESSAGES.put("admin.usage-setgovdebt", "<yellow>使用法: /meco admin setgovdebt <プレイヤー> <金額>（0で完済扱い）</yellow>");
-      DEFAULT_MESSAGES.put("admin.setgovdebt-success", "<green>{player} の国営ローン残債を {amount}円 に設定しました。</green>");
+      DEFAULT_MESSAGES.put("admin.setgovdebt-success", "<green>{player} の国営ローン残債を {amount} に設定しました。</green>");
       DEFAULT_MESSAGES.put("admin.reset-success", "<green><bold>{player} の経済データをリセットしました。</bold></green>");
       DEFAULT_MESSAGES.put("admin.reset-note", "<gray>(会社・連合データは影響が大きいため別途 /meco admin reset は個人データのみ対象です)</gray>");
       DEFAULT_MESSAGES.put("admin.usage-event", "<yellow>/meco admin event <random|boom|tax|bonus|recession></yellow>");
@@ -13627,7 +13632,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("log.entry", "<gray>{entry}</gray>");
       DEFAULT_MESSAGES.put("news.enabled", "<green>経済ニュース放送を【ON】にしました。</green>");
       DEFAULT_MESSAGES.put("news.disabled", "<yellow>経済ニュース放送を【OFF】にしました。</yellow>");
-      DEFAULT_MESSAGES.put("treasury.balance", "<gold>【国庫】 <white>{amount}円</white></gold>");
+      DEFAULT_MESSAGES.put("treasury.balance", "<gold>【国庫】 <white>{amount}</white></gold>");
       DEFAULT_MESSAGES.put("treasury.admin-required", "<red>管理者権限が必要です。</red>");
       DEFAULT_MESSAGES.put("treasury.insufficient", "<red>国庫残高が不足しています。</red>");
       DEFAULT_MESSAGES.put("common.invalid-amount", "<red>金額が不正です。</red>");
@@ -13635,20 +13640,20 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          "treasury.usage",
          "<yellow>/meco treasury</yellow> / <yellow>/meco treasury bonus <金額></yellow> / <yellow>/meco treasury set <金額></yellow> / <yellow>/meco treasury donate <金額></yellow>"
       );
-      DEFAULT_MESSAGES.put("treasury.set", "<gold>国庫残高を <white>{amount}円</white> に設定しました。</gold>");
-      DEFAULT_MESSAGES.put("treasury.citizen-dividend", "<gold><bold>【市民配当】</bold> 国庫から <white>{amount}円</white> が配当されました。</gold>");
-      DEFAULT_MESSAGES.put("treasury.welfare", "<green><bold>【生活支援】</bold> 国庫から生活支援金 <white>{amount}円</white> が給付されました。</green>");
+      DEFAULT_MESSAGES.put("treasury.set", "<gold>国庫残高を <white>{amount}</white> に設定しました。</gold>");
+      DEFAULT_MESSAGES.put("treasury.citizen-dividend", "<gold><bold>【市民配当】</bold> 国庫から <white>{amount}</white> が配当されました。</gold>");
+      DEFAULT_MESSAGES.put("treasury.welfare", "<green><bold>【生活支援】</bold> 国庫から生活支援金 <white>{amount}</white> が給付されました。</green>");
       DEFAULT_MESSAGES.put("donate.usage-treasury", "<yellow>/meco donate treasury <金額></yellow> <gray>- 国庫へ寄付(信用スコアが少し上がります)</gray>");
       DEFAULT_MESSAGES.put("donate.usage-player", "<yellow>/meco donate <プレイヤー> <金額></yellow> <gray>- 他プレイヤーへ寄付</gray>");
       DEFAULT_MESSAGES.put("donate.usage-treasury-amount", "<yellow>/meco donate treasury <金額></yellow>");
-      DEFAULT_MESSAGES.put("common.amount-must-be-positive", "<red>0円より大きい金額を入力してください。</red>");
+      DEFAULT_MESSAGES.put("common.amount-must-be-positive", "<red>0より大きい金額を入力してください。</red>");
       DEFAULT_MESSAGES.put("common.insufficient-funds-simple", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("donate.treasury-thanks", "<green><bold>国庫へ {amount}円 を寄付しました。ありがとうございます！</bold></green>");
+      DEFAULT_MESSAGES.put("donate.treasury-thanks", "<green><bold>国庫へ {amount} を寄付しました。ありがとうございます！</bold></green>");
       DEFAULT_MESSAGES.put("common.target-offline", "<red>対象プレイヤーがオンラインではありません。</red>");
       DEFAULT_MESSAGES.put("donate.cannot-self", "<red>自分自身には寄付できません。</red>");
       DEFAULT_MESSAGES.put("donate.usage-player-amount", "<yellow>/meco donate <プレイヤー> <金額></yellow>");
-      DEFAULT_MESSAGES.put("donate.player-success", "<green><bold>{player} に {amount}円 を寄付しました。</bold></green>");
-      DEFAULT_MESSAGES.put("donate.player-received", "<gold><bold>【寄付】</bold> {player} から {amount}円 の寄付を受け取りました。</gold>");
+      DEFAULT_MESSAGES.put("donate.player-success", "<green><bold>{player} に {amount} を寄付しました。</bold></green>");
+      DEFAULT_MESSAGES.put("donate.player-received", "<gold><bold>【寄付】</bold> {player} から {amount} の寄付を受け取りました。</gold>");
       DEFAULT_MESSAGES.put("guarantor.usage-request", "<yellow>/meco guarantor request <プレイヤー></yellow> <gray>- 保証人を依頼する</gray>");
       DEFAULT_MESSAGES.put("guarantor.usage-accept", "<yellow>/meco guarantor accept</yellow> <gray>- 依頼を承諾する</gray>");
       DEFAULT_MESSAGES.put("guarantor.usage-decline", "<yellow>/meco guarantor decline</yellow> <gray>- 依頼を拒否する</gray>");
@@ -13679,14 +13684,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("trade.cannot-self", "<red>自分自身とは交換できません。</red>");
       DEFAULT_MESSAGES.put("trade.already-in-progress", "<red>既に交換が進行中か、保留中の依頼があります。</red>");
       DEFAULT_MESSAGES.put("trade.money-prompt", "<gold><bold>チャットに提示する金額を入力してください。（0でキャンセル可）</bold></gold>");
-      DEFAULT_MESSAGES.put("trade.money-set", "<green>提示金額を {amount}円 に設定しました。</green>");
+      DEFAULT_MESSAGES.put("trade.money-set", "<green>提示金額を {amount} に設定しました。</green>");
       DEFAULT_MESSAGES.put("trade.money-insufficient", "<red>所持金が足りないため、その金額は提示できません。</red>");
       DEFAULT_MESSAGES.put("trade.cancelled", "<red><bold>取引はキャンセルされました。提示していたアイテムは返却されました。</bold></red>");
       DEFAULT_MESSAGES.put("trade.completed", "<green><bold>【成立】アイテム交換が完了しました！</bold></green>");
       DEFAULT_MESSAGES.put("help.trade", "<yellow>/meco trade <プレイヤー></yellow> <gray>- 安全にアイテム・お金を交換する</gray>");
       DEFAULT_MESSAGES.put("quest.max-reached", "<red>掲示できる依頼数の上限({count}件)に達しています。</red>");
       DEFAULT_MESSAGES.put("quest.post-prompt", "<gold><bold>チャットに依頼の報酬額を入力してください。（あなたの今の場所が目的地になります）</bold></gold>");
-      DEFAULT_MESSAGES.put("quest.withdrawn", "<yellow>依頼を取り下げ、報酬 {amount}円 を返金しました。</yellow>");
+      DEFAULT_MESSAGES.put("quest.withdrawn", "<yellow>依頼を取り下げ、報酬 {amount} を返金しました。</yellow>");
       DEFAULT_MESSAGES.put("quest.cannot-withdraw", "<gray>受注中またはクールダウン中の依頼は取り下げられません。</gray>");
       DEFAULT_MESSAGES.put("quest.accepted", "<green><bold>依頼を受注しました！目的地({world} {x}, {y}, {z})まで移動してください。</bold></green>");
       DEFAULT_MESSAGES.put("quest.accepted-notice", "<aqua>{player} があなたの依頼を受注しました。</aqua>");
@@ -13703,7 +13708,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("quest.team-abandoned", "<red>チームメンバーが離脱したため、依頼は募集中に戻りました。</red>");
       DEFAULT_MESSAGES.put("quest.team-withdraw-blocked", "<gray>参加者がいるチーム依頼は取り下げられません。全員が離脱するのを待ってください。</gray>");
       DEFAULT_MESSAGES.put("quest.team-arrived-waiting", "<yellow>目的地に到達しました。他のメンバーの到着を待っています。（{arrived}/{required}人）</yellow>");
-      DEFAULT_MESSAGES.put("quest.team-completed", "<green><bold>【チーム依頼達成】 探索依頼を達成し、報酬 {amount}円 を受け取りました！</bold></green>");
+      DEFAULT_MESSAGES.put("quest.team-completed", "<green><bold>【チーム依頼達成】 探索依頼を達成し、報酬 {amount} を受け取りました！</bold></green>");
       DEFAULT_MESSAGES.put("admin.search-player-prompt", "<gold><bold>チャットに検索したいプレイヤー名を入力してください。</bold></gold>");
       DEFAULT_MESSAGES.put("admin.give-prompt", "<gold><bold>付与する金額をチャットに入力してください。</bold></gold>");
       DEFAULT_MESSAGES.put("admin.take-prompt", "<gold><bold>没収する金額をチャットに入力してください。</bold></gold>");
@@ -13715,10 +13720,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("event.bonus-triggered", "<green>ボーナス支給デーを発生させました。</green>");
       DEFAULT_MESSAGES.put("event.recession-triggered", "<green>冬の時代を発生させました。</green>");
       DEFAULT_MESSAGES.put("collateral.select-item", "<red>担保アイテムを選択してください。</red>");
-      DEFAULT_MESSAGES.put("collateral.borrowed", "<green><bold>{item} を担保に {amount}円 を借り入れました。返済期限は {minutes}分後です。</bold></green>");
+      DEFAULT_MESSAGES.put("collateral.borrowed", "<green><bold>{item} を担保に {amount} を借り入れました。返済期限は {minutes}分後です。</bold></green>");
       DEFAULT_MESSAGES.put("collateral.repaid", "<green><bold>担保融資を完済し、アイテムを取り戻しました！</bold></green>");
-      DEFAULT_MESSAGES.put("collateral.repay-insufficient", "<red>返済資金が足りません。（必要額: {amount}円）</red>");
-      DEFAULT_MESSAGES.put("treasury.balance-gui", "<gold><bold>\ud83c\udfdb 国庫残高: {amount}円</bold></gold>");
+      DEFAULT_MESSAGES.put("collateral.repay-insufficient", "<red>返済資金が足りません。（必要額: {amount}）</red>");
+      DEFAULT_MESSAGES.put("treasury.balance-gui", "<gold><bold>\ud83c\udfdb 国庫残高: {amount}</bold></gold>");
       DEFAULT_MESSAGES.put("treasury.balance-note", "<gray>法人税・オークション手数料などが積み立てられています。</gray>");
       DEFAULT_MESSAGES.put("donate.treasury-prompt", "<gold><bold>チャットに国庫へ寄付する金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
       DEFAULT_MESSAGES.put("tutorial.completed", "<green>チュートリアルを完了しました！</green>");
@@ -13733,13 +13738,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("auction.search-prompt", "<gold>検索したいアイテム名（の一部）をチャットに入力してください。「クリア」で検索を解除、「キャンセル」で閉じます。</gold>");
       DEFAULT_MESSAGES.put("auction.search-set", "<green>検索語を「{query}」に設定しました。</green>");
       DEFAULT_MESSAGES.put("auction.search-cleared", "<gray>検索条件をクリアしました。</gray>");
-      DEFAULT_MESSAGES.put("auction.bid-prompt", "<gold><bold>チャットに入札額を入力してください。（最低 {amount}円 / キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+      DEFAULT_MESSAGES.put("auction.bid-prompt", "<gold><bold>チャットに入札額を入力してください。（最低 {amount} / キャンセルする場合は「キャンセル」と入力）</bold></gold>");
       DEFAULT_MESSAGES.put("insurance.already-active", "<red>すでに保険に加入中です。</red>");
       DEFAULT_MESSAGES.put("insurance.joined", "<green><bold>生命保険に加入しました！有効期間: {minutes}分</bold></green>");
-      DEFAULT_MESSAGES.put("insurance.premium-insufficient", "<red>保険料（{amount}円）が足りません。</red>");
-      DEFAULT_MESSAGES.put("personal.deposit-step", "<green>{amount}円 預金。</green>");
+      DEFAULT_MESSAGES.put("insurance.premium-insufficient", "<red>保険料（{amount}）が足りません。</red>");
+      DEFAULT_MESSAGES.put("personal.deposit-step", "<green>{amount} 預金。</green>");
       DEFAULT_MESSAGES.put("personal.deposit-full", "<green>全額預金。</green>");
-      DEFAULT_MESSAGES.put("personal.withdraw-step", "<red>{amount}円 引出。</red>");
+      DEFAULT_MESSAGES.put("personal.withdraw-step", "<red>{amount} 引出。</red>");
       DEFAULT_MESSAGES.put("personal.withdraw-full", "<red>全額引出。</red>");
       DEFAULT_MESSAGES.put("personal.deposit-prompt", "<gold><bold>チャットに預金したい金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
       DEFAULT_MESSAGES.put("personal.withdraw-prompt", "<gold><bold>チャットに引き出したい金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
@@ -13747,114 +13752,114 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("loan.already-has-debt", "<red>既に他のプレイヤーからの借金があります。</red>");
       DEFAULT_MESSAGES.put("loan.plan-not-exist", "<red>このプランはすでに存在しません。</red>");
       DEFAULT_MESSAGES.put("loan.bank-capital-insufficient", "<red>この銀行の資本金プールが不足しています。</red>");
-      DEFAULT_MESSAGES.put("loan.player-approved-notice", "<green><bold>【融資成立】 {player} があなたのプランから {amount}円 を借りました！</bold></green>");
+      DEFAULT_MESSAGES.put("loan.player-approved-notice", "<green><bold>【融資成立】 {player} があなたのプランから {amount} を借りました！</bold></green>");
       DEFAULT_MESSAGES.put("loan.player-repaid-full-plain", "<green>プレイヤー間の借金を完済しました！</green>");
-      DEFAULT_MESSAGES.put("loan.repay-partial", "<yellow>{amount}円 を返済しました。</yellow>");
+      DEFAULT_MESSAGES.put("loan.repay-partial", "<yellow>{amount} を返済しました。</yellow>");
       DEFAULT_MESSAGES.put("loan.repay-full-insufficient", "<red>全額返済する資金が足りません。</red>");
       DEFAULT_MESSAGES.put("loan.gov-repaid-full-plain", "<green>国営公庫のローンを完済しました！</green>");
       DEFAULT_MESSAGES.put("loan.gov-repaid-full-bold", "<green><bold>国営公庫のローンを全額完済しました！</bold></green>");
       DEFAULT_MESSAGES.put("bank.already-established", "<red>すでに銀行を設立しています。</red>");
       DEFAULT_MESSAGES.put("bank.established", "<green><bold>銀行を設立しました！頭取パネルが開放されました。</bold></green>");
-      DEFAULT_MESSAGES.put("bank.establish-cost-insufficient", "<red>設立費用（{amount}円）が足りません。</red>");
-      DEFAULT_MESSAGES.put("bank.capital-added", "<green>資本金プールに +10,000円 追加。</green>");
-      DEFAULT_MESSAGES.put("bank.capital-withdrawn", "<red>資本金プールから -10,000円 引き出し。</red>");
+      DEFAULT_MESSAGES.put("bank.establish-cost-insufficient", "<red>設立費用（{amount}）が足りません。</red>");
+      DEFAULT_MESSAGES.put("bank.capital-added", "<green>資本金プールに +{amount} 追加。</green>");
+      DEFAULT_MESSAGES.put("bank.capital-withdrawn", "<red>資本金プールから -{amount} 引き出し。</red>");
       DEFAULT_MESSAGES.put("bank.capital-insufficient-pool", "<red>資本金プールにそれだけの資金がありません。</red>");
       DEFAULT_MESSAGES.put("bank.plan-withdrawn", "<yellow>プラン({slot}枠目)を取り下げました。</yellow>");
       DEFAULT_MESSAGES.put("bank.no-published-plan", "<red>公開中のプランはありません。</red>");
       DEFAULT_MESSAGES.put("bank.plan-amount-prompt", "<gold><bold>チャットに融資額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
       DEFAULT_MESSAGES.put("bank.plan-interest-prompt", "<gold><bold>チャットに利息(%)を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
       DEFAULT_MESSAGES.put("bank.plan-published", "<green><bold>融資プラン({slot}枠目)を市場に公開しました！</bold></green>");
-      DEFAULT_MESSAGES.put("loan.gov-cap-exceeded", "<red>借入上限（{amount}円）を超えるため、これ以上借りられません。信用スコアを上げるか返済してください。</red>");
+      DEFAULT_MESSAGES.put("loan.gov-cap-exceeded", "<red>借入上限（{amount}）を超えるため、これ以上借りられません。信用スコアを上げるか返済してください。</red>");
       DEFAULT_MESSAGES.put("deposit.already-exists", "<red>すでに定期預金が存在します。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot1-created", "<green>{amount}円 を定期預金に預けました（満期: {seconds}秒後 / 利率: +{rate}%）</green>");
-      DEFAULT_MESSAGES.put("deposit.funds-insufficient", "<red>手持ち資金が {amount}円 足りません。</red>");
+      DEFAULT_MESSAGES.put("deposit.slot1-created", "<green>{amount} を定期預金に預けました（満期: {seconds}秒後 / 利率: +{rate}%）</green>");
+      DEFAULT_MESSAGES.put("deposit.funds-insufficient", "<red>手持ち資金が {amount} 足りません。</red>");
       DEFAULT_MESSAGES.put("deposit.slot1-none", "<red>定期預金がありません。</red>");
       DEFAULT_MESSAGES.put("deposit.slot1-not-matured", "<red>まだ満期を迎えていません。</red>");
       DEFAULT_MESSAGES.put("deposit.slot2-exists", "<red>すでに2枠目に定期預金が存在します。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot2-created", "<aqua>{amount}円 を2枠目の定期預金に預けました。</aqua>");
+      DEFAULT_MESSAGES.put("deposit.slot2-created", "<aqua>{amount} を2枠目の定期預金に預けました。</aqua>");
       DEFAULT_MESSAGES.put("deposit.slot2-none", "<red>2枠目に定期預金がありません。</red>");
       DEFAULT_MESSAGES.put("deposit.slot2-not-matured", "<red>2枠目はまだ満期を迎えていません。</red>");
       DEFAULT_MESSAGES.put("deposit.slot3-exists", "<red>すでに3枠目に定期預金が存在します。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot3-created", "<light_purple>{amount}円 を3枠目の定期預金に預けました。</light_purple>");
+      DEFAULT_MESSAGES.put("deposit.slot3-created", "<light_purple>{amount} を3枠目の定期預金に預けました。</light_purple>");
       DEFAULT_MESSAGES.put("deposit.slot3-none", "<red>3枠目に定期預金がありません。</red>");
       DEFAULT_MESSAGES.put("deposit.slot3-not-matured", "<red>3枠目はまだ満期を迎えていません。</red>");
-      DEFAULT_MESSAGES.put("quest.completed", "<green><bold>【依頼達成】 探索依頼を達成し、報酬 {amount}円 を受け取りました！</bold></green>");
+      DEFAULT_MESSAGES.put("quest.completed", "<green><bold>【依頼達成】 探索依頼を達成し、報酬 {amount} を受け取りました！</bold></green>");
       DEFAULT_MESSAGES.put("quest.completed-notice", "<aqua>{player} があなたの依頼を達成しました。</aqua>");
-      DEFAULT_MESSAGES.put("quest.relisted", "<aqua>あなたの依頼が再出品されました。（報酬 {amount}円 を再徴収）</aqua>");
+      DEFAULT_MESSAGES.put("quest.relisted", "<aqua>あなたの依頼が再出品されました。（報酬 {amount} を再徴収）</aqua>");
       DEFAULT_MESSAGES.put("quest.removed-insufficient-funds", "<red>資金不足のため、依頼ボードから依頼を取り下げました。</red>");
       DEFAULT_MESSAGES.put("auction.listing-cancelled-returned", "<gray>【オークションハウス】 出品手続き中だったアイテムを返却しました。</gray>");
       DEFAULT_MESSAGES.put("loan.login-seized-full", "<green><bold>[完済] ログイン時に借金がすべて徴収されました。</bold></green>");
-      DEFAULT_MESSAGES.put("loan.login-seized-partial", "<red><bold>[執行]</bold> 借金 <yellow>{amount}円</yellow> 強制徴収。</red>");
-      DEFAULT_MESSAGES.put("loan.guarantor-seized-notice", "<dark_red><bold>【保証債務】</bold> {player} の借金返済不能につき、保証人として {amount}円 が徴収され、信用スコアが低下しました。</dark_red>");
+      DEFAULT_MESSAGES.put("loan.login-seized-partial", "<red><bold>[執行]</bold> 借金 <yellow>{amount}</yellow> 強制徴収。</red>");
+      DEFAULT_MESSAGES.put("loan.guarantor-seized-notice", "<dark_red><bold>【保証債務】</bold> {player} の借金返済不能につき、保証人として {amount} が徴収され、信用スコアが低下しました。</dark_red>");
       DEFAULT_MESSAGES.put("loan.guarantor-repaid-full", "<green><bold>[完済] 保証人により借金が完済されました。</bold></green>");
       DEFAULT_MESSAGES.put("insurance.claim-cooldown", "<gray>[保険] クールダウン中のため、今回の死亡では保険金は支払われませんでした。</gray>");
       DEFAULT_MESSAGES.put("input.cancelled-auction-item-returned", "<gray>出品をキャンセルし、アイテムを返却しました。</gray>");
       DEFAULT_MESSAGES.put("input.cancelled", "<gray>入力をキャンセルしました。</gray>");
       DEFAULT_MESSAGES.put("admin.player-not-found", "<red>プレイヤー「{name}」が見つかりませんでした。</red>");
       DEFAULT_MESSAGES.put("quest.reward-insufficient", "<red>所持金が足りません。</red>");
-      DEFAULT_MESSAGES.put("quest.posted", "<green><bold>依頼を掲示しました！報酬 {amount}円 をエスクローしました。</bold></green>");
+      DEFAULT_MESSAGES.put("quest.posted", "<green><bold>依頼を掲示しました！報酬 {amount} をエスクローしました。</bold></green>");
       DEFAULT_MESSAGES.put("worldstock.search-prompt", "<gold><bold>チャットにティッカーシンボルを入力してください。（例: AAPL, TSLA, 7203.T）</bold></gold>");
       DEFAULT_MESSAGES.put("worldstock.invalid-symbol", "<red>ティッカーシンボルの形式が正しくありません。</red>");
       DEFAULT_MESSAGES.put("worldstock.searching", "<gray>{symbol} の株価を取得中...</gray>");
       DEFAULT_MESSAGES.put("worldstock.not-found", "<red>{symbol} が見つかりませんでした。ティッカーシンボルを確認するか、しばらく経ってから再度お試しください。</red>");
       DEFAULT_MESSAGES.put("worldstock.funds-insufficient", "<red>手持ち資金が足りません。</red>");
       DEFAULT_MESSAGES.put("worldstock.not-owned", "<red>この銘柄を保有していません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.bought", "<green><bold>{symbol} を {qty}株 購入しました。（{amount}円 / 単価 {native} / 手数料 {fee}円）</bold></green>");
-      DEFAULT_MESSAGES.put("worldstock.sold", "<green><bold>{symbol} を {qty}株 売却しました。（{amount}円 / 単価 {native} / 損益: {pnl}円 / 手数料 {fee}円）</bold></green>");
+      DEFAULT_MESSAGES.put("worldstock.bought", "<green><bold>{symbol} を {qty}株 購入しました。（{amount} / 単価 {native} / 手数料 {fee}）</bold></green>");
+      DEFAULT_MESSAGES.put("worldstock.sold", "<green><bold>{symbol} を {qty}株 売却しました。（{amount} / 単価 {native} / 損益: {pnl} / 手数料 {fee}）</bold></green>");
       DEFAULT_MESSAGES.put("worldstock.sell-not-enough-shares", "<red>売却したい株数が保有数を超えています。（保有: {owned}株 / 指定: {requested}株）部分約定はしません。</red>");
       DEFAULT_MESSAGES.put("worldstock.bulk-qty-too-large", "<red>一度に取引できる株数の上限（{max}株）を超えています。</red>");
       DEFAULT_MESSAGES.put("worldstock.bulk-buy-prompt", "<gold><bold>{symbol} を購入する株数をチャットに入力してください。（例: 25）</bold></gold>");
       DEFAULT_MESSAGES.put("worldstock.bulk-sell-prompt", "<gold><bold>{symbol} を売却する株数をチャットに入力してください。（例: 25）</bold></gold>");
       DEFAULT_MESSAGES.put("worldstock.cooldown", "<red>この銘柄は取引後 {seconds}秒経過するまで再度取引できません。</red>");
       DEFAULT_MESSAGES.put("worldstock.daily-count-limit", "<red>本日の世界株取引回数の上限（{count}回）に達しました。また明日お試しください。</red>");
-      DEFAULT_MESSAGES.put("worldstock.daily-amount-limit", "<red>本日の世界株取引金額の上限（{amount}円）に達するため、この取引はできません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.daily-profit-limit", "<red>本日の世界株実現利益の上限（{amount}円）に達したため、これ以上の利益確定売りはできません。</red>");
+      DEFAULT_MESSAGES.put("worldstock.daily-amount-limit", "<red>本日の世界株取引金額の上限（{amount}）に達するため、この取引はできません。</red>");
+      DEFAULT_MESSAGES.put("worldstock.daily-profit-limit", "<red>本日の世界株実現利益の上限（{amount}）に達したため、これ以上の利益確定売りはできません。</red>");
       DEFAULT_MESSAGES.put("worldstock.alert-prompt", "<gold><bold>{symbol} の値動きアラート閾値(%)をチャットに入力してください。（例: 5 で ±5% 変動時に通知）</bold></gold>");
       DEFAULT_MESSAGES.put("worldstock.alert-set", "<green><bold>{symbol} に値動きアラートを設定しました。（現在値から ±{percent}% 変動で通知）</bold></green>");
       DEFAULT_MESSAGES.put("worldstock.alert-cancelled", "<gray>{symbol} の値動きアラートを解除しました。</gray>");
       DEFAULT_MESSAGES.put("worldstock.alert-triggered", "<gold><bold>\ud83d\udd14 {symbol} が基準値から{percent}%以上変動しました！（現在値: {price}）</bold></gold>");
-      DEFAULT_MESSAGES.put("worldstock.dividend-paid", "<green>世界株の配当金として {amount}円 を受け取りました。</green>");
+      DEFAULT_MESSAGES.put("worldstock.dividend-paid", "<green>世界株の配当金として {amount} を受け取りました。</green>");
       DEFAULT_MESSAGES.put("resourceshop.not-enough-items", "<red>{material}が足りません。（所持: {have}個 / 必要: {need}個）</red>");
       DEFAULT_MESSAGES.put("resourceshop.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("resourceshop.sold", "<green><bold>{material}を{qty}個売却しました。（{amount}円）</bold></green>");
-      DEFAULT_MESSAGES.put("resourceshop.bought", "<green><bold>{material}を{qty}個購入しました。（{amount}円）</bold></green>");
+      DEFAULT_MESSAGES.put("resourceshop.sold", "<green><bold>{material}を{qty}個売却しました。（{amount}）</bold></green>");
+      DEFAULT_MESSAGES.put("resourceshop.bought", "<green><bold>{material}を{qty}個購入しました。（{amount}）</bold></green>");
       DEFAULT_MESSAGES.put("resourceshop.sell-qty-prompt", "<gold><bold>{material}を売る個数をチャットに入力してください。（例: 40）</bold></gold>");
       DEFAULT_MESSAGES.put("resourceshop.buy-qty-prompt", "<gold><bold>{material}を買う個数をチャットに入力してください。（例: 40）</bold></gold>");
       DEFAULT_MESSAGES.put("lottery.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("lottery.ticket-bought", "<green><bold>宝くじチケットを{count}枚購入しました。（{amount}円）</bold></green>");
+      DEFAULT_MESSAGES.put("lottery.ticket-bought", "<green><bold>宝くじチケットを{count}枚購入しました。（{amount}）</bold></green>");
       DEFAULT_MESSAGES.put("lottery.buy-qty-prompt", "<gold><bold>購入するチケットの枚数をチャットに入力してください。（例: 3）</bold></gold>");
       DEFAULT_MESSAGES.put("merchant.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("merchant.bought", "<green><bold>{item} を購入しました。（{amount}円）</bold></green>");
+      DEFAULT_MESSAGES.put("merchant.bought", "<green><bold>{item} を購入しました。（{amount}）</bold></green>");
       DEFAULT_MESSAGES.put("merchant.location-hint", "<gold><bold>巡回商人は現在 {world} ({x}, {y}, {z}) 付近にいます。</bold></gold>");
-      DEFAULT_MESSAGES.put("treasure.found", "<gold><bold>【埋蔵金発見】 埋蔵金チェストを発見し、{amount}円 を手に入れました！</bold></gold>");
+      DEFAULT_MESSAGES.put("treasure.found", "<gold><bold>【埋蔵金発見】 埋蔵金チェストを発見し、{amount} を手に入れました！</bold></gold>");
       DEFAULT_MESSAGES.put(
-         "merchant.installment-purchased", "<green><bold>{item} を分割払いで購入しました！初回 {first}円を支払いました。（残り{count}回中 {remaining}回、各{each}円）</bold></green>"
+         "merchant.installment-purchased", "<green><bold>{item} を分割払いで購入しました！初回 {first}を支払いました。（残り{count}回中 {remaining}回、各{each}）</bold></green>"
       );
-      DEFAULT_MESSAGES.put("installment.paid", "<green>分割払い: {item} の {amount}円 を引き落としました。（残り{remaining}回）</green>");
+      DEFAULT_MESSAGES.put("installment.paid", "<green>分割払い: {item} の {amount} を引き落としました。（残り{remaining}回）</green>");
       DEFAULT_MESSAGES.put("installment.completed", "<green><bold>分割払い: {item} の支払いが完了しました！</bold></green>");
-      DEFAULT_MESSAGES.put("installment.missed", "<red>分割払い: {item} の {amount}円 が引き落とせませんでした。信用スコアが減少します。</red>");
-      DEFAULT_MESSAGES.put("auction.bid-too-low", "<red>入札額が低すぎます。（最低 {amount}円）</red>");
+      DEFAULT_MESSAGES.put("installment.missed", "<red>分割払い: {item} の {amount} が引き落とせませんでした。信用スコアが減少します。</red>");
+      DEFAULT_MESSAGES.put("auction.bid-too-low", "<red>入札額が低すぎます。（最低 {amount}）</red>");
       DEFAULT_MESSAGES.put("auction.buyout-purchased", "<green><bold>即決価格で購入しました！</bold></green>");
-      DEFAULT_MESSAGES.put("auction.bid-placed", "<green><bold>{item} に {amount}円 で入札しました。</bold></green>");
-      DEFAULT_MESSAGES.put("personal.deposit-custom", "<green><bold>{amount}円 を預金しました。</bold></green>");
-      DEFAULT_MESSAGES.put("personal.withdraw-insufficient", "<red>預金残高が足りません。（残高: {amount}円）</red>");
-      DEFAULT_MESSAGES.put("personal.withdraw-custom", "<green><bold>{amount}円 を引き出しました。</bold></green>");
-      DEFAULT_MESSAGES.put("bank.plan-amount-set", "<green>融資額を {amount}円 に設定しました。</green>");
+      DEFAULT_MESSAGES.put("auction.bid-placed", "<green><bold>{item} に {amount} で入札しました。</bold></green>");
+      DEFAULT_MESSAGES.put("personal.deposit-custom", "<green><bold>{amount} を預金しました。</bold></green>");
+      DEFAULT_MESSAGES.put("personal.withdraw-insufficient", "<red>預金残高が足りません。（残高: {amount}）</red>");
+      DEFAULT_MESSAGES.put("personal.withdraw-custom", "<green><bold>{amount} を引き出しました。</bold></green>");
+      DEFAULT_MESSAGES.put("bank.plan-amount-set", "<green>融資額を {amount} に設定しました。</green>");
       DEFAULT_MESSAGES.put("bank.plan-interest-set", "<green>利息を {amount}% に設定しました。</green>");
       DEFAULT_MESSAGES.put("auction.draft-not-found", "<red>出品するアイテムが見つかりませんでした。もう一度お試しください。</red>");
       DEFAULT_MESSAGES.put("auction.buyout-prompt", "<gold><bold>即決価格(Buy Now)を入力してください。設定しない場合は 0 と入力してください。</bold></gold>");
       DEFAULT_MESSAGES.put("auction.listing-info-not-found", "<red>出品情報が見つかりませんでした。もう一度お試しください。</red>");
-      DEFAULT_MESSAGES.put("auction.buyout-too-low", "<red>即決価格は開始価格（{amount}円）より高く設定してください。出品をキャンセルします。</red>");
-      DEFAULT_MESSAGES.put("auction.listed", "<green><bold>{item} をオークションに出品しました！（開始価格: {amount}円{buyoutMsg} / 期間: {minutes}分）</bold></green>");
+      DEFAULT_MESSAGES.put("auction.buyout-too-low", "<red>即決価格は開始価格（{amount}）より高く設定してください。出品をキャンセルします。</red>");
+      DEFAULT_MESSAGES.put("auction.listed", "<green><bold>{item} をオークションに出品しました！（開始価格: {amount}{buyoutMsg} / 期間: {minutes}分）</bold></green>");
       DEFAULT_MESSAGES.put("storage.funds-insufficient", "<red>手持ち資金が足りません。</red>");
       DEFAULT_MESSAGES.put(
-         "storage.rented", "<green><bold>レンタル倉庫を契約しました！（家賃 {amount}円 / {hours}時間ごと）</bold></green> <red>家賃の支払いに1回でも失敗すると、契約は失効し倉庫の中身は全て没収されますのでご注意ください。</red>"
+         "storage.rented", "<green><bold>レンタル倉庫を契約しました！（家賃 {amount} / {hours}時間ごと）</bold></green> <red>家賃の支払いに1回でも失敗すると、契約は失効し倉庫の中身は全て没収されますのでご注意ください。</red>"
       );
-      DEFAULT_MESSAGES.put("storage.rent-paid", "<green>レンタル倉庫の家賃 {amount}円 を支払いました。</green>");
+      DEFAULT_MESSAGES.put("storage.rent-paid", "<green>レンタル倉庫の家賃 {amount} を支払いました。</green>");
       DEFAULT_MESSAGES.put("storage.forfeited", "<red><bold>【レンタル倉庫】家賃の支払いに失敗したため契約が失効し、倉庫の中身は全て没収されました。</bold></red>");
       DEFAULT_MESSAGES.put("storage.not-renting", "<red>レンタル倉庫を契約していません。</red>");
       DEFAULT_MESSAGES.put("group.created", "<green><bold>グループ貯金箱「{name}」を作成しました！（ID: {id}）</bold></green>");
-      DEFAULT_MESSAGES.put("group.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}円）</red>");
+      DEFAULT_MESSAGES.put("group.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}）</red>");
       DEFAULT_MESSAGES.put("group.create-name-prompt", "<gold><bold>作成するグループ貯金箱の名前をチャットに入力してください。</bold></gold>");
       DEFAULT_MESSAGES.put("group.not-found", "<red>指定したグループ貯金箱が見つかりません。</red>");
       DEFAULT_MESSAGES.put("group.not-owner", "<red>この操作はオーナーのみ実行できます。</red>");
@@ -13866,16 +13871,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("group.kicked-notice", "<yellow>【グループ貯金箱】</yellow> 「{group}」のメンバー構成が変更されました。");
       DEFAULT_MESSAGES.put("group.owner-cannot-leave", "<red>オーナーは脱退できません。解散する場合は /meco group disband <名前> を使用してください。</red>");
       DEFAULT_MESSAGES.put("group.left", "<yellow>「{group}」から脱退しました。</yellow>");
-      DEFAULT_MESSAGES.put("group.disbanded", "<gold><bold>グループ貯金箱が解散されました。残高から {amount}円 が振り込まれました。</bold></gold>");
+      DEFAULT_MESSAGES.put("group.disbanded", "<gold><bold>グループ貯金箱が解散されました。残高から {amount} が振り込まれました。</bold></gold>");
       DEFAULT_MESSAGES.put("group.disband-confirm", "<red><bold>本当にグループ貯金箱を解散しますか？</bold></red> <yellow>残高はメンバー全員に均等割りされます。30秒以内にもう一度クリックで確定します。</yellow>");
       DEFAULT_MESSAGES.put("group.deposit-prompt", "<gold><bold>入金する金額をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("group.deposited", "<green><bold>グループ貯金箱へ {amount}円 を入金しました。</bold></green>");
+      DEFAULT_MESSAGES.put("group.deposited", "<green><bold>グループ貯金箱へ {amount} を入金しました。</bold></green>");
       DEFAULT_MESSAGES.put("group.withdraw-prompt", "<gold><bold>引き出す金額をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("group.withdraw-insufficient", "<red>グループ貯金箱の残高が足りません。（残高: {amount}円）</red>");
-      DEFAULT_MESSAGES.put("group.withdrawn", "<green><bold>グループ貯金箱から {amount}円 を引き出しました。</bold></green>");
+      DEFAULT_MESSAGES.put("group.withdraw-insufficient", "<red>グループ貯金箱の残高が足りません。（残高: {amount}）</red>");
+      DEFAULT_MESSAGES.put("group.withdrawn", "<green><bold>グループ貯金箱から {amount} を引き出しました。</bold></green>");
       DEFAULT_MESSAGES.put("help.group", "<yellow>/meco group <create|invite|kick|leave|disband></yellow> <gray>- 複数人で共有するグループ貯金箱を管理する</gray>");
       DEFAULT_MESSAGES.put("fund.created", "<green><bold>共同投資ファンド「{name}」を作成しました！（ID: {id}）</bold></green>");
-      DEFAULT_MESSAGES.put("fund.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}円）</red>");
+      DEFAULT_MESSAGES.put("fund.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}）</red>");
       DEFAULT_MESSAGES.put("fund.not-found", "<red>指定した共同投資ファンドが見つかりません。</red>");
       DEFAULT_MESSAGES.put("fund.not-manager", "<red>この操作はファンドのマネージャーのみ実行できます。</red>");
       DEFAULT_MESSAGES.put("fund.already-contributor", "<red>そのプレイヤーは既に出資者です。</red>");
@@ -13885,19 +13890,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          "fund.invite-received", "<gold><bold>【共同投資ファンド】</bold> {player} があなたを「{fund}」に招待しました。/meco fund contribute {fund} <金額> で出資できます。</gold>"
       );
       DEFAULT_MESSAGES.put("fund.not-invited", "<red>そのファンドの出資者(またはマネージャー)ではありません。先に招待してもらう必要があります。</red>");
-      DEFAULT_MESSAGES.put("fund.contributed", "<green><bold>共同投資ファンド「{fund}」へ {amount}円 出資しました。</bold></green>");
-      DEFAULT_MESSAGES.put("fund.contribute-funds-insufficient", "<red>手持ち資金が足りません。（所持金: {amount}円）</red>");
-      DEFAULT_MESSAGES.put("fund.redeemed", "<green><bold>共同投資ファンドから解約し、持分 {amount}円 を受け取りました。</bold></green>");
+      DEFAULT_MESSAGES.put("fund.contributed", "<green><bold>共同投資ファンド「{fund}」へ {amount} 出資しました。</bold></green>");
+      DEFAULT_MESSAGES.put("fund.contribute-funds-insufficient", "<red>手持ち資金が足りません。（所持金: {amount}）</red>");
+      DEFAULT_MESSAGES.put("fund.redeemed", "<green><bold>共同投資ファンドから解約し、持分 {amount} を受け取りました。</bold></green>");
       DEFAULT_MESSAGES.put("fund.redeem-confirm", "<red><bold>本当に持分を全額解約しますか？</bold></red> <yellow>もう一度クリックすると確定します(30秒以内)。</yellow>");
       DEFAULT_MESSAGES.put("fund.redeem-insufficient-cash", "<red>ファンドの現金残高が不足しているため解約できません。マネージャーに保有銘柄の売却を依頼してください。</red>");
       DEFAULT_MESSAGES.put("fund.disband-has-holdings", "<red>保有銘柄が残っているため解散できません。先に運用画面ですべて売却してください。</red>");
-      DEFAULT_MESSAGES.put("fund.disbanded", "<gold><bold>共同投資ファンドが解散されました。持分に応じて {amount}円 が振り込まれました。</bold></gold>");
+      DEFAULT_MESSAGES.put("fund.disbanded", "<gold><bold>共同投資ファンドが解散されました。持分に応じて {amount} が振り込まれました。</bold></gold>");
       DEFAULT_MESSAGES.put("fund.trade-funds-insufficient", "<red>ファンドの現金残高が足りません。</red>");
       DEFAULT_MESSAGES.put("help.fund", "<yellow>/meco fund <create|invite|contribute|redeem|disband></yellow> <gray>- 複数人で出資し合う共同投資ファンドを管理する</gray>");
       DEFAULT_MESSAGES.put("vip.not-eligible", "<red>VIP限定です。信用スコアを上げてシルバー会員以上になると利用できます。</red>");
-      DEFAULT_MESSAGES.put("vip.shop-bought", "<green><bold>VIP限定ショップで {item} を購入しました。（{amount}円）</bold></green>");
+      DEFAULT_MESSAGES.put("vip.shop-bought", "<green><bold>VIP限定ショップで {item} を購入しました。（{amount}）</bold></green>");
       DEFAULT_MESSAGES.put("vip.shop-funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("vip.stipend-claimed", "<green><bold>日次VIP手当（{tier}）として {amount}円 を受け取りました。</bold></green>");
+      DEFAULT_MESSAGES.put("vip.stipend-claimed", "<green><bold>日次VIP手当（{tier}）として {amount} を受け取りました。</bold></green>");
       DEFAULT_MESSAGES.put("vip.stipend-cooldown", "<red>日次VIP手当は受取済みです。次回受取まであと {time}。</red>");
       DEFAULT_MESSAGES.put("vip.stipend-treasury-empty", "<red>国庫残高が不足しているため、現在は日次VIP手当を支給できません。しばらく経ってからお試しください。</red>");
       DEFAULT_MESSAGES.put("vip.stipend-disabled", "<red>日次VIP手当は現在無効化されています。</red>");
