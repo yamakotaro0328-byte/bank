@@ -12,11 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 25
+      # Gradle 8.14.3 itself can't run on JDK 25 yet, so use JDK 21 to run
+      # Gradle and let the foojay-resolver toolchain plugin fetch JDK 25
+      # (required by Paper API 26.2) for compilation.
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "25"
+          java-version: "21"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
