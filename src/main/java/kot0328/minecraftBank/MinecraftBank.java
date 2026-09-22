@@ -4431,6 +4431,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         } else if (adminSub.equals("treasure")) {
                            this.sendTreasureLocationInfo(p);
                            return true;
+                        } else if (adminSub.equals("merchantcleanup")) {
+                           int removed = this.cleanupOrphanedMerchants();
+                           this.msgKey(p, "admin.merchant-cleanup", "count", String.valueOf(removed));
+                           return true;
                         } else if (args.length < 3) {
                            this.msgKey(p, "admin.need-playername");
                            return true;
@@ -5244,7 +5248,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String sub = args[0].toLowerCase();
             if (sub.equals("admin")) {
                List<String> adminSubs = Arrays.asList(
-                  "give", "take", "setcredit", "setgovdebt", "reset", "reload", "save", "backup", "config", "event", "discord", "selfcheck", "gui", "treasure"
+                  "give", "take", "setcredit", "setgovdebt", "reset", "reload", "save", "backup", "config", "event", "discord", "selfcheck", "gui", "treasure", "merchantcleanup"
                );
                String cur = args[1].toLowerCase();
 
@@ -8460,6 +8464,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       this.ensureMerchantEntityPresent();
+      this.cleanupOrphanedMerchants();
+   }
+
+   private int cleanupOrphanedMerchants() {
+      int removed = 0;
+
+      for (World world : Bukkit.getWorlds()) {
+         removed += this.removeOrphanedMerchantEntities(world);
+      }
+
+      return removed;
    }
 
    private void rerollMerchantDeals() {
@@ -8486,13 +8501,18 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.relocateMerchant();
    }
 
-   private void removeOrphanedMerchantEntities(World world) {
+   private int removeOrphanedMerchantEntities(World world) {
+      int removed = 0;
+
       for (Entity e : world.getEntitiesByClass(WanderingTrader.class)) {
          Byte marker = e.getPersistentDataContainer().get(this.merchantNpcMarkerKey, PersistentDataType.BYTE);
          if (marker != null && !e.getUniqueId().equals(this.merchantEntityId)) {
             e.remove();
+            removed++;
          }
       }
+
+      return removed;
    }
 
    private void spawnMerchantEntityAt(Location loc) {
@@ -13738,6 +13758,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          "<gold><bold>【埋蔵金】</bold> 出現中: {world} ({x}, {y}, {z}) / 報酬 {amount}</gold>"
       );
       DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
+      DEFAULT_MESSAGES.put(
+         "admin.merchant-cleanup",
+         "<green>巡回商人の余分なNPCを{count}体削除しました。（未読み込みのチャンクにいる個体は見つかり次第自動で削除されます）</green>"
+      );
       DEFAULT_MESSAGES.put(
          "treasure.location-found",
          "<gold><bold>【埋蔵金探索】</bold> {world} ({x}, {y}, {z}) 付近に埋蔵金の入ったチェストがあります！（推定報酬 {amount}）</gold>"
