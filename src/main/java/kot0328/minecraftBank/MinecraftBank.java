@@ -4422,6 +4422,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         } else if (adminSub.equals("gui")) {
                            this.openAdminMainGUI(p);
                            return true;
+                        } else if (adminSub.equals("treasure")) {
+                           this.sendTreasureLocationInfo(p);
+                           return true;
                         } else if (args.length < 3) {
                            this.msgKey(p, "admin.need-playername");
                            return true;
@@ -5234,7 +5237,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String sub = args[0].toLowerCase();
             if (sub.equals("admin")) {
                List<String> adminSubs = Arrays.asList(
-                  "give", "take", "setcredit", "setgovdebt", "reset", "reload", "save", "backup", "config", "event", "discord", "selfcheck", "gui"
+                  "give", "take", "setcredit", "setgovdebt", "reset", "reload", "save", "backup", "config", "event", "discord", "selfcheck", "gui", "treasure"
                );
                String cur = args[1].toLowerCase();
 
@@ -8467,9 +8470,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.relocateMerchant();
    }
 
+   private void removeOrphanedMerchantEntities(World world) {
+      for (Entity e : world.getEntitiesByClass(WanderingTrader.class)) {
+         Byte marker = e.getPersistentDataContainer().get(this.merchantNpcMarkerKey, PersistentDataType.BYTE);
+         if (marker != null && !e.getUniqueId().equals(this.merchantEntityId)) {
+            e.remove();
+         }
+      }
+   }
+
    private void spawnMerchantEntityAt(Location loc) {
       World world = loc.getWorld();
       if (world != null) {
+         this.removeOrphanedMerchantEntities(world);
          WanderingTrader trader = (WanderingTrader)world.spawn(loc, WanderingTrader.class, entity -> {
             entity.setAI(false);
             entity.setInvulnerable(true);
@@ -8569,6 +8582,29 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                + this.treasureZ
                + ") 付近に埋蔵金の入ったチェストが出現しました！最初に発見した者が総取りです。</gold>"
          );
+      }
+   }
+
+   private void sendTreasureLocationInfo(Player p) {
+      if (this.treasureActive) {
+         this.msgKey(
+            p,
+            "admin.treasure-active",
+            "world",
+            this.treasureWorldName,
+            "x",
+            String.valueOf(this.treasureX),
+            "y",
+            String.valueOf(this.treasureY),
+            "z",
+            String.valueOf(this.treasureZ),
+            "amount",
+            this.fmtCur(this.treasureReward)
+         );
+      } else {
+         long remainMs = this.treasureNextSpawnAt - System.currentTimeMillis();
+         long remainMin = Math.max(0L, remainMs / 60000L);
+         this.msgKey(p, "admin.treasure-inactive", "minutes", String.valueOf(remainMin));
       }
    }
 
@@ -9179,6 +9215,24 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(12, this.createItem(Material.NETHERITE_INGOT, "<yellow><bold>\ud83d\udcb0 手数料高騰を発生</bold></yellow>"));
       gui.setItem(13, this.createItem(Material.SUNFLOWER, "<aqua><bold>\ud83c\udf81 ボーナス支給デーを発生</bold></aqua>"));
       gui.setItem(14, this.createItem(Material.REDSTONE_BLOCK, "<red><bold>\ud83d\udcc9 冬の時代を発生</bold></red>"));
+      gui.setItem(
+         15,
+         this.treasureActive
+            ? this.createItem(
+               Material.COMPASS,
+               "<gold><bold>\ud83e\udded 埋蔵金の場所</bold></gold>",
+               "<gray>出現中:</gray> <white>" + this.treasureWorldName + " (" + this.treasureX + ", " + this.treasureY + ", " + this.treasureZ + ")</white>",
+               "<gray>報酬:</gray> <gold>" + this.fmtCur(this.treasureReward) + "</gold>",
+               "<yellow>クリックでチャットにも表示</yellow>"
+            )
+            : this.createItem(
+               Material.COMPASS,
+               "<gray><bold>\ud83e\udded 埋蔵金の場所</bold></gray>",
+               "<gray>現在出現していません。</gray>",
+               "<gray>次回出現まで約" + Math.max(0L, (this.treasureNextSpawnAt - System.currentTimeMillis()) / 60000L) + "分</gray>",
+               "<yellow>クリックでチャットにも表示</yellow>"
+            )
+      );
       gui.setItem(
          16, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>\ud83d\udd0d 自己診断を実行</bold></light_purple>", "<gray>データ不整合を検出してチャットに表示</gray>")
       );
@@ -9827,6 +9881,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         } else if (mat == Material.NETHERITE_INGOT) {
                            this.fireEconomyEvent("手数料高騰");
                            this.msgKey(p, "event.tax-triggered");
+                        } else if (mat == Material.COMPASS) {
+                           this.sendTreasureLocationInfo(p);
                         } else if (mat == Material.SUNFLOWER) {
                            this.fireEconomyEvent("ボーナス支給デー");
                            this.msgKey(p, "event.bonus-triggered");
@@ -13624,6 +13680,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("admin.selfcheck-issues", "<yellow><bold>【自己診断】{count}件の不整合を検出しました{note}</bold></yellow>");
       DEFAULT_MESSAGES.put("admin.selfcheck-more", "<gray>...他 {count}件（コンソールログを確認してください）</gray>");
       DEFAULT_MESSAGES.put("admin.selfcheck-issue-line", "<gray>- {issue}</gray>");
+      DEFAULT_MESSAGES.put(
+         "admin.treasure-active",
+         "<gold><bold>【埋蔵金】</bold> 出現中: {world} ({x}, {y}, {z}) / 報酬 {amount}</gold>"
+      );
+      DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
       DEFAULT_MESSAGES.put(
          "admin.usage-full", "<yellow>使用法: /meco admin <give|take|setcredit|setgovdebt|reset|reload|save|event|discord|selfcheck|gui> ...</yellow>"
       );
