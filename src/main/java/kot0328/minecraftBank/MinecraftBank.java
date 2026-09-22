@@ -354,6 +354,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private double cfgTreasureRewardMin = 3000.0;
    private double cfgTreasureRewardMax = 15000.0;
    private double cfgTreasureSpawnRadius = 500.0;
+   private double cfgTreasureLocationFee = 1000.0;
    private boolean treasureActive = false;
    private String treasureWorldName;
    private int treasureX;
@@ -819,6 +820,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("economy.treasure-reward-min", this.cfgTreasureRewardMin);
       c.addDefault("economy.treasure-reward-max", this.cfgTreasureRewardMax);
       c.addDefault("economy.treasure-spawn-radius", this.cfgTreasureSpawnRadius);
+      c.addDefault("economy.treasure-location-fee", this.cfgTreasureLocationFee);
       c.addDefault("economy.installment-enabled", this.cfgInstallmentEnabled);
       c.addDefault("economy.installment-min-credit-score", this.cfgInstallmentMinCreditScore);
       c.addDefault("economy.installment-count", this.cfgInstallmentCount);
@@ -1006,6 +1008,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgTreasureRewardMin = c.getDouble("economy.treasure-reward-min", this.cfgTreasureRewardMin);
       this.cfgTreasureRewardMax = c.getDouble("economy.treasure-reward-max", this.cfgTreasureRewardMax);
       this.cfgTreasureSpawnRadius = c.getDouble("economy.treasure-spawn-radius", this.cfgTreasureSpawnRadius);
+      this.cfgTreasureLocationFee = c.getDouble("economy.treasure-location-fee", this.cfgTreasureLocationFee);
       this.cfgInstallmentEnabled = c.getBoolean("economy.installment-enabled", this.cfgInstallmentEnabled);
       this.cfgInstallmentMinCreditScore = c.getInt("economy.installment-min-credit-score", this.cfgInstallmentMinCreditScore);
       this.cfgInstallmentCount = c.getInt("economy.installment-count", this.cfgInstallmentCount);
@@ -4331,6 +4334,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.deliverLoanOfflineNotices(p);
                   this.clickSound(p);
                   return true;
+               case "treasure":
+                  this.checkTreasureLocationPaid(p);
+                  return true;
                case "webpage":
                   if (!this.cfgWebDashboardEnabled) {
                      this.msgKey(p, "webpage.disabled");
@@ -5216,7 +5222,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "achievement",
                "repay",
                "webpage",
-               "collect"
+               "collect",
+               "treasure"
             )
          );
          if (sender.hasPermission("bank.admin")) {
@@ -5491,6 +5498,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(20, this.createItem(Material.ENDER_CHEST, "<gold><bold>\ud83d\udc5b グループ貯金箱</bold></gold>", "<gray>友人・小さなグループで共有する共同口座</gray>"));
       gui.setItem(
          24, this.createItem(Material.DIAMOND, "<dark_green><bold>\ud83d\udcca 共同投資ファンド</bold></dark_green>", "<gray>複数人で出資し、マネージャーが世界株式市場でまとめて運用</gray>")
+      );
+      gui.setItem(
+         29,
+         this.createItem(
+            Material.COMPASS,
+            "<gold><bold>\ud83e\udded 埋蔵金の場所を調べる</bold></gold>",
+            "<gray>調査費用:</gray> <red>" + this.fmtCur(this.cfgTreasureLocationFee) + "</red>",
+            "<yellow>クリックで支払って場所を確認</yellow>"
+         )
       );
       gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>"));
       this.fillGlass(gui);
@@ -8608,6 +8624,40 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
+   private void checkTreasureLocationPaid(Player p) {
+      double fee = this.cfgTreasureLocationFee;
+      if (econ.getBalance(p) < fee) {
+         this.msgKey(p, "common.insufficient-funds", "amount", this.fmtCur(econ.getBalance(p)));
+         this.errorSound(p);
+         return;
+      }
+
+      econ.withdrawPlayer(p, fee);
+      this.addLog(p.getUniqueId(), "埋蔵金の場所を調査 -" + this.fmtCur(fee));
+      if (this.treasureActive) {
+         this.msgKey(
+            p,
+            "treasure.location-found",
+            "world",
+            this.treasureWorldName,
+            "x",
+            String.valueOf(this.treasureX),
+            "y",
+            String.valueOf(this.treasureY),
+            "z",
+            String.valueOf(this.treasureZ),
+            "amount",
+            this.fmtCur(this.treasureReward)
+         );
+      } else {
+         long remainMs = this.treasureNextSpawnAt - System.currentTimeMillis();
+         long remainMin = Math.max(0L, remainMs / 60000L);
+         this.msgKey(p, "treasure.location-not-found", "minutes", String.valueOf(remainMin));
+      }
+
+      this.clickSound(p);
+   }
+
    private void openTravelingMerchantGUI(Player p) {
       this.ensureMerchantDealsCurrent();
       Inventory gui = Bukkit.createInventory(null, 27, this.tTravelingMerchant);
@@ -10096,6 +10146,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.openTradeSelectGUI(p);
                         } else if (mat == Material.ENDER_CHEST) {
                            this.openGroupListGUI(p);
+                        } else if (mat == Material.COMPASS) {
+                           this.checkTreasureLocationPaid(p);
+                           return;
                         } else {
                            if (mat != Material.DIAMOND) {
                               return;
@@ -13685,6 +13738,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          "<gold><bold>【埋蔵金】</bold> 出現中: {world} ({x}, {y}, {z}) / 報酬 {amount}</gold>"
       );
       DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
+      DEFAULT_MESSAGES.put(
+         "treasure.location-found",
+         "<gold><bold>【埋蔵金探索】</bold> {world} ({x}, {y}, {z}) 付近に埋蔵金の入ったチェストがあります！（推定報酬 {amount}）</gold>"
+      );
+      DEFAULT_MESSAGES.put("treasure.location-not-found", "<gray>【埋蔵金探索】現在は出現していないようです。次回出現まで約{minutes}分。</gray>");
       DEFAULT_MESSAGES.put(
          "admin.usage-full", "<yellow>使用法: /meco admin <give|take|setcredit|setgovdebt|reset|reload|save|event|discord|selfcheck|gui> ...</yellow>"
       );
