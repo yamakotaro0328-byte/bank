@@ -1492,10 +1492,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private double economyMultiplier() {
-      if (this.economyEventActive("黄金ラッシュ")) {
+      if (this.economyEventActive("需要急増")) {
          return 1.1;
       } else {
-         return this.economyEventActive("冬の時代") ? 0.9 : 1.0;
+         return this.economyEventActive("供給過多") ? 0.9 : 1.0;
       }
    }
 
@@ -1511,10 +1511,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       long duration = 600000L;
       if (type.equals("random")) {
          type = switch (this.economyRandom.nextInt(4)) {
-            case 0 -> "黄金ラッシュ";
+            case 0 -> "需要急増";
             case 1 -> "手数料高騰";
             case 2 -> "ボーナス支給デー";
-            default -> "冬の時代";
+            default -> "供給過多";
          };
       }
 
@@ -1522,7 +1522,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.activeEconomyEventUntil = System.currentTimeMillis() + duration;
 
       String text = switch (type) {
-         case "黄金ラッシュ" -> this.getMsg("event.boom");
+         case "需要急増" -> this.getMsg("event.boom");
          case "手数料高騰" -> this.getMsg("event.tax");
          case "ボーナス支給デー" -> {
             double bonus = 5000.0;
@@ -4535,10 +4535,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  return true;
                               } else {
                                  String event = switch (args[2].toLowerCase()) {
-                                    case "boom" -> "黄金ラッシュ";
-                                    case "tax" -> "手数料高騰";
+                                    case "demand" -> "需要急増";
+                                    case "fee" -> "手数料高騰";
                                     case "bonus" -> "ボーナス支給デー";
-                                    case "recession" -> "冬の時代";
+                                    case "supply" -> "供給過多";
                                     default -> "random";
                                  };
                                  this.fireEconomyEvent(event);
@@ -5368,7 +5368,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             } else if (args.length == 3 && args[0].equalsIgnoreCase("admin") && args[1].equalsIgnoreCase("event")) {
                String cur = args[2].toLowerCase();
 
-               for (String event : Arrays.asList("random", "boom", "tax", "bonus", "recession")) {
+               for (String event : Arrays.asList("random", "demand", "fee", "bonus", "supply")) {
                   if (event.startsWith(cur)) {
                      result.add(event);
                   }
@@ -9281,10 +9281,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void openAdminServerGUI(Player p) {
       Inventory gui = Bukkit.createInventory(null, 27, this.tAdminServer);
       gui.setItem(10, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\ud83c\udfb2 ランダム経済イベント発生</bold></gold>"));
-      gui.setItem(11, this.createItem(Material.EMERALD_BLOCK, "<green><bold>\ud83d\udcc8 黄金ラッシュを発生</bold></green>"));
+      gui.setItem(11, this.createItem(Material.EMERALD_BLOCK, "<green><bold>\ud83d\udcc8 需要急増を発生</bold></green>"));
       gui.setItem(12, this.createItem(Material.NETHERITE_INGOT, "<yellow><bold>\ud83d\udcb0 手数料高騰を発生</bold></yellow>"));
       gui.setItem(13, this.createItem(Material.SUNFLOWER, "<aqua><bold>\ud83c\udf81 ボーナス支給デーを発生</bold></aqua>"));
-      gui.setItem(14, this.createItem(Material.REDSTONE_BLOCK, "<red><bold>\ud83d\udcc9 冬の時代を発生</bold></red>"));
+      gui.setItem(14, this.createItem(Material.REDSTONE_BLOCK, "<red><bold>\ud83d\udcc9 供給過多を発生</bold></red>"));
       gui.setItem(
          15,
          this.treasureActive
@@ -9946,7 +9946,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.fireEconomyEvent("random");
                            this.msgKey(p, "event.random-triggered");
                         } else if (mat == Material.EMERALD_BLOCK) {
-                           this.fireEconomyEvent("黄金ラッシュ");
+                           this.fireEconomyEvent("需要急増");
                            this.msgKey(p, "event.boom-triggered");
                         } else if (mat == Material.NETHERITE_INGOT) {
                            this.fireEconomyEvent("手数料高騰");
@@ -9957,7 +9957,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.fireEconomyEvent("ボーナス支給デー");
                            this.msgKey(p, "event.bonus-triggered");
                         } else if (mat == Material.REDSTONE_BLOCK) {
-                           this.fireEconomyEvent("冬の時代");
+                           this.fireEconomyEvent("供給過多");
                            this.msgKey(p, "event.recession-triggered");
                         } else {
                            if (mat == Material.KNOWLEDGE_BOOK) {
@@ -13671,10 +13671,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("loan.gov-approved", "<green><bold>国営公庫から {amount} 融資を受けました！ (適用金利: {rate}% / 総返済額: {total} / 期限: {minutes}分)</bold></green>");
       DEFAULT_MESSAGES.put("loan.repaid-full", "<green><bold>プレイヤー間の借金を全額完済しました！</bold></green>");
       DEFAULT_MESSAGES.put("achievement.unlocked", "<gold><bold>\ud83c\udf96 実績「{title}」を解放しました！</bold></gold>");
-      DEFAULT_MESSAGES.put("event.boom", "<green><bold>【経済イベント】黄金ラッシュ！</bold> 資源相場ショップの取引価格が一時的に10%上昇します。</green>");
+      DEFAULT_MESSAGES.put("event.boom", "<green><bold>【経済イベント】需要急増！</bold> 資源の買い手が殺到し、資源相場ショップの取引価格が一時的に10%上昇します。</green>");
       DEFAULT_MESSAGES.put("event.tax", "<red><bold>【経済イベント】手数料高騰！</bold> 世界株式市場の売買手数料が一時的に2倍になります。</red>");
       DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 全プレイヤーに{amount}を支給しました。</gold>");
-      DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>【経済イベント】冬の時代！</bold> 資源相場ショップの取引価格が一時的に10%下落します。</dark_red>");
+      DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>【経済イベント】供給過多！</bold> 市場に資源があふれ、資源相場ショップの取引価格が一時的に10%下落します。</dark_red>");
       DEFAULT_MESSAGES.put("confirm.dissolve-prompt", "<red><bold>会社を本当に解散しますか？</bold></red>");
       DEFAULT_MESSAGES.put("confirm.withdraw-prompt", "<red><bold>預金全額を引き出しますか？</bold></red> <yellow>30秒以内にもう一度クリックで確定します。</yellow>");
       DEFAULT_MESSAGES.put("confirm.expired", "<red>確認の有効期限が切れました。もう一度実行してください。</red>");
@@ -13744,7 +13744,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("admin.setgovdebt-success", "<green>{player} の国営ローン残債を {amount} に設定しました。</green>");
       DEFAULT_MESSAGES.put("admin.reset-success", "<green><bold>{player} の経済データをリセットしました。</bold></green>");
       DEFAULT_MESSAGES.put("admin.reset-note", "<gray>(会社・連合データは影響が大きいため別途 /meco admin reset は個人データのみ対象です)</gray>");
-      DEFAULT_MESSAGES.put("admin.usage-event", "<yellow>/meco admin event <random|boom|tax|bonus|recession></yellow>");
+      DEFAULT_MESSAGES.put("admin.usage-event", "<yellow>/meco admin event <random|demand|fee|bonus|supply></yellow>");
       DEFAULT_MESSAGES.put("admin.discord-not-configured", "<red>Botトークンまたはチャンネルidがconfig.ymlに設定されていません。</red>");
       DEFAULT_MESSAGES.put("admin.discord-config-hint", "<gray>system.discord-bot-token / system.discord-channel-id を確認してください。</gray>");
       DEFAULT_MESSAGES.put("admin.discord-test-sending", "<gray>Discordへテスト送信中...サーバーコンソールに結果ログが出ます。</gray>");
@@ -13858,10 +13858,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("admin.setcredit-prompt", "<gold><bold>設定する信用スコア(0〜800)をチャットに入力してください。</bold></gold>");
       DEFAULT_MESSAGES.put("admin.reset-confirm", "<red><bold>本当にリセットする場合はもう一度クリックしてください。（15秒以内）</bold></red>");
       DEFAULT_MESSAGES.put("event.random-triggered", "<green>ランダム経済イベントを発生させました。</green>");
-      DEFAULT_MESSAGES.put("event.boom-triggered", "<green>黄金ラッシュを発生させました。</green>");
+      DEFAULT_MESSAGES.put("event.boom-triggered", "<green>需要急増を発生させました。</green>");
       DEFAULT_MESSAGES.put("event.tax-triggered", "<green>手数料高騰を発生させました。</green>");
       DEFAULT_MESSAGES.put("event.bonus-triggered", "<green>ボーナス支給デーを発生させました。</green>");
-      DEFAULT_MESSAGES.put("event.recession-triggered", "<green>冬の時代を発生させました。</green>");
+      DEFAULT_MESSAGES.put("event.recession-triggered", "<green>供給過多を発生させました。</green>");
       DEFAULT_MESSAGES.put("collateral.select-item", "<red>担保アイテムを選択してください。</red>");
       DEFAULT_MESSAGES.put("collateral.borrowed", "<green><bold>{item} を担保に {amount} を借り入れました。返済期限は {minutes}分後です。</bold></green>");
       DEFAULT_MESSAGES.put("collateral.repaid", "<green><bold>担保融資を完済し、アイテムを取り戻しました！</bold></green>");
