@@ -295,9 +295,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<Material, Double> resourcePrices = new HashMap<>();
    private final HashMap<UUID, String> resourceShopViewCategory = new HashMap<>();
    private final HashMap<UUID, HashMap<Material, Double>> resourcePersonalBuyMultiplier = new HashMap<>();
+   private final HashSet<Material> resourceBoughtSinceLastDrift = new HashSet<>();
    private double cfgResourcePersonalImpactRate = 0.02;
    private double cfgResourcePersonalCeilingPercent = 3.0;
-   private double cfgResourcePriceImpactRate = 0.004;
+   private double cfgResourcePriceImpactRate = 0.01;
+   private double cfgResourceIdleDecayRate = 0.03;
    private double cfgResourcePriceFloorPercent = 0.2;
    private double cfgResourcePriceCeilingPercent = 3.0;
    private double cfgResourcePriceReversionRate = 0.05;
@@ -783,6 +785,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("economy.world-stock-trade-cooldown-seconds", this.cfgWorldStockTradeCooldownSeconds);
       c.addDefault("economy.world-stock-max-bulk-qty", this.cfgWorldStockMaxBulkQty);
       c.addDefault("economy.resource-price-impact-rate", this.cfgResourcePriceImpactRate);
+      c.addDefault("economy.resource-idle-decay-rate", this.cfgResourceIdleDecayRate);
       c.addDefault("economy.resource-price-floor-percent", this.cfgResourcePriceFloorPercent);
       c.addDefault("economy.resource-price-ceiling-percent", this.cfgResourcePriceCeilingPercent);
       c.addDefault("economy.resource-personal-impact-rate", this.cfgResourcePersonalImpactRate);
@@ -971,6 +974,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       this.cfgResourcePriceImpactRate = c.getDouble("economy.resource-price-impact-rate", this.cfgResourcePriceImpactRate);
+      this.cfgResourceIdleDecayRate = c.getDouble("economy.resource-idle-decay-rate", this.cfgResourceIdleDecayRate);
       this.cfgResourcePriceFloorPercent = c.getDouble("economy.resource-price-floor-percent", this.cfgResourcePriceFloorPercent);
       this.cfgResourcePriceCeilingPercent = c.getDouble("economy.resource-price-ceiling-percent", this.cfgResourcePriceCeilingPercent);
       this.cfgResourcePersonalImpactRate = c.getDouble("economy.resource-personal-impact-rate", this.cfgResourcePersonalImpactRate);
@@ -3768,8 +3772,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       double base = RESOURCE_BASE_PRICES.getOrDefault(mat, 0.0);
       if (!(base <= 0.0)) {
          double price = this.getResourcePrice(mat);
-         double factor = isBuy ? 1.0 + this.cfgResourcePriceImpactRate : 1.0 - this.cfgResourcePriceImpactRate;
-         price *= Math.pow(factor, qty);
+         double step = 1.0 + this.cfgResourcePriceImpactRate;
+         price *= Math.pow(isBuy ? step : 1.0 / step, qty);
          double floor = base * this.cfgResourcePriceFloorPercent;
          double ceiling = base * this.cfgResourcePriceCeilingPercent;
          price = Math.max(floor, Math.min(ceiling, price));
@@ -3777,15 +3781,37 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
+   private double resourceTradeTotal(Material mat, int qty, boolean isBuy) {
+      double base = RESOURCE_BASE_PRICES.getOrDefault(mat, 0.0);
+      double floor = base * this.cfgResourcePriceFloorPercent;
+      double ceiling = base * this.cfgResourcePriceCeilingPercent;
+      double step = 1.0 + this.cfgResourcePriceImpactRate;
+      double price = this.getResourcePrice(mat);
+      double total = 0.0;
+
+      for (int i = 0; i < qty; i++) {
+         if (isBuy) {
+            total += price;
+            price = Math.min(ceiling, price * step);
+         } else {
+            price = Math.max(floor, price / step);
+            total += price;
+         }
+      }
+
+      return total * this.economyMultiplier();
+   }
+
    private void driftResourcePrices() {
       for (Entry<Material, Double> entry : RESOURCE_BASE_PRICES.entrySet()) {
          Material mat = entry.getKey();
-         double base = entry.getValue();
-         double price = this.getResourcePrice(mat);
-         price += (base - price) * this.cfgResourcePriceReversionRate;
-         this.resourcePrices.put(mat, price);
+         if (!this.resourceBoughtSinceLastDrift.contains(mat)) {
+            double floor = entry.getValue() * this.cfgResourcePriceFloorPercent;
+            this.resourcePrices.put(mat, Math.max(floor, this.getResourcePrice(mat) * (1.0 - this.cfgResourceIdleDecayRate)));
+         }
       }
 
+      this.resourceBoughtSinceLastDrift.clear();
       this.decayResourcePersonalBuyMultipliers();
    }
 
@@ -3860,8 +3886,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.msgKey(p, "resourceshop.not-enough-items", "material", this.resourceDisplayName(mat), "have", String.valueOf(have), "need", String.valueOf(qty));
          this.errorSound(p);
       } else {
-         double unitPrice = this.getResourceEffectivePrice(mat);
-         double total = unitPrice * qty;
+         double total = this.resourceTradeTotal(mat, qty, false);
          this.removeMaterialFromInventory(p, mat, qty);
          econ.depositPlayer(p, total);
          this.applyResourceTradeImpact(mat, qty, false);
@@ -3880,8 +3905,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void executeResourceBuy(Player p, Material mat, int qty) {
       UUID u = p.getUniqueId();
-      double unitPrice = this.getResourceEffectivePrice(mat) * this.getResourcePersonalMultiplier(u, mat);
-      double total = unitPrice * qty;
+      double total = this.resourceTradeTotal(mat, qty, true) * this.getResourcePersonalMultiplier(u, mat);
       if (econ.getBalance(p) < total) {
          this.msgKey(p, "resourceshop.funds-insufficient");
          this.errorSound(p);
@@ -3894,6 +3918,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
 
          this.applyResourceTradeImpact(mat, qty, true);
+         this.resourceBoughtSinceLastDrift.add(mat);
          this.applyResourcePersonalImpact(u, mat, qty);
          this.addLog(u, "資源相場ショップ: " + this.resourceDisplayName(mat) + " を" + qty + "個購入 -" + this.fmtCur(total));
          if (qty >= 16) {
@@ -8042,7 +8067,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Material.EMERALD,
             "<green><bold>【資源相場ショップ】</bold></green>",
             "<gray>鉱石・農作物・モブドロップ・木材をサーバーに即時売買できます。</gray>",
-            "<gray>価格は取引量に応じて上下し、時間経過で基準価格へ緩やかに戻ります。</gray>",
+            "<gray>買われるほど値上がりし、売られると値下がりします。誰も買わない品目は時間とともに安くなります。</gray>",
             "<dark_gray>売りすぎると価格が下がるため、売却益は自然と頭打ちになります。</dark_gray>"
          )
       );
@@ -8099,7 +8124,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       double base = RESOURCE_BASE_PRICES.getOrDefault(mat, 0.0);
       double price = this.getResourceEffectivePrice(mat);
       double personalMult = this.getResourcePersonalMultiplier(p.getUniqueId(), mat);
-      double buyPrice = price * personalMult;
       int holding = this.countMaterialInInventory(p, mat);
       List<String> infoLore = new ArrayList<>(
          List.of(
@@ -8120,22 +8144,22 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       for (int i = 0; i < qtys.length; i++) {
          int qty = qtys[i];
-         double sellTotal = price * qty;
+         double sellTotal = this.resourceTradeTotal(mat, qty, false);
          ItemStack sellItem = this.createItem(
             mat,
             "<red><bold>売る x" + qty + "</bold></red>",
             "<gray>受取額: </gray><gold>" + this.fmtCurPrecise(sellTotal) + "</gold>",
-            "<dark_gray>(単価 " + this.fmtCurPrecise(price) + " × " + qty + "個)</dark_gray>"
+            "<dark_gray>(平均単価 " + this.fmtCurPrecise(sellTotal / qty) + " × " + qty + "個)</dark_gray>"
          );
          this.setResourceMaterialTag(sellItem, mat);
          this.setResourceActionTag(sellItem, "sell" + qty);
          gui.setItem(sellSlots[i], sellItem);
-         double buyTotal = buyPrice * qty;
+         double buyTotal = this.resourceTradeTotal(mat, qty, true) * personalMult;
          ItemStack buyItem = this.createItem(
             mat,
             "<green><bold>買う x" + qty + "</bold></green>",
             "<gray>支払額: </gray><gold>" + this.fmtCurPrecise(buyTotal) + "</gold>",
-            "<dark_gray>(単価 " + this.fmtCurPrecise(buyPrice) + " × " + qty + "個)</dark_gray>"
+            "<dark_gray>(平均単価 " + this.fmtCurPrecise(buyTotal / qty) + " × " + qty + "個)</dark_gray>"
          );
          this.setResourceMaterialTag(buyItem, mat);
          this.setResourceActionTag(buyItem, "buy" + qty);
