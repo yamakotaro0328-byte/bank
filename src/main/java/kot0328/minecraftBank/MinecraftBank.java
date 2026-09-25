@@ -180,6 +180,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private long lastSelfCheckAt = 0L;
    private final LinkedHashMap<UUID, MinecraftBank.Quest> quests = new LinkedHashMap<>();
    private final HashMap<UUID, UUID> playerActiveQuest = new HashMap<>();
+   private long cfgQuestOfflineReleaseMinutes = 30L;
    private double cfgQuestRadius = 15.0;
    private long cfgQuestCooldownMs = 3600000L;
    private int cfgQuestMaxPerPlayer = 3;
@@ -374,6 +375,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<UUID, Integer> donationScoreToday = new HashMap<>();
    private final HashMap<UUID, Long> donationScoreResetAt = new HashMap<>();
    private int cfgDonationScoreCapPerDay = 10;
+   private final HashMap<UUID, Integer> repayScoreToday = new HashMap<>();
+   private final HashMap<UUID, Long> repayScoreResetAt = new HashMap<>();
+   private int cfgRepayScoreCapPerDay = 60;
    private final HashMap<UUID, UUID> loanGuarantor = new HashMap<>();
    private final HashMap<UUID, UUID> guarantorProposals = new HashMap<>();
    private final HashMap<UUID, Long> guarantorProposalTime = new HashMap<>();
@@ -956,6 +960,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("economy.insurance-claim-cooldown-minutes", this.cfgInsuranceClaimCooldownMs / 60000L);
       c.addDefault("economy.report-interval-days", this.cfgReportIntervalDays);
       c.addDefault("economy.donation-score-cap-per-day", this.cfgDonationScoreCapPerDay);
+      c.addDefault("economy.quest-offline-release-minutes", this.cfgQuestOfflineReleaseMinutes);
+      c.addDefault("economy.repay-score-cap-per-day", this.cfgRepayScoreCapPerDay);
       c.addDefault("system.discord-bot-token", this.cfgDiscordBotToken);
       c.addDefault("system.discord-channel-id", this.cfgDiscordChannelId);
       c.addDefault("economy.random-event-chance", this.cfgRandomEventChance);
@@ -1163,6 +1169,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgInsuranceClaimCooldownMs = c.getLong("economy.insurance-claim-cooldown-minutes", this.cfgInsuranceClaimCooldownMs / 60000L) * 60000L;
       this.cfgReportIntervalDays = c.getLong("economy.report-interval-days", this.cfgReportIntervalDays);
       this.cfgDonationScoreCapPerDay = c.getInt("economy.donation-score-cap-per-day", this.cfgDonationScoreCapPerDay);
+      this.cfgQuestOfflineReleaseMinutes = c.getLong("economy.quest-offline-release-minutes", this.cfgQuestOfflineReleaseMinutes);
+      this.cfgRepayScoreCapPerDay = c.getInt("economy.repay-score-cap-per-day", this.cfgRepayScoreCapPerDay);
       this.cfgDiscordBotToken = c.getString("system.discord-bot-token", this.cfgDiscordBotToken);
       this.cfgDiscordChannelId = c.getString("system.discord-channel-id", this.cfgDiscordChannelId);
       this.cfgRandomEventChance = c.getDouble("economy.random-event-chance", this.cfgRandomEventChance);
@@ -2690,6 +2698,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.donationScoreResetAt.put(UUID.fromString(key), this.db.getLong("donation_score_reset_at", key, 0L));
       }
 
+      for (String key : this.db.getKeys("repay_score_today")) {
+         this.repayScoreToday.put(UUID.fromString(key), this.db.getInt("repay_score_today", key, 0));
+      }
+
+      for (String key : this.db.getKeys("repay_score_reset_at")) {
+         this.repayScoreResetAt.put(UUID.fromString(key), this.db.getLong("repay_score_reset_at", key, 0L));
+      }
+
       for (String key : this.db.getKeys("welfare_count_today")) {
          this.welfareCountToday.put(UUID.fromString(key), this.db.getInt("welfare_count_today", key, 0));
       }
@@ -3290,6 +3306,18 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.db.setLong("donation_score_reset_at", u2.toString(), this.donationScoreResetAt.get(u2));
             }
 
+            this.db.removeSection("repay_score_today");
+
+            for (UUID u2 : this.repayScoreToday.keySet()) {
+               this.db.setInt("repay_score_today", u2.toString(), this.repayScoreToday.get(u2));
+            }
+
+            this.db.removeSection("repay_score_reset_at");
+
+            for (UUID u2 : this.repayScoreResetAt.keySet()) {
+               this.db.setLong("repay_score_reset_at", u2.toString(), this.repayScoreResetAt.get(u2));
+            }
+
             this.db.removeSection("welfare_count_today");
 
             for (UUID u2 : this.welfareCountToday.keySet()) {
@@ -3546,6 +3574,20 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          return true;
       } else {
          return false;
+      }
+   }
+
+   private void grantRepaymentCreditScore(UUID u, int points) {
+      long now = System.currentTimeMillis();
+      if (this.isDailyCounterResetDue(u, this.repayScoreResetAt, now)) {
+         this.repayScoreToday.put(u, 0);
+      }
+
+      int usedToday = this.repayScoreToday.getOrDefault(u, 0);
+      int grant = Math.min(points, Math.max(0, this.cfgRepayScoreCapPerDay - usedToday));
+      if (grant > 0) {
+         this.addScore(u, grant);
+         this.repayScoreToday.put(u, usedToday + grant);
       }
    }
 
@@ -4986,6 +5028,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  return true;
                               } else if (target.getUniqueId().equals(u)) {
                                  this.msgKey(p, "guarantor.cannot-self");
+                                 return true;
+                              } else if (this.guarantorProposals.containsKey(target.getUniqueId())
+                                 && !u.equals(this.guarantorProposals.get(target.getUniqueId()))
+                                 && System.currentTimeMillis() - this.guarantorProposalTime.getOrDefault(target.getUniqueId(), 0L) <= this.cfgGuarantorProposalTimeoutMs) {
+                                 this.msgKey(p, "guarantor.target-busy", "player", target.getName());
                                  return true;
                               } else {
                                  this.guarantorProposals.put(target.getUniqueId(), u);
@@ -9978,7 +10025,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     this.msgKey(p, "quest.cannot-withdraw");
                                  }
                               } else if (q.requiredTeamSize <= 1) {
-                                 if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+                                 if (q.state == MinecraftBank.QuestState.AVAILABLE && this.hasOtherActiveQuest(u, q.id)) {
+                                    this.msgKey(p, "quest.already-active");
+                                    this.errorSound(p);
+                                 } else if (q.state == MinecraftBank.QuestState.AVAILABLE) {
                                     q.state = MinecraftBank.QuestState.IN_PROGRESS;
                                     q.acceptedBy = u;
                                     this.playerActiveQuest.put(u, q.id);
@@ -10019,6 +10069,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        this.msgKey(p, "quest.team-left-recruiting");
                                        this.clickSound(p);
                                        this.openQuestBoardGUI(p);
+                                    } else if (this.hasOtherActiveQuest(u, q.id)) {
+                                       this.msgKey(p, "quest.already-active");
+                                       this.errorSound(p);
                                     } else if (q.teamMembers.size() < q.requiredTeamSize) {
                                        q.teamMembers.add(u);
                                        this.playerActiveQuest.put(u, q.id);
@@ -11171,13 +11224,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.activeDebts.remove(u);
                                  this.loanGuarantor.remove(u);
                                  this.msgKey(p, "loan.player-repaid-full-plain");
-                                 this.addScore(u, 30);
+                                 this.grantRepaymentCreditScore(u, 30);
                                  this.unlockAchievement(u, "first_loan_repaid", "初めての完済");
                                  this.sendDiscordWebhook("\ud83d\udcb3 **" + p.getName() + "** がプレイヤー間融資を完済しました。");
                               } else {
                                  this.activeDebts.put(u, lenderId.toString() + ":" + debt);
                                  this.msgKey(p, "loan.repay-partial", "amount", this.fmtCur(pay));
-                                 this.addScore(u, 5);
                               }
 
                               p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
@@ -11195,7 +11247,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.loanGuarantor.remove(u);
                               this.bankCapital.put(lenderId, this.bankCapital.getOrDefault(lenderId, 0.0) + debt);
                               this.msgKey(p, "loan.repaid-full");
-                              this.addScore(u, 50);
+                              this.grantRepaymentCreditScore(u, 50);
                               this.unlockAchievement(u, "first_loan_repaid", "初めての完済");
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                            } else {
@@ -11214,14 +11266,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.govDebt.remove(u);
                                  this.govDebtDueTime.remove(u);
                                  this.msgKey(p, "loan.gov-repaid-full-plain");
-                                 this.addScore(u, 40);
+                                 this.grantRepaymentCreditScore(u, 40);
                                  this.addLog(u, "国営ローン完済");
                                  this.unlockAchievement(u, "first_gov_loan_repaid", "公庫の常連");
                                  this.sendDiscordWebhook("\ud83c\udfdb️ **" + p.getName() + "** が国営公庫ローンを完済しました。");
                               } else {
                                  this.govDebt.put(u, gDebt);
                                  this.msgKey(p, "loan.repay-partial", "amount", this.fmtCur(pay));
-                                 this.addScore(u, 10);
                               }
 
                               p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
@@ -11235,7 +11286,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.govDebt.remove(u);
                               this.govDebtDueTime.remove(u);
                               this.msgKey(p, "loan.gov-repaid-full-bold");
-                              this.addScore(u, 60);
+                              this.grantRepaymentCreditScore(u, 60);
                               p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                               this.addLog(u, "国営ローン全額完済");
                               this.unlockAchievement(u, "first_gov_loan_repaid", "公庫の常連");
@@ -11894,12 +11945,54 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
+   private boolean hasOtherActiveQuest(UUID u, UUID questId) {
+      UUID active = this.playerActiveQuest.get(u);
+      if (active == null || active.equals(questId)) {
+         return false;
+      } else if (!this.quests.containsKey(active)) {
+         this.playerActiveQuest.remove(u);
+         return false;
+      } else {
+         return true;
+      }
+   }
+
+   private boolean isLongOffline(UUID u, long now) {
+      if (Bukkit.getPlayer(u) != null) {
+         return false;
+      }
+
+      long lastSeen = Bukkit.getOfflinePlayer(u).getLastSeen();
+      return now - lastSeen > this.cfgQuestOfflineReleaseMinutes * 60000L;
+   }
+
    private void refreshQuestBoard() {
       long now = System.currentTimeMillis();
       Iterator<MinecraftBank.Quest> it = this.quests.values().iterator();
 
       while (it.hasNext()) {
          MinecraftBank.Quest q = it.next();
+         if (q.state == MinecraftBank.QuestState.IN_PROGRESS && q.acceptedBy != null && this.isLongOffline(q.acceptedBy, now)) {
+            this.playerActiveQuest.remove(q.acceptedBy);
+            q.acceptedBy = null;
+            q.state = MinecraftBank.QuestState.AVAILABLE;
+         }
+
+         if (q.state == MinecraftBank.QuestState.AVAILABLE && q.teamMembers != null && !q.teamMembers.isEmpty()) {
+            Iterator<UUID> members = q.teamMembers.iterator();
+
+            while (members.hasNext()) {
+               UUID member = members.next();
+               if (this.isLongOffline(member, now)) {
+                  members.remove();
+                  this.playerActiveQuest.remove(member);
+                  if (q.teamArrived != null) {
+                     q.teamArrived.remove(member);
+                  }
+               }
+            }
+         }
+
          if (q.state == MinecraftBank.QuestState.COOLDOWN && now >= q.cooldownUntil) {
             double totalReward = q.reward * q.requiredTeamSize;
             if (q.posterId.equals(SYSTEM_QUEST_POSTER_ID)) {
@@ -12037,6 +12130,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   econ.withdrawPlayer(guarantorOff, guarantorSeize);
                   this.bankCapital.put(lenderId, this.bankCapital.getOrDefault(lenderId, 0.0) + guarantorSeize);
                   debt -= guarantorSeize;
+                  this.loanGuarantor.remove(u);
                   this.addScore(guarantorId, -30);
                   this.addLog(guarantorId, "保証債務の履行: -" + this.fmtCur(guarantorSeize) + " (" + p.getName() + "の借金分)");
                   Player guarantorOnline = Bukkit.getPlayer(guarantorId);
@@ -12930,6 +13024,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.worldStockDailyResetAt.remove(u);
       this.worldStockLastTradeTime.remove(u);
       this.worldStockAlerts.remove(u);
+      this.installmentPlans.remove(u);
+      this.repayScoreToday.remove(u);
+      this.repayScoreResetAt.remove(u);
+      this.loanGuarantor.remove(u);
+      this.loanGuarantor.values().removeIf(u::equals);
+      this.guarantorProposals.remove(u);
+      this.guarantorProposalTime.remove(u);
+      this.guarantorProposals.values().removeIf(u::equals);
+      this.guarantorProposalTime.keySet().retainAll(this.guarantorProposals.keySet());
    }
 
    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -14090,6 +14193,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          "admin.treasure-active",
          "<gold><bold>【埋蔵金】</bold> 出現中: {world} ({x}, {y}, {z}) / 報酬 {amount}</gold>"
       );
+      DEFAULT_MESSAGES.put("guarantor.target-busy", "<red>{player} は他のプレイヤーからの保証人依頼に対応中です。少し待ってから再度お試しください。</red>");
+      DEFAULT_MESSAGES.put("quest.already-active", "<red>すでに別の依頼を受注中です。先にその依頼を達成するか、取り消してください。</red>");
       DEFAULT_MESSAGES.put("common.invalid-name", "<red>名前は24文字以内で、< > \\ は使えません。</red>");
       DEFAULT_MESSAGES.put("resourceshop.qty-out-of-range", "<red>数量は1〜{max}個で指定してください。</red>");
       DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
