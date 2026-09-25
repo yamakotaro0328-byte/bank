@@ -546,6 +546,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private boolean configDefaultsMigrated = false;
 
    static {
+      LEGACY_MESSAGE_HASHES.put("trade.request-instructions", new int[]{-1096766543});
       LEGACY_MESSAGE_HASHES.put("common.insufficient-funds", new int[]{-177994242});
       LEGACY_MESSAGE_HASHES.put("insurance.payout", new int[]{-756975550});
       LEGACY_MESSAGE_HASHES.put("auction.won", new int[]{-714352911});
@@ -6562,24 +6563,42 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       p.openInventory(gui);
    }
 
+   private void purgeStaleTradeRequests() {
+      long now = System.currentTimeMillis();
+      Iterator<Entry<UUID, UUID>> it = this.tradeRequests.entrySet().iterator();
+
+      while (it.hasNext()) {
+         Entry<UUID, UUID> req = it.next();
+         long at = this.tradeRequestTime.getOrDefault(req.getKey(), 0L);
+         if (now - at > this.cfgTradeRequestTimeoutMs || Bukkit.getPlayer(req.getKey()) == null || Bukkit.getPlayer(req.getValue()) == null) {
+            it.remove();
+            this.tradeRequestTime.remove(req.getKey());
+         }
+      }
+   }
+
    private void sendTradeRequest(Player requester, Player target) {
       UUID ru = requester.getUniqueId();
       UUID tu = target.getUniqueId();
+      this.purgeStaleTradeRequests();
+      UUID pendingForTarget = this.tradeRequests.get(tu);
       if (ru.equals(tu)) {
          this.msgKey(requester, "trade.cannot-self");
       } else if (this.activeTradeSessions.containsKey(ru) || this.activeTradeSessions.containsKey(tu)) {
          this.msgKey(requester, "trade.already-in-progress");
-      } else if (!this.tradeRequests.containsKey(ru)
-         && !this.tradeRequests.containsKey(tu)
-         && !this.tradeRequests.containsValue(ru)
-         && !this.tradeRequests.containsValue(tu)) {
+      } else if (this.tradeRequests.containsKey(ru)) {
+         this.msgKey(requester, "trade.respond-first");
+      } else if (pendingForTarget != null && !pendingForTarget.equals(ru)) {
+         this.msgKey(requester, "trade.target-busy", "player", target.getName());
+      } else {
+         this.tradeRequests.values().removeIf(ru::equals);
+         this.tradeRequestTime.keySet().retainAll(this.tradeRequests.keySet());
          this.tradeRequests.put(tu, ru);
          this.tradeRequestTime.put(tu, System.currentTimeMillis());
          this.msgKey(requester, "trade.request-sent", "player", target.getName());
          this.msgKey(target, "trade.request-received", "player", requester.getName());
          this.msgKey(target, "trade.request-instructions");
-      } else {
-         this.msgKey(requester, "trade.already-in-progress");
+         target.playSound(target.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0F, 1.5F);
       }
    }
 
@@ -14050,7 +14069,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("trade.usage", "<yellow>使用法: /meco trade <プレイヤー|accept|decline></yellow>");
       DEFAULT_MESSAGES.put("trade.request-sent", "<green><bold>{player} にアイテム交換を申し込みました。（60秒以内に返答が必要）</bold></green>");
       DEFAULT_MESSAGES.put("trade.request-received", "<gold><bold>【交換依頼】</bold> {player} があなたにアイテム交換を申し込んでいます。</gold>");
-      DEFAULT_MESSAGES.put("trade.request-instructions", "<yellow>承諾: /meco trade accept ／ 拒否: /meco trade decline</yellow>");
+      DEFAULT_MESSAGES.put("trade.request-instructions", "<click:run_command:'/meco trade accept'><green><bold>[承諾する]</bold></green></click> <click:run_command:'/meco trade decline'><red><bold>[拒否する]</bold></red></click> <gray>(クリック、または /meco trade accept / decline)</gray>");
+      DEFAULT_MESSAGES.put("trade.respond-first", "<red>あなた宛ての交換依頼に先に返答してください。（/meco trade accept ／ decline）</red>");
+      DEFAULT_MESSAGES.put("trade.target-busy", "<red>{player} は他のプレイヤーからの交換依頼に対応中です。少し待ってから再度お試しください。</red>");
       DEFAULT_MESSAGES.put("trade.no-request", "<red>有効な交換依頼がありません。</red>");
       DEFAULT_MESSAGES.put("trade.no-request-expired", "<red>有効な交換依頼がありません。（期限切れの可能性があります）</red>");
       DEFAULT_MESSAGES.put("trade.declined-self", "<yellow>交換依頼を拒否しました。</yellow>");
