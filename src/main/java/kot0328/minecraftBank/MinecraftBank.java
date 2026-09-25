@@ -48,6 +48,7 @@ import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -153,7 +154,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<UUID, Integer> planDesignSlot = new HashMap<>();
    private final LinkedHashMap<UUID, LinkedList<String>> transactionLogs = new LinkedHashMap<>();
    private static final int LOG_MAX = 30;
-   private final HashMap<UUID, String> awaitingChatInput = new HashMap<>();
+   private final Map<UUID, String> awaitingChatInput = new ConcurrentHashMap<>();
    private final HashMap<UUID, Long> govDebtDueTime = new HashMap<>();
    private final HashMap<UUID, Double> fixedDeposit2 = new HashMap<>();
    private final HashMap<UUID, Long> fixedDepositUnlockTime2 = new HashMap<>();
@@ -194,9 +195,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private int cfgWebDashboardPort = 8765;
    private long cfgWebDashboardExportIntervalMinutes = 5L;
    private String cfgWebDashboardPublicUrl = "";
-   private final HashMap<UUID, String> dashboardTokens = new HashMap<>();
-   private final HashMap<UUID, String> webPasswordHash = new HashMap<>();
-   private final HashMap<UUID, String> webAdminPasswordHash = new HashMap<>();
+   private final Map<UUID, String> dashboardTokens = new ConcurrentHashMap<>();
+   private final Map<UUID, String> webPasswordHash = new ConcurrentHashMap<>();
+   private final Map<UUID, String> webAdminPasswordHash = new ConcurrentHashMap<>();
    private HttpServer webDashboardServer;
    private final HashMap<UUID, ItemStack> collateralItem = new HashMap<>();
    private final HashMap<UUID, Double> collateralLoanAmount = new HashMap<>();
@@ -286,6 +287,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private int cfgWorldStockTradeCooldownSeconds = 30;
    private int cfgWorldStockMaxBulkQty = 1000;
    private String cfgCurrencyUnit = "円";
+   private volatile String detectedServerCountry;
+   private boolean serverCountryLookupStarted = false;
    private boolean cfgCustomMoneyEnabled = false;
    private String cfgCustomMoneySymbol = "V";
    private double cfgCustomMoneyRate = 10.0;
@@ -1049,9 +1052,22 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgWorldStockTradeCooldownSeconds = c.getInt("economy.world-stock-trade-cooldown-seconds", this.cfgWorldStockTradeCooldownSeconds);
       this.cfgWorldStockMaxBulkQty = c.getInt("economy.world-stock-max-bulk-qty", this.cfgWorldStockMaxBulkQty);
       String cfgCountryInput = c.getString("economy.currency-country", "");
-      String effectiveCountry = cfgCountryInput.isBlank() ? this.detectServerCountry() : cfgCountryInput;
+      String effectiveCountry = cfgCountryInput.isBlank() ? this.detectedServerCountry : cfgCountryInput;
       String resolvedCountryCurrency = this.resolveCurrencyByCountry(effectiveCountry);
       this.cfgCurrencyUnit = resolvedCountryCurrency != null ? resolvedCountryCurrency : c.getString("economy.currency-unit", this.cfgCurrencyUnit);
+      if (cfgCountryInput.isBlank() && !this.serverCountryLookupStarted) {
+         this.serverCountryLookupStarted = true;
+         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            String country = this.detectServerCountry();
+            if (country != null) {
+               Bukkit.getScheduler().runTask(this, () -> {
+                  this.detectedServerCountry = country;
+                  this.loadConfigValues();
+               });
+            }
+         });
+      }
+
       if (cfgCountryInput.isBlank() && resolvedCountryCurrency != null) {
          this.getLogger().info("[Economy] サーバーの所在地を自動判定しました: " + effectiveCountry + " → 通貨表記: " + resolvedCountryCurrency);
       }
@@ -3002,21 +3018,30 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       for (String key2 : this.db.getKeys("dashboard_tokens")) {
          try {
-            this.dashboardTokens.put(UUID.fromString(key2), this.db.getString("dashboard_tokens", key2, null));
+            String vkey2 = this.db.getString("dashboard_tokens", key2, null);
+            if (vkey2 != null) {
+               this.dashboardTokens.put(UUID.fromString(key2), vkey2);
+            }
          } catch (IllegalArgumentException var13) {
          }
       }
 
       for (String key3 : this.db.getKeys("web_password")) {
          try {
-            this.webPasswordHash.put(UUID.fromString(key3), this.db.getString("web_password", key3, null));
+            String vkey3 = this.db.getString("web_password", key3, null);
+            if (vkey3 != null) {
+               this.webPasswordHash.put(UUID.fromString(key3), vkey3);
+            }
          } catch (IllegalArgumentException var12) {
          }
       }
 
       for (String key4 : this.db.getKeys("web_admin_password")) {
          try {
-            this.webAdminPasswordHash.put(UUID.fromString(key4), this.db.getString("web_admin_password", key4, null));
+            String vkey4 = this.db.getString("web_admin_password", key4, null);
+            if (vkey4 != null) {
+               this.webAdminPasswordHash.put(UUID.fromString(key4), vkey4);
+            }
          } catch (IllegalArgumentException var11) {
          }
       }
@@ -3861,6 +3886,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   }
                }
             }
+         }
+      }
+   }
+
+   private void returnAuctionDraftIfPricing(Player p, String inputType) {
+      if (inputType.equals("auction_list_price") || inputType.equals("auction_buyout_price")) {
+         UUID u = p.getUniqueId();
+         ItemStack draft = this.auctionListingDraft.remove(u);
+         this.auctionListingStartPrice.remove(u);
+         if (draft != null) {
+            for (ItemStack over : p.getInventory().addItem(new ItemStack[]{draft}).values()) {
+               p.getWorld().dropItem(p.getLocation(), over);
+            }
+
+            this.msgKey(p, "input.cancelled-auction-item-returned");
          }
       }
    }
@@ -4862,7 +4902,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  } else {
                                     econ.withdrawPlayer(p, amount);
                                     econ.depositPlayer(target, amount);
-                                    this.grantDonationCreditScore(u, amount);
                                     this.msgKey(p, "donate.player-success", "player", target.getName(), "amount", this.fmtCur(amount));
                                     this.msgKey(target, "donate.player-received", "player", p.getName(), "amount", this.fmtCur(amount));
                                     this.addLog(u, "寄付: " + target.getName() + " へ -" + this.fmtCur(amount));
@@ -10206,7 +10245,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      }
                   } else if (t.equals(this.tCollateral)) {
-                     if (mat == Material.IRON_DOOR) {
+                     if (e.getRawSlot() == 11) {
+                        return;
+                     } else if (mat == Material.IRON_DOOR) {
                         this.openBankHubGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.ANVIL && !this.collateralItem.containsKey(u)) {
@@ -10214,8 +10255,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else {
                         if (mat == Material.EMERALD && !this.collateralItem.containsKey(u)) {
                            ItemStack selected = this.collateralSelection.remove(u);
-                           double value = this.evaluateItemValue(selected);
+                           double value = selected == null ? 0.0 : this.evaluateItemValue(selected);
                            if (value <= 0.0) {
+                              if (selected != null) {
+                                 for (ItemStack over : p.getInventory().addItem(new ItemStack[]{selected}).values()) {
+                                    p.getWorld().dropItem(p.getLocation(), over);
+                                 }
+                              }
+
                               this.msgKey(p, "collateral.select-item");
                               this.errorSound(p);
                            } else {
@@ -10735,8 +10782,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else {
                         if (e.getRawSlot() < 45) {
                            ItemStack selected = item.clone();
-                           this.auctionListingDraft.put(u, selected);
                            p.getInventory().setItem(e.getRawSlot(), null);
+                           this.returnAuctionDraftIfPricing(p, "auction_list_price");
+                           this.auctionListingDraft.put(u, selected);
                            this.awaitingChatInput.put(u, "auction_list_price");
                            this.msgKey(p, "auction.list-price-prompt");
                            p.closeInventory();
@@ -12141,7 +12189,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private String readRequestBody(HttpExchange exchange) throws IOException {
       try (InputStream is = exchange.getRequestBody()) {
-         return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+         byte[] data = is.readNBytes(65537);
+         if (data.length > 65536) {
+            throw new IOException("request body too large");
+         }
+
+         return new String(data, StandardCharsets.UTF_8);
       }
    }
 
@@ -12978,6 +13031,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            amount = parseFiniteDouble(raw);
                         } catch (NumberFormatException ex) {
                            this.msgKey(p, "common.invalid-number");
+                           this.returnAuctionDraftIfPricing(p, type);
                            return;
                         }
 
@@ -13395,6 +13449,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            }
                         } else {
                            this.msgKey(p, "common.amount-must-be-positive");
+                           this.returnAuctionDraftIfPricing(p, type);
                         }
                      }
                   } else {
