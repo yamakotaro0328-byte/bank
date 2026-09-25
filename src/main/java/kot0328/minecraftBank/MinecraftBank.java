@@ -155,6 +155,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final LinkedHashMap<UUID, LinkedList<String>> transactionLogs = new LinkedHashMap<>();
    private static final int LOG_MAX = 30;
    private final Map<UUID, String> awaitingChatInput = new ConcurrentHashMap<>();
+   private final Map<UUID, Long> awaitingChatInputAt = new ConcurrentHashMap<>();
+   private static final long CHAT_INPUT_TIMEOUT_MS = 300000L;
    private final HashMap<UUID, Long> govDebtDueTime = new HashMap<>();
    private final HashMap<UUID, Double> fixedDeposit2 = new HashMap<>();
    private final HashMap<UUID, Long> fixedDepositUnlockTime2 = new HashMap<>();
@@ -375,6 +377,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<UUID, Integer> donationScoreToday = new HashMap<>();
    private final HashMap<UUID, Long> donationScoreResetAt = new HashMap<>();
    private int cfgDonationScoreCapPerDay = 10;
+   private double cfgBonusEventAmount = 5000.0;
    private final HashMap<UUID, Integer> repayScoreToday = new HashMap<>();
    private final HashMap<UUID, Long> repayScoreResetAt = new HashMap<>();
    private int cfgRepayScoreCapPerDay = 60;
@@ -562,7 +565,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       LEGACY_MESSAGE_HASHES.put("loan.player-approved", new int[]{-575725092});
       LEGACY_MESSAGE_HASHES.put("loan.gov-approved", new int[]{-967462664});
       LEGACY_MESSAGE_HASHES.put("event.boom", new int[]{634323636});
-      LEGACY_MESSAGE_HASHES.put("event.bonus", new int[]{95605934});
+      LEGACY_MESSAGE_HASHES.put("event.bonus", new int[]{95605934, 1163847345});
       LEGACY_MESSAGE_HASHES.put("event.recession", new int[]{-1192384585});
       LEGACY_MESSAGE_HASHES.put("fixed-deposit.matured", new int[]{1671674389});
       LEGACY_MESSAGE_HASHES.put("fixed-deposit.matured-2", new int[]{-1691157979});
@@ -784,6 +787,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.migrateLegacyYamlDataToSqlite();
          } else {
             this.loadData();
+            if (this.lotteryDrawAt <= 0L) {
+               this.lotteryDrawAt = System.currentTimeMillis() + this.cfgLotteryDrawIntervalHours * 3600000L;
+            }
          }
 
          this.checkTreasureSpawn();
@@ -960,6 +966,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("economy.insurance-claim-cooldown-minutes", this.cfgInsuranceClaimCooldownMs / 60000L);
       c.addDefault("economy.report-interval-days", this.cfgReportIntervalDays);
       c.addDefault("economy.donation-score-cap-per-day", this.cfgDonationScoreCapPerDay);
+      c.addDefault("economy.bonus-event-amount", this.cfgBonusEventAmount);
       c.addDefault("economy.quest-offline-release-minutes", this.cfgQuestOfflineReleaseMinutes);
       c.addDefault("economy.repay-score-cap-per-day", this.cfgRepayScoreCapPerDay);
       c.addDefault("system.discord-bot-token", this.cfgDiscordBotToken);
@@ -1169,6 +1176,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgInsuranceClaimCooldownMs = c.getLong("economy.insurance-claim-cooldown-minutes", this.cfgInsuranceClaimCooldownMs / 60000L) * 60000L;
       this.cfgReportIntervalDays = c.getLong("economy.report-interval-days", this.cfgReportIntervalDays);
       this.cfgDonationScoreCapPerDay = c.getInt("economy.donation-score-cap-per-day", this.cfgDonationScoreCapPerDay);
+      this.cfgBonusEventAmount = c.getDouble("economy.bonus-event-amount", this.cfgBonusEventAmount);
       this.cfgQuestOfflineReleaseMinutes = c.getLong("economy.quest-offline-release-minutes", this.cfgQuestOfflineReleaseMinutes);
       this.cfgRepayScoreCapPerDay = c.getInt("economy.repay-score-cap-per-day", this.cfgRepayScoreCapPerDay);
       this.cfgDiscordBotToken = c.getString("system.discord-bot-token", this.cfgDiscordBotToken);
@@ -1355,6 +1363,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double currentBid = this.auctionBid.getOrDefault(auctionId, 0.0);
             UUID prevBidder = this.auctionBidder.get(auctionId);
             double minNext = prevBidder != null ? currentBid + this.cfgAuctionMinIncrement : currentBid;
+            Double buyoutPrice = this.auctionBuyoutPrice.get(auctionId);
+            if (buyoutPrice != null) {
+               minNext = Math.min(minNext, buyoutPrice);
+               amount = Math.min(amount, buyoutPrice);
+            }
+
             if (amount < minNext) {
                if (online != null) {
                   this.msgKey(online, "auction.bid-too-low", "amount", this.fmtCur(minNext));
@@ -1529,7 +1543,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void queueAuctionOfflineNotice(UUID u, String itemTypeName, double amount) {
       List<String> list = this.auctionOfflineNotices.computeIfAbsent(u, k -> new ArrayList<>());
-      list.add(itemTypeName + ";" + (long)amount);
+      list.add(itemTypeName + ";" + amount);
    }
 
    private void deliverAuctionOfflineNotices(Player p) {
@@ -1549,7 +1563,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void queueLoanOfflineNotice(UUID lenderId, String borrowerName, double amount) {
       List<String> list = this.loanOfflineNotices.computeIfAbsent(lenderId, k -> new ArrayList<>());
-      list.add(borrowerName + ";" + (long)amount);
+      list.add(borrowerName + ";" + amount);
    }
 
    private void deliverLoanOfflineNotices(Player p) {
@@ -1658,8 +1672,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          case "需要急増" -> this.getMsg("event.boom");
          case "手数料高騰" -> this.getMsg("event.tax");
          case "ボーナス支給デー" -> {
-            double bonus = 5000.0;
-            for (Player online : Bukkit.getOnlinePlayers()) {
+            List<Player> recipients = new ArrayList<>(Bukkit.getOnlinePlayers());
+            double bonus = recipients.isEmpty() ? 0.0 : Math.min(this.cfgBonusEventAmount, Math.floor(this.treasury / recipients.size()));
+            if (bonus <= 0.0) {
+               yield this.getMsg("event.bonus-empty");
+            }
+
+            this.treasury -= bonus * recipients.size();
+
+            for (Player online : recipients) {
                econ.depositPlayer(online, bonus);
                this.addLog(online.getUniqueId(), "経済イベントボーナス +" + this.fmtCur(bonus));
                this.sendToast(online, "ボーナス支給", "+" + this.fmtCur(bonus) + " が支給されました！");
@@ -4597,7 +4618,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            return true;
                         }
 
-                        this.awaitingChatInput.put(u, "webpage_password");
+                        this.awaitChatInput(u, "webpage_password");
                         this.msgKey(p, "webpage.password-prompt");
                         p.closeInventory();
                         return true;
@@ -6598,7 +6619,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.clickSound(p);
                   this.openWorldStockDetailGUI(p, symbol);
                } else {
-                  this.awaitingChatInput.put(u, "world_stock_alert:" + symbol);
+                  this.awaitChatInput(u, "world_stock_alert:" + symbol);
                   p.closeInventory();
                   this.msgKey(p, "worldstock.alert-prompt", "symbol", symbol);
                }
@@ -6629,12 +6650,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.executeWorldStockSell(p, symbol, 50, fund);
                            break;
                         case "buyqty":
-                           this.awaitingChatInput.put(u, buyQtyKey);
+                           this.awaitChatInput(u, buyQtyKey);
                            p.closeInventory();
                            this.msgKey(p, "worldstock.bulk-buy-prompt", "symbol", symbol);
                            break;
                         case "sellqty":
-                           this.awaitingChatInput.put(u, sellQtyKey);
+                           this.awaitChatInput(u, sellQtyKey);
                            p.closeInventory();
                            this.msgKey(p, "worldstock.bulk-sell-prompt", "symbol", symbol);
                      }
@@ -6866,7 +6887,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      switch (rawSlot) {
                         case 20:
                            if (isA) {
-                              this.awaitingChatInput.put(p.getUniqueId(), "trade_money");
+                              this.awaitChatInput(p.getUniqueId(), "trade_money");
                               this.msgKey(p, "trade.money-prompt");
                            } else {
                               this.errorSound(p);
@@ -6874,7 +6895,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            break;
                         case 24:
                            if (!isA) {
-                              this.awaitingChatInput.put(p.getUniqueId(), "trade_money");
+                              this.awaitChatInput(p.getUniqueId(), "trade_money");
                               this.msgKey(p, "trade.money-prompt");
                            } else {
                               this.errorSound(p);
@@ -8540,13 +8561,26 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       } else {
          Inventory inv = this.storageInventories.get(u);
          if (inv == null) {
-            int clampedSize = Math.max(9, this.cfgStorageSize / 9 * 9);
+            int clampedSize = Math.min(54, Math.max(9, this.cfgStorageSize / 9 * 9));
             inv = Bukkit.createInventory(null, clampedSize, this.tStorageLocker);
             Map<Integer, ItemStack> pending = this.pendingStorageContents.remove(u);
             if (pending != null) {
+               List<ItemStack> overflow = new ArrayList<>();
+
                for (Entry<Integer, ItemStack> entry : pending.entrySet()) {
                   if (entry.getKey() >= 0 && entry.getKey() < clampedSize) {
                      inv.setItem(entry.getKey(), entry.getValue());
+                  } else if (entry.getValue() != null) {
+                     overflow.add(entry.getValue());
+                  }
+               }
+
+               // the locker was shrunk since these were stored: refill free slots, hand back the rest
+               for (ItemStack item : overflow) {
+                  for (ItemStack left : inv.addItem(new ItemStack[]{item}).values()) {
+                     for (ItemStack drop : p.getInventory().addItem(new ItemStack[]{left}).values()) {
+                        p.getWorld().dropItemNaturally(p.getLocation(), drop);
+                     }
                   }
                }
             }
@@ -9782,7 +9816,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openHubGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.COMPASS) {
-                        this.awaitingChatInput.put(u, "world_stock_search");
+                        this.awaitChatInput(u, "world_stock_search");
                         p.closeInventory();
                         this.msgKey(p, "worldstock.search-prompt");
                      } else if (mat == Material.PLAYER_HEAD) {
@@ -9872,12 +9906,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.executeResourceBuy(p, rmat, 64);
                                  break;
                               case "sellqty":
-                                 this.awaitingChatInput.put(u, "resource_sell_qty:" + rmat.name());
+                                 this.awaitChatInput(u, "resource_sell_qty:" + rmat.name());
                                  p.closeInventory();
                                  this.msgKey(p, "resourceshop.sell-qty-prompt", "material", this.resourceDisplayName(rmat));
                                  break;
                               case "buyqty":
-                                 this.awaitingChatInput.put(u, "resource_buy_qty:" + rmat.name());
+                                 this.awaitChatInput(u, "resource_buy_qty:" + rmat.name());
                                  p.closeInventory();
                                  this.msgKey(p, "resourceshop.buy-qty-prompt", "material", this.resourceDisplayName(rmat));
                            }
@@ -9894,7 +9928,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else if (mat == Material.DIAMOND) {
                         this.buyLotteryTickets(p, 10);
                      } else if (mat == Material.WRITABLE_BOOK) {
-                        this.awaitingChatInput.put(u, "lottery_buy_qty");
+                        this.awaitChatInput(u, "lottery_buy_qty");
                         p.closeInventory();
                         this.msgKey(p, "lottery.buy-qty-prompt");
                      }
@@ -9977,7 +10011,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.msgKey(p, "quest.max-reached", "count", String.valueOf(this.cfgQuestMaxPerPlayer));
                            this.errorSound(p);
                         } else {
-                           this.awaitingChatInput.put(u, "quest_post");
+                           this.awaitChatInput(u, "quest_post");
                            p.closeInventory();
                            this.msgKey(p, "quest.post-prompt");
                         }
@@ -9987,7 +10021,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.msgKey(p, "quest.max-reached", "count", String.valueOf(this.cfgQuestMaxPerPlayer));
                            this.errorSound(p);
                         } else {
-                           this.awaitingChatInput.put(u, "team_quest_post_reward");
+                           this.awaitChatInput(u, "team_quest_post_reward");
                            p.closeInventory();
                            this.msgKey(p, "quest.team-post-prompt-reward");
                         }
@@ -10166,7 +10200,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openAdminMainGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.NAME_TAG) {
-                        this.awaitingChatInput.put(u, "admin_search_player");
+                        this.awaitChatInput(u, "admin_search_player");
                         p.closeInventory();
                         this.msgKey(p, "admin.search-player-prompt");
                      } else {
@@ -10189,15 +10223,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.openAdminPlayerListGUI(p);
                            this.clickSound(p);
                         } else if (mat == Material.GOLD_INGOT) {
-                           this.awaitingChatInput.put(u, "admin_give:" + adminTargetId);
+                           this.awaitChatInput(u, "admin_give:" + adminTargetId);
                            p.closeInventory();
                            this.msgKey(p, "admin.give-prompt");
                         } else if (mat == Material.REDSTONE) {
-                           this.awaitingChatInput.put(u, "admin_take:" + adminTargetId);
+                           this.awaitChatInput(u, "admin_take:" + adminTargetId);
                            p.closeInventory();
                            this.msgKey(p, "admin.take-prompt");
                         } else if (mat == Material.EMERALD) {
-                           this.awaitingChatInput.put(u, "admin_setcredit:" + adminTargetId);
+                           this.awaitChatInput(u, "admin_setcredit:" + adminTargetId);
                            p.closeInventory();
                            this.msgKey(p, "admin.setcredit-prompt");
                         } else {
@@ -10311,7 +10345,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               ItemMeta meta = item.getItemMeta();
                               String key = meta != null ? (String)meta.getPersistentDataContainer().get(this.configKeyTag, PersistentDataType.STRING) : null;
                               if (key != null) {
-                                 this.awaitingChatInput.put(u, "config_edit:" + key);
+                                 this.awaitChatInput(u, "config_edit:" + key);
                                  this.msgKey(p, "config.edit-prompt", "key", key);
                                  p.closeInventory();
                               }
@@ -10504,7 +10538,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openTodoHubGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.WRITABLE_BOOK) {
-                        this.awaitingChatInput.put(u, "group_create_name");
+                        this.awaitChatInput(u, "group_create_name");
                         p.closeInventory();
                         this.msgKey(p, "group.create-name-prompt");
                      } else {
@@ -10525,11 +10559,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openGroupListGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.EMERALD) {
-                        this.awaitingChatInput.put(u, "group_deposit:" + acc.id);
+                        this.awaitChatInput(u, "group_deposit:" + acc.id);
                         p.closeInventory();
                         this.msgKey(p, "group.deposit-prompt");
                      } else if (mat == Material.GOLD_INGOT) {
-                        this.awaitingChatInput.put(u, "group_withdraw:" + acc.id);
+                        this.awaitChatInput(u, "group_withdraw:" + acc.id);
                         p.closeInventory();
                         this.msgKey(p, "group.withdraw-prompt");
                      } else if (mat == Material.PLAYER_HEAD && acc.owner.equals(u)) {
@@ -10676,7 +10710,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.openFundListGUI(p);
                            this.clickSound(p);
                         } else if (mat == Material.COMPASS) {
-                           this.awaitingChatInput.put(u, "fund_stock_search:" + fund.id);
+                           this.awaitChatInput(u, "fund_stock_search:" + fund.id);
                            p.closeInventory();
                            this.msgKey(p, "worldstock.search-prompt");
                         } else if (item.hasItemMeta()) {
@@ -10784,7 +10818,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.openMyPageGUI(p);
                               } else {
                                  if (mat == Material.GLOWSTONE_DUST || mat == Material.SUNFLOWER) {
-                                    this.awaitingChatInput.put(u, "treasury_donate");
+                                    this.awaitChatInput(u, "treasury_donate");
                                     this.msgKey(p, "donate.treasury-prompt");
                                     p.closeInventory();
                                     return;
@@ -10804,7 +10838,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  } else {
                                     if (mat != Material.MAP) {
                                        if (mat == Material.TRIPWIRE_HOOK) {
-                                          this.awaitingChatInput.put(u, "webpage_password");
+                                          this.awaitChatInput(u, "webpage_password");
                                           this.msgKey(p, "webpage.password-prompt");
                                           p.closeInventory();
                                           return;
@@ -10864,7 +10898,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            p.getInventory().setItem(e.getRawSlot(), null);
                            this.returnAuctionDraftIfPricing(p, "auction_list_price");
                            this.auctionListingDraft.put(u, selected);
-                           this.awaitingChatInput.put(u, "auction_list_price");
+                           this.awaitChatInput(u, "auction_list_price");
                            this.msgKey(p, "auction.list-price-prompt");
                            p.closeInventory();
                         }
@@ -10897,7 +10931,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openAuctionGUI(p);
                         this.clickSound(p);
                      } else if (rawSlot == 46) {
-                        this.awaitingChatInput.put(u, "auction_search");
+                        this.awaitChatInput(u, "auction_search");
                         this.msgKey(p, "auction.search-prompt");
                         p.closeInventory();
                      } else if (rawSlot == 47) {
@@ -10944,7 +10978,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.errorSound(p);
                               } else {
                                  if (!seller.equals(u)) {
-                                    this.awaitingChatInput.put(u, "auction_bid:" + idStr);
+                                    this.awaitChatInput(u, "auction_bid:" + idStr);
                                     double currentBid = this.auctionBid.getOrDefault(auctionId, 0.0);
                                     boolean hasBidder = this.auctionBidder.containsKey(auctionId);
                                     double minNext = hasBidder ? currentBid + this.cfgAuctionMinIncrement : currentBid;
@@ -11070,14 +11104,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** が個人口座から全額 " + this.fmtCur(bank) + " 引き出しました。");
                      } else {
                         if (mat == Material.WRITABLE_BOOK) {
-                           this.awaitingChatInput.put(u, "personal_deposit");
+                           this.awaitChatInput(u, "personal_deposit");
                            this.msgKey(p, "personal.deposit-prompt");
                            p.closeInventory();
                            return;
                         }
 
                         if (mat == Material.PAPER) {
-                           this.awaitingChatInput.put(u, "personal_withdraw");
+                           this.awaitChatInput(u, "personal_withdraw");
                            this.msgKey(p, "personal.withdraw-prompt");
                            p.closeInventory();
                            return;
@@ -11423,14 +11457,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            }
                         } else {
                            if (mat == Material.WRITABLE_BOOK && e.getRawSlot() == 18) {
-                              this.awaitingChatInput.put(u, "plan_amount");
+                              this.awaitChatInput(u, "plan_amount");
                               this.msgKey(p, "bank.plan-amount-prompt");
                               p.closeInventory();
                               return;
                            }
 
                            if (mat == Material.PAPER && e.getRawSlot() == 19) {
-                              this.awaitingChatInput.put(u, "plan_interest");
+                              this.awaitChatInput(u, "plan_interest");
                               this.msgKey(p, "bank.plan-interest-prompt");
                               p.closeInventory();
                               return;
@@ -13035,11 +13069,27 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.guarantorProposalTime.keySet().retainAll(this.guarantorProposals.keySet());
    }
 
+   private void awaitChatInput(UUID u, String type) {
+      this.awaitingChatInputAt.put(u, System.currentTimeMillis());
+      this.awaitingChatInput.put(u, type);
+   }
+
    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
    public void onPlayerChatInput(AsyncPlayerChatEvent e) {
       Player p = e.getPlayer();
       UUID u = p.getUniqueId();
-      if (this.awaitingChatInput.containsKey(u)) {
+      Long promptedAt = this.awaitingChatInputAt.get(u);
+      if (promptedAt != null && System.currentTimeMillis() - promptedAt > CHAT_INPUT_TIMEOUT_MS && this.awaitingChatInput.containsKey(u)) {
+         String expired = this.awaitingChatInput.remove(u);
+         this.awaitingChatInputAt.remove(u);
+         Bukkit.getScheduler().runTask(this, () -> {
+            if (expired != null) {
+               this.returnAuctionDraftIfPricing(p, expired);
+            }
+
+            this.msgKey(p, "input.expired");
+         });
+      } else if (this.awaitingChatInput.containsKey(u)) {
          e.setCancelled(true);
          String type = this.awaitingChatInput.remove(u);
          String raw = e.getMessage().trim();
@@ -13192,7 +13242,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** が探索依頼を掲示しました。報酬: " + this.fmtCur(amount));
                               }
                            } else if (type.equals("team_quest_post_reward")) {
-                              this.awaitingChatInput.put(u, "team_quest_post_size:" + amount);
+                              this.awaitChatInput(u, "team_quest_post_size:" + amount);
                               this.msgKey(p, "quest.team-post-prompt-size", "max", String.valueOf(this.cfgQuestTeamMaxSize));
                            } else if (type.startsWith("team_quest_post_size:")) {
                               double teamReward;
@@ -13487,7 +13537,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     }
 
                                     this.auctionListingStartPrice.put(u, amount);
-                                    this.awaitingChatInput.put(u, "auction_buyout_price");
+                                    this.awaitChatInput(u, "auction_buyout_price");
                                     this.msgKey(p, "auction.buyout-prompt");
                                     break;
                                  case "auction_buyout_price":
@@ -14109,7 +14159,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("achievement.unlocked", "<gold><bold>\ud83c\udf96 実績「{title}」を解放しました！</bold></gold>");
       DEFAULT_MESSAGES.put("event.boom", "<green><bold>【経済イベント】需要急増！</bold> 資源の買い手が殺到し、資源相場ショップの取引価格が一時的に10%上昇します。</green>");
       DEFAULT_MESSAGES.put("event.tax", "<red><bold>【経済イベント】手数料高騰！</bold> 世界株式市場の売買手数料が一時的に2倍になります。</red>");
-      DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 全プレイヤーに{amount}を支給しました。</gold>");
+      DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 国庫からオンラインの全プレイヤーに{amount}を支給しました。</gold>");
+      DEFAULT_MESSAGES.put("event.bonus-empty", "<gray><b>【経済イベント】ボーナス支給デー</b> …のはずが、国庫が空のため今回の支給は見送られました。</gray>");
       DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>【経済イベント】供給過多！</bold> 市場に資源があふれ、資源相場ショップの取引価格が一時的に10%下落します。</dark_red>");
       DEFAULT_MESSAGES.put("confirm.dissolve-prompt", "<red><bold>会社を本当に解散しますか？</bold></red>");
       DEFAULT_MESSAGES.put("confirm.withdraw-prompt", "<red><bold>預金全額を引き出しますか？</bold></red> <yellow>30秒以内にもう一度クリックで確定します。</yellow>");
@@ -14195,6 +14246,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       );
       DEFAULT_MESSAGES.put("guarantor.target-busy", "<red>{player} は他のプレイヤーからの保証人依頼に対応中です。少し待ってから再度お試しください。</red>");
       DEFAULT_MESSAGES.put("quest.already-active", "<red>すでに別の依頼を受注中です。先にその依頼を達成するか、取り消してください。</red>");
+      DEFAULT_MESSAGES.put("input.expired", "<gray>入力待ちが時間切れ(5分)になったため、今のメッセージは通常のチャットとして送信しました。</gray>");
       DEFAULT_MESSAGES.put("common.invalid-name", "<red>名前は24文字以内で、< > \\ は使えません。</red>");
       DEFAULT_MESSAGES.put("resourceshop.qty-out-of-range", "<red>数量は1〜{max}個で指定してください。</red>");
       DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
