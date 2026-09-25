@@ -3759,11 +3759,24 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          : prefix + "<white>" + String.format("%,.2f", q.price) + "円</white>";
    }
 
+   private boolean isWorldStockQuoteStale(MinecraftBank.WorldStockQuote q) {
+      return q != null && System.currentTimeMillis() - q.fetchedAt >= (long)(this.cfgWorldStockCacheSeconds * 1000.0);
+   }
+
    private void executeWorldStockBuy(OfflinePlayer actor, String symbol, int qty, MinecraftBank.InvestmentFund fund) {
       UUID actorU = actor.getUniqueId();
       Player online = actor instanceof Player pl && pl.isOnline() ? pl : null;
       MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
-      if (q == null) {
+      if (this.isWorldStockQuoteStale(q)) {
+         this.fetchWorldStockQuote(symbol, fresh -> {
+            if (fresh != null && !this.isWorldStockQuoteStale(fresh)) {
+               this.executeWorldStockBuy(actor, symbol, qty, fund);
+            } else if (online != null) {
+               this.msgKey(online, "worldstock.quote-refresh-failed");
+               this.errorSound(online);
+            }
+         });
+      } else if (q == null) {
          if (online != null) {
             this.errorSound(online);
          }
@@ -3774,6 +3787,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
       } else {
          UUID trackedUuid = fund != null ? fund.id : actorU;
+         UUID limitUuid = fund != null ? fund.manager : actorU;
          UUID feeContextUuid = fund != null ? fund.manager : actorU;
          double feeRate = this.effectiveWorldStockFeeRate(feeContextUuid);
          double yenPrice = this.worldStockYenPrice(q);
@@ -3786,7 +3800,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.msgKey(online, fund != null ? "fund.trade-funds-insufficient" : "worldstock.funds-insufficient");
                this.errorSound(online);
             }
-         } else if (!this.enforceWorldStockDailyLimits(online, trackedUuid, symbol, totalCost)) {
+         } else if (!this.enforceWorldStockDailyLimits(online, limitUuid, symbol, totalCost)) {
             HashMap<String, Integer> holdings = this.playerWorldStocks.computeIfAbsent(trackedUuid, k -> new HashMap<>());
             HashMap<String, Double> avgCosts = this.playerWorldStockAvgCost.computeIfAbsent(trackedUuid, k -> new HashMap<>());
             int oldQty = holdings.getOrDefault(symbol, 0);
@@ -3801,7 +3815,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double newAvg = (oldAvg * oldQty + perShareCost * qty) / (oldQty + qty);
             holdings.put(symbol, oldQty + qty);
             avgCosts.put(symbol, newAvg);
-            this.recordWorldStockTrade(trackedUuid, symbol, totalCost, 0.0);
+            this.recordWorldStockTrade(limitUuid, symbol, totalCost, 0.0);
             if (online != null) {
                this.msgKey(
                   online,
@@ -3856,13 +3870,23 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void executeWorldStockSell(Player actor, String symbol, int qty, MinecraftBank.InvestmentFund fund) {
       UUID actorU = actor.getUniqueId();
       MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
-      if (q == null) {
+      if (this.isWorldStockQuoteStale(q)) {
+         this.fetchWorldStockQuote(symbol, fresh -> {
+            if (fresh != null && !this.isWorldStockQuoteStale(fresh) && actor.isOnline()) {
+               this.executeWorldStockSell(actor, symbol, qty, fund);
+            } else if (actor.isOnline()) {
+               this.msgKey(actor, "worldstock.quote-refresh-failed");
+               this.errorSound(actor);
+            }
+         });
+      } else if (q == null) {
          this.errorSound(actor);
       } else if (qty > this.cfgWorldStockMaxBulkQty) {
          this.msgKey(actor, "worldstock.bulk-qty-too-large", "max", String.valueOf(this.cfgWorldStockMaxBulkQty));
          this.errorSound(actor);
       } else {
          UUID trackedUuid = fund != null ? fund.id : actorU;
+         UUID limitUuid = fund != null ? fund.manager : actorU;
          UUID feeContextUuid = fund != null ? fund.manager : actorU;
          HashMap<String, Integer> holdings = this.playerWorldStocks.computeIfAbsent(trackedUuid, k -> new HashMap<>());
          HashMap<String, Double> avgCosts = this.playerWorldStockAvgCost.computeIfAbsent(trackedUuid, k -> new HashMap<>());
@@ -3881,10 +3905,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double totalFee = yenPrice * feeRate * qty;
             double oldAvg = avgCosts.getOrDefault(symbol, 0.0);
             double bulkProfit = (perShareProceeds - oldAvg) * qty;
-            if (!this.enforceWorldStockDailyLimits(actor, trackedUuid, symbol, totalProceeds)) {
+            if (!this.enforceWorldStockDailyLimits(actor, limitUuid, symbol, totalProceeds)) {
                if (bulkProfit > 0.0
-                  && this.worldStockProfitToday.getOrDefault(trackedUuid, 0.0) + bulkProfit > this.effectiveWorldStockMaxProfitPerDay(trackedUuid)) {
-                  this.msgKey(actor, "worldstock.daily-profit-limit", "amount", this.fmtCurPrecise(this.effectiveWorldStockMaxProfitPerDay(trackedUuid)));
+                  && this.worldStockProfitToday.getOrDefault(limitUuid, 0.0) + bulkProfit > this.effectiveWorldStockMaxProfitPerDay(limitUuid)) {
+                  this.msgKey(actor, "worldstock.daily-profit-limit", "amount", this.fmtCurPrecise(this.effectiveWorldStockMaxProfitPerDay(limitUuid)));
                   this.errorSound(actor);
                } else {
                   if (fund != null) {
@@ -3902,7 +3926,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      holdings.put(symbol, remaining);
                   }
 
-                  this.recordWorldStockTrade(trackedUuid, symbol, totalProceeds, bulkProfit);
+                  this.recordWorldStockTrade(limitUuid, symbol, totalProceeds, bulkProfit);
                   this.msgKey(
                      actor,
                      "worldstock.sold",
@@ -5338,9 +5362,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                           this.msgKey(p, "fund.contribute-funds-insufficient", "amount", this.fmtCur(pocket));
                                           return true;
                                        } else {
+                                          double totalUnits = this.totalFundContributions(fund);
+                                          double navPerUnit = totalUnits > 0.0 ? Math.max(this.getFundNav(fund), 1.0E-6) / totalUnits : 1.0;
                                           econ.withdrawPlayer(p, amount);
                                           fund.cashBalance += amount;
-                                          fund.contributions.merge(u, amount, Double::sum);
+                                          fund.contributions.merge(u, amount / navPerUnit, Double::sum);
                                           this.msgKey(p, "fund.contributed", "amount", this.fmtCur(amount), "fund", fund.name);
                                           this.addLog(u, "共同投資ファンド「" + fund.name + "」へ出資 -" + this.fmtCur(amount));
                                           this.sendDiscordWebhook(
@@ -5871,11 +5897,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       UUID u = p.getUniqueId();
       HashSet<UUID> allMembers = new HashSet<>(acc.members);
       allMembers.add(acc.owner);
-      double share = allMembers.isEmpty() ? 0.0 : acc.balance / allMembers.size();
+      double share = allMembers.isEmpty() ? 0.0 : Math.floor(acc.balance / allMembers.size() * 100.0) / 100.0;
+      double remainder = acc.balance - share * allMembers.size();
 
       for (UUID m : allMembers) {
-         if (share > 0.0) {
-            econ.depositPlayer(Bukkit.getOfflinePlayer(m), share);
+         double payout = m.equals(acc.owner) ? share + remainder : share;
+         if (payout > 0.0) {
+            econ.depositPlayer(Bukkit.getOfflinePlayer(m), payout);
          }
 
          HashSet<UUID> pset = this.playerGroupAccounts.get(m);
@@ -6304,7 +6332,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                lore.add("<yellow>あなたはマネージャーです</yellow>");
                lore.add("<dark_gray>クリックして運用画面を開く</dark_gray>");
             } else {
-               lore.add("<gray>あなたの出資額:</gray> <white>" + this.fmtCur(myContrib) + "</white>");
+               lore.add("<gray>保有口数:</gray> <white>" + String.format("%,.2f", myContrib) + "口" + "</white>");
                lore.add("<gray>あなたの持分評価額:</gray> <gold>" + this.fmtCur(myStakeValue) + "</gold>");
                lore.add("<dark_gray>クリックして情報画面を開く</dark_gray>");
             }
@@ -6354,7 +6382,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "<gray>マネージャー:</gray> <aqua>" + managerName + "</aqua>",
                "<gray>ファンド評価額(NAV):</gray> <gold>" + this.fmtCur(nav) + "</gold>",
                "<gray>現金残高:</gray> <white>" + this.fmtCur(fund.cashBalance) + "</white>",
-               "<gray>あなたの出資額:</gray> <white>" + this.fmtCur(myContrib) + "</white>",
+               "<gray>保有口数:</gray> <white>" + String.format("%,.2f", myContrib) + "口" + "</white>",
                "<gray>あなたの持分評価額:</gray> <gold>" + this.fmtCur(myStakeValue) + "</gold>"
             )
          );
@@ -6412,7 +6440,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "<gray>現金残高:</gray> <white>" + this.fmtCur(fund.cashBalance) + "</white>",
                "<gray>出資者数:</gray> <white>" + fund.contributions.size() + "人</white>",
                "<gray>実在する銘柄のティッカーシンボルを検索して、ファンドの資金で売買できます。</gray>",
-               "<dark_gray>取引回数/取引金額の1日あたり上限は、あなた個人の上限とは別にこのファンド専用でカウントされます。</dark_gray>"
+               "<dark_gray>取引回数/取引金額/利益の1日あたり上限は、マネージャー個人の取引と合算してカウントされます。</dark_gray>"
             )
          );
          gui.setItem(49, this.createItem(Material.COMPASS, "<gold><bold>\ud83d\udd0d 銘柄を検索して売買</bold></gold>", "<gray>クリックしてティッカーシンボルをチャット入力</gray>"));
@@ -14247,6 +14275,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("guarantor.target-busy", "<red>{player} は他のプレイヤーからの保証人依頼に対応中です。少し待ってから再度お試しください。</red>");
       DEFAULT_MESSAGES.put("quest.already-active", "<red>すでに別の依頼を受注中です。先にその依頼を達成するか、取り消してください。</red>");
       DEFAULT_MESSAGES.put("input.expired", "<gray>入力待ちが時間切れ(5分)になったため、今のメッセージは通常のチャットとして送信しました。</gray>");
+      DEFAULT_MESSAGES.put("worldstock.quote-refresh-failed", "<red>最新の株価を取得できなかったため、取引を中止しました。少し待ってから再度お試しください。</red>");
       DEFAULT_MESSAGES.put("common.invalid-name", "<red>名前は24文字以内で、< > \\ は使えません。</red>");
       DEFAULT_MESSAGES.put("resourceshop.qty-out-of-range", "<red>数量は1〜{max}個で指定してください。</red>");
       DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
