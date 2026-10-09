@@ -463,6 +463,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final List<MinecraftBank.StandingTransfer> standingTransfers = new ArrayList<>();
    private int cfgStandingTransferMaxPerPlayer = 5;
    private int cfgStandingTransferMinIntervalHours = 1;
+   private boolean cfgTaxEnabled = true;
+   private double cfgTaxSalesRate = 0.05;
+   private double cfgTaxWealthRate = 0.005;
+   private double cfgTaxWealthThreshold = 1000000.0;
+   private int cfgTaxWealthIntervalHours = 168;
+   private int cfgTaxWealthActiveDays = 14;
+   private int cfgChartRecordMinutes = 30;
+   private final HashMap<UUID, Double> taxPaidTotal = new HashMap<>();
+   private double taxRevenueTotal = 0.0;
+   private long wealthTaxNextAt = 0L;
+   private final HashMap<Material, LinkedList<Double>> resourcePriceHistory = new HashMap<>();
+   private final HashMap<String, List<Double>> stockHistoryCache = new HashMap<>();
+   private final HashMap<String, Long> stockHistoryFetchedAt = new HashMap<>();
    private final Component tAuctionRanking = this.mm("<bold><green>【オークション・落札売上ランキング】</green></bold>");
    private final Component tCollateralSelect = this.mm("<bold><dark_purple>【担保アイテム選択】</dark_purple></bold>");
    private final Component tAdminMain = this.mm("<bold><red>【管理者パネル】</red></bold>");
@@ -839,6 +852,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Bukkit.getScheduler().runTaskTimer(this, this::checkGovLoanDeadlines, 1200L, 1200L);
          Bukkit.getScheduler().runTaskTimer(this, this::checkCollateralDeadlines, 1200L, 1200L);
          Bukkit.getScheduler().runTaskTimer(this, this::processStandingTransfers, 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this::processWealthTax, 1200L, 1200L);
+         long chartTicks = this.cfgChartRecordMinutes * 60L * 20L;
+         Bukkit.getScheduler().runTaskTimer(this, this::recordResourcePrices, 200L, chartTicks);
          Bukkit.getScheduler().runTaskTimer(this, this::refreshQuestBoard, 1200L, 1200L);
          long questSystemTicks = Math.max(1, this.cfgQuestSystemCheckIntervalMinutes) * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, this::generateSystemQuestsIfNeeded, questSystemTicks, questSystemTicks);
@@ -958,6 +974,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("economy.admin-confirm-threshold", this.cfgAdminConfirmThreshold);
       c.addDefault("economy.standing-transfer-max-per-player", this.cfgStandingTransferMaxPerPlayer);
       c.addDefault("economy.standing-transfer-min-interval-hours", this.cfgStandingTransferMinIntervalHours);
+      c.addDefault("tax.enabled", this.cfgTaxEnabled);
+      c.addDefault("tax.sales-rate", this.cfgTaxSalesRate);
+      c.addDefault("tax.wealth-rate", this.cfgTaxWealthRate);
+      c.addDefault("tax.wealth-threshold", this.cfgTaxWealthThreshold);
+      c.addDefault("tax.wealth-interval-hours", this.cfgTaxWealthIntervalHours);
+      c.addDefault("tax.wealth-active-days", this.cfgTaxWealthActiveDays);
+      c.addDefault("chart.resource-record-minutes", this.cfgChartRecordMinutes);
       c.addDefault("economy.installment-enabled", this.cfgInstallmentEnabled);
       c.addDefault("economy.installment-min-credit-score", this.cfgInstallmentMinCreditScore);
       c.addDefault("economy.installment-count", this.cfgInstallmentCount);
@@ -1173,6 +1196,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgAdminConfirmThreshold = Math.max(0.0, c.getDouble("economy.admin-confirm-threshold", this.cfgAdminConfirmThreshold));
       this.cfgStandingTransferMaxPerPlayer = Math.max(1, c.getInt("economy.standing-transfer-max-per-player", this.cfgStandingTransferMaxPerPlayer));
       this.cfgStandingTransferMinIntervalHours = Math.max(1, c.getInt("economy.standing-transfer-min-interval-hours", this.cfgStandingTransferMinIntervalHours));
+      this.cfgTaxEnabled = c.getBoolean("tax.enabled", this.cfgTaxEnabled);
+      this.cfgTaxSalesRate = Math.max(0.0, Math.min(0.9, c.getDouble("tax.sales-rate", this.cfgTaxSalesRate)));
+      this.cfgTaxWealthRate = Math.max(0.0, Math.min(0.5, c.getDouble("tax.wealth-rate", this.cfgTaxWealthRate)));
+      this.cfgTaxWealthThreshold = Math.max(0.0, c.getDouble("tax.wealth-threshold", this.cfgTaxWealthThreshold));
+      this.cfgTaxWealthIntervalHours = Math.max(1, c.getInt("tax.wealth-interval-hours", this.cfgTaxWealthIntervalHours));
+      this.cfgTaxWealthActiveDays = Math.max(1, c.getInt("tax.wealth-active-days", this.cfgTaxWealthActiveDays));
+      this.cfgChartRecordMinutes = Math.max(5, c.getInt("chart.resource-record-minutes", this.cfgChartRecordMinutes));
       this.cfgInstallmentEnabled = c.getBoolean("economy.installment-enabled", this.cfgInstallmentEnabled);
       this.cfgInstallmentMinCreditScore = c.getInt("economy.installment-min-credit-score", this.cfgInstallmentMinCreditScore);
       this.cfgInstallmentCount = c.getInt("economy.installment-count", this.cfgInstallmentCount);
@@ -1468,7 +1498,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void finalizeAuctionSale(UUID auctionId, UUID seller, UUID winner, ItemStack item, double finalBid) {
       double fee = finalBid * this.cfgAuctionFeeRate * this.vipFeeMultiplier(seller);
-      double proceeds = finalBid - fee;
+      double grossProceeds = finalBid - fee;
+      double auctionTax = this.collectSalesTax(seller, grossProceeds);
+      double proceeds = grossProceeds - auctionTax;
       this.weeklyTradeVolume += finalBid;
       this.auctionTotalSoldAmount.merge(seller, finalBid, Double::sum);
       this.addPendingItem(winner, item);
@@ -4185,7 +4217,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
 
          this.removeMaterialFromInventory(p, mat, qty);
-         econ.depositPlayer(p, total);
+         double salesTax = this.collectSalesTax(u, total);
+         econ.depositPlayer(p, total - salesTax);
          this.resourceSoldToday.merge(u, total, Double::sum);
          this.applyResourceTradeImpact(mat, qty, false);
          this.addLog(u, "資源相場ショップ: " + this.resourceDisplayName(mat) + " を" + qty + "個売却 +" + this.fmtCur(total));
@@ -4196,6 +4229,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
 
          this.msgKey(p, "resourceshop.sold", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", this.fmtCurPrecise(total));
+         if (salesTax > 0.0) {
+            this.msgKey(p, "tax.sales-deducted", "amount", this.fmtCurPrecise(salesTax), "rate", this.fmtPercent(this.cfgTaxSalesRate));
+         }
          this.clickSound(p);
          this.openResourceShopDetailGUI(p, mat);
       }
@@ -5077,6 +5113,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
                            }
                         }
+                     } else if (sub.equals("tax")) {
+                        this.showTaxInfo(p);
+                        return true;
+                     } else if (sub.equals("chart")) {
+                        if (args.length < 2) {
+                           this.msgKey(p, "chart.usage");
+                        } else {
+                           this.showChart(p, args[1]);
+                        }
+
+                        return true;
                      } else if (sub.equals("standing")) {
                         this.handleStandingCommand(p, args);
                         return true;
@@ -5613,7 +5660,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "collect",
                "treasure",
                "standing",
-               "transfers"
+               "transfers",
+               "tax",
+               "chart"
             )
          );
          if (sender.hasPermission("bank.admin")) {
@@ -6598,6 +6647,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
 
          infoLore.add("<gray>取引所: </gray><white>" + q.exchangeName + "</white>");
+      List<Double> stockHist = this.stockHistoryCache.get(symbol);
+      if (stockHist != null && stockHist.size() >= 2) {
+         String cur = q.currency != null ? q.currency : "";
+         infoLore.add("<gray>1ヶ月の値動き:</gray> " + this.sparkline(stockHist));
+         infoLore.add("<dark_gray>" + this.chartSummary(stockHist, v -> String.format("%,.2f %s", v, cur)) + "</dark_gray>");
+      } else {
+         this.fetchWorldStockHistory(symbol, h -> {});
+         infoLore.add("<dark_gray>チャート取得中… (/meco chart " + symbol + ")</dark_gray>");
+      }
       } else {
          infoLore.add("<red>現在値を取得できませんでした</red>");
          infoLore.add("<gray>存在しないティッカーか、通信エラーの可能性があります</gray>");
@@ -8556,6 +8614,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       );
       if (personalMult > 1.01) {
          infoLore.add("<red>あなたは連続購入中のため、買値が割増(×" + String.format("%.2f", personalMult) + ")になっています</red>");
+      }
+
+      LinkedList<Double> priceHist = this.resourcePriceHistory.get(mat);
+      if (priceHist != null && priceHist.size() >= 2) {
+         infoLore.add("<gray>相場(直近" + this.fmtHistorySpan(priceHist.size()) + "):</gray> " + this.sparkline(priceHist));
+         infoLore.add("<dark_gray>" + this.chartSummary(priceHist, this::fmtCurPrecise) + "</dark_gray>");
       }
 
       if (this.cfgResourceMaxSellPerDay > 0.0) {
@@ -13255,6 +13319,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.treasureLastFoundAt.remove(u);
       this.transferHistory.remove(u);
       this.standingTransfers.removeIf(st -> st.from.equals(u));
+      this.taxPaidTotal.remove(u);
       this.welfareCountToday.remove(u);
       this.welfareCountResetAt.remove(u);
       this.auctionPendingItems.remove(u);
@@ -13907,6 +13972,263 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
+   private String fmtPercent(double rate) {
+      double pct = rate * 100.0;
+      return (pct == Math.floor(pct) ? String.valueOf((long)pct) : String.format("%.2f", pct).replaceAll("0+$", "")) + "%";
+   }
+
+   private double collectSalesTax(UUID u, double gross) {
+      if (this.cfgTaxEnabled && !(this.cfgTaxSalesRate <= 0.0) && !(gross <= 0.0)) {
+         double tax = gross * this.cfgTaxSalesRate;
+         this.treasury += tax;
+         this.taxRevenueTotal += tax;
+         this.taxPaidTotal.merge(u, tax, Double::sum);
+         return tax;
+      } else {
+         return 0.0;
+      }
+   }
+
+   private double estimateWealthTax(double wealth) {
+      return this.cfgTaxEnabled && !(this.cfgTaxWealthRate <= 0.0) && wealth > this.cfgTaxWealthThreshold
+         ? (wealth - this.cfgTaxWealthThreshold) * this.cfgTaxWealthRate
+         : 0.0;
+   }
+
+   private void processWealthTax() {
+      long now = System.currentTimeMillis();
+      if (this.wealthTaxNextAt <= 0L) {
+         this.wealthTaxNextAt = now + this.cfgTaxWealthIntervalHours * 3600000L;
+      } else if (now >= this.wealthTaxNextAt) {
+         this.wealthTaxNextAt = now + this.cfgTaxWealthIntervalHours * 3600000L;
+         if (this.cfgTaxEnabled && !(this.cfgTaxWealthRate <= 0.0)) {
+            long activeSince = now - this.cfgTaxWealthActiveDays * 86400000L;
+            double total = 0.0;
+            int count = 0;
+
+            for (OfflinePlayer op : Bukkit.getOfflinePlayers()) {
+               if (op.isOnline() || op.getLastSeen() >= activeSince) {
+                  UUID u = op.getUniqueId();
+                  double pocket = econ.getBalance(op);
+                  double bank = this.personalBank.getOrDefault(u, 0.0);
+                  double wealth = pocket + bank;
+                  double tax = this.estimateWealthTax(wealth);
+                  if (!(tax < 0.01)) {
+                     double fromPocket = Math.min(Math.max(0.0, pocket), tax);
+                     if (fromPocket > 0.0 && !econ.withdrawPlayer(op, fromPocket).transactionSuccess()) {
+                        fromPocket = 0.0;
+                     }
+
+                     double fromBank = Math.min(Math.max(0.0, bank), tax - fromPocket);
+                     if (fromBank > 0.0) {
+                        this.personalBank.put(u, bank - fromBank);
+                     }
+
+                     double paid = fromPocket + fromBank;
+                     if (!(paid <= 0.0)) {
+                        this.treasury += paid;
+                        this.taxRevenueTotal += paid;
+                        this.taxPaidTotal.merge(u, paid, Double::sum);
+                        total += paid;
+                        count++;
+                        this.addLog(u, "資産税 -" + this.fmtCur(paid));
+                        Player online = Bukkit.getPlayer(u);
+                        if (online != null) {
+                           this.msgKey(
+                              online,
+                              "tax.wealth-paid",
+                              "wealth",
+                              this.fmtCur(wealth),
+                              "threshold",
+                              this.fmtCur(this.cfgTaxWealthThreshold),
+                              "amount",
+                              this.fmtCur(paid)
+                           );
+                        }
+                     }
+                  }
+               }
+            }
+
+            if (count > 0) {
+               this.broadcastNews(this.getMsg("tax.wealth-broadcast", "total", this.fmtCur(total), "count", String.valueOf(count)));
+               this.sendDiscordWebhook("🏛 資産税を徴収しました。総額 " + this.fmtCur(total) + "（" + count + "人）");
+            }
+         }
+      }
+   }
+
+   private void showTaxInfo(Player p) {
+      UUID u = p.getUniqueId();
+      this.msgKey(p, "tax.info-header");
+      if (!this.cfgTaxEnabled) {
+         this.msgKey(p, "tax.info-disabled");
+      } else {
+         this.msgKey(p, "tax.info-sales", "rate", this.fmtPercent(this.cfgTaxSalesRate));
+         this.msgKey(
+            p,
+            "tax.info-wealth",
+            "threshold",
+            this.fmtCur(this.cfgTaxWealthThreshold),
+            "rate",
+            this.fmtPercent(this.cfgTaxWealthRate),
+            "hours",
+            String.valueOf(this.cfgTaxWealthIntervalHours),
+            "time",
+            this.fmtRemain(this.wealthTaxNextAt - System.currentTimeMillis())
+         );
+         double wealth = econ.getBalance(p) + this.personalBank.getOrDefault(u, 0.0);
+         this.msgKey(p, "tax.info-estimate", "wealth", this.fmtCur(wealth), "amount", this.fmtCur(this.estimateWealthTax(wealth)));
+      }
+
+      this.msgKey(p, "tax.info-paid", "mine", this.fmtCur(this.taxPaidTotal.getOrDefault(u, 0.0)), "total", this.fmtCur(this.taxRevenueTotal));
+   }
+
+   private void recordResourcePrices() {
+      int maxPoints = Math.max(2, (int)(1440L / this.cfgChartRecordMinutes));
+
+      for (Material mat : RESOURCE_BASE_PRICES.keySet()) {
+         LinkedList<Double> hist = this.resourcePriceHistory.computeIfAbsent(mat, k -> new LinkedList<>());
+         hist.addLast(this.getResourceEffectivePrice(mat));
+
+         while (hist.size() > maxPoints) {
+            hist.removeFirst();
+         }
+      }
+   }
+
+   private String fmtHistorySpan(int points) {
+      long minutes = (long)(points - 1) * this.cfgChartRecordMinutes;
+      return minutes >= 60L ? minutes / 60L + "時間" : minutes + "分";
+   }
+
+   private String sparkline(List<Double> vals) {
+      if (vals.size() < 2) {
+         return "<dark_gray>(データ収集中)</dark_gray>";
+      } else {
+         double min = Collections.min(vals);
+         double max = Collections.max(vals);
+         String bars = "▁▂▃▄▅▆▇█";
+         StringBuilder sb = new StringBuilder();
+
+         for (double v : vals) {
+            int idx = max - min < 1.0E-9 ? 3 : (int)Math.round((v - min) / (max - min) * 7.0);
+            sb.append(bars.charAt(Math.max(0, Math.min(7, idx))));
+         }
+
+         String color = vals.get(vals.size() - 1) >= vals.get(0) ? "green" : "red";
+         return "<" + color + ">" + sb + "</" + color + ">";
+      }
+   }
+
+   private String chartSummary(List<Double> vals, java.util.function.Function<Double, String> fmt) {
+      double first = vals.get(0);
+      double last = vals.get(vals.size() - 1);
+      double change = first > 0.0 ? (last - first) / first * 100.0 : 0.0;
+      return "最高 "
+         + fmt.apply(Collections.max(vals))
+         + " / 最安 "
+         + fmt.apply(Collections.min(vals))
+         + " / 変動 "
+         + (change >= 0.0 ? "+" : "")
+         + String.format("%.2f", change)
+         + "%";
+   }
+
+   private void fetchWorldStockHistory(String rawSymbol, Consumer<List<Double>> callback) {
+      String symbol = rawSymbol.trim().toUpperCase();
+      long now = System.currentTimeMillis();
+      if (now - this.stockHistoryFetchedAt.getOrDefault(symbol, 0L) < 1800000L) {
+         callback.accept(this.stockHistoryCache.get(symbol));
+      } else {
+         this.stockHistoryFetchedAt.put(symbol, now);
+         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
+            List<Double> result = null;
+            HttpURLConnection conn = null;
+
+            try {
+               String encoded = URLEncoder.encode(symbol, StandardCharsets.UTF_8).replace("+", "%20");
+               URL url = new URL("https://query1.finance.yahoo.com/v8/finance/chart/" + encoded + "?interval=1d&range=1mo");
+               conn = (HttpURLConnection)url.openConnection();
+               conn.setRequestMethod("GET");
+               conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) MinecraftBankPlugin");
+               conn.setConnectTimeout(5000);
+               conn.setReadTimeout(5000);
+               if (conn.getResponseCode() == 200) {
+                  String body = new String(conn.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                  Matcher m = Pattern.compile("\"close\"\\s*:\\s*\\[([^\\]]*)\\]").matcher(body);
+                  if (m.find()) {
+                     List<Double> vals = new ArrayList<>();
+
+                     for (String tok : m.group(1).split(",")) {
+                        try {
+                           double v = Double.parseDouble(tok.trim());
+                           if (Double.isFinite(v)) {
+                              vals.add(v);
+                           }
+                        } catch (NumberFormatException ignored) {
+                        }
+                     }
+
+                     if (vals.size() >= 2) {
+                        result = vals;
+                     }
+                  }
+               }
+            } catch (Exception ex) {
+               this.getLogger().warning("[世界株式市場] " + symbol + " の株価履歴取得に失敗しました: " + ex.getMessage());
+            } finally {
+               if (conn != null) {
+                  conn.disconnect();
+               }
+            }
+
+            List<Double> finalResult = result;
+            Bukkit.getScheduler().runTask(this, () -> {
+               if (finalResult != null) {
+                  this.stockHistoryCache.put(symbol, finalResult);
+               }
+
+               callback.accept(finalResult);
+            });
+         });
+      }
+   }
+
+   private void showChart(Player p, String raw) {
+      Material mat = Material.matchMaterial(raw);
+      if (mat != null && RESOURCE_BASE_PRICES.containsKey(mat)) {
+         LinkedList<Double> hist = this.resourcePriceHistory.get(mat);
+         if (hist != null && hist.size() >= 2) {
+            this.msgKey(p, "chart.header", "name", this.resourceDisplayName(mat), "span", "直近" + this.fmtHistorySpan(hist.size()));
+            p.sendMessage(this.mm(this.sparkline(hist)));
+            p.sendMessage(this.mm("<gray>" + this.chartSummary(hist, this::fmtCurPrecise) + "</gray>"));
+         } else {
+            this.msgKey(p, "chart.no-data");
+         }
+      } else {
+         String symbol = raw.trim().toUpperCase();
+         if (!symbol.matches("[A-Z0-9.^=\\-]{1,20}")) {
+            this.msgKey(p, "chart.usage");
+         } else {
+            this.msgKey(p, "chart.fetching", "symbol", symbol);
+            this.fetchWorldStockHistory(symbol, hist -> {
+               if (p.isOnline()) {
+                  if (hist != null && hist.size() >= 2) {
+                     MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+                     String cur = q != null && q.currency != null ? q.currency : "";
+                     this.msgKey(p, "chart.header", "name", symbol, "span", "1ヶ月・日足");
+                     p.sendMessage(this.mm(this.sparkline(hist)));
+                     p.sendMessage(this.mm("<gray>" + this.chartSummary(hist, v -> String.format("%,.2f %s", v, cur)) + "</gray>"));
+                  } else {
+                     this.msgKey(p, "chart.fetch-failed", "symbol", symbol);
+                  }
+               }
+            });
+         }
+      }
+   }
+
    private void sendShortfall(Player p, double need, double have) {
       if (p != null && need > have) {
          this.msgKey(p, "common.shortfall", "amount", this.fmtCur(need - have));
@@ -14432,6 +14754,32 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.standingTransfers.add(st);
          }
       }
+
+      for (String key : this.db.getKeys("tax_paid")) {
+         try {
+            this.taxPaidTotal.put(UUID.fromString(key), this.db.getDouble("tax_paid", key, 0.0));
+         } catch (IllegalArgumentException ignored) {
+         }
+      }
+
+      this.taxRevenueTotal = this.db.getDouble("tax_state", "revenue", 0.0);
+      this.wealthTaxNextAt = this.db.getLong("tax_state", "wealth_next_at", 0L);
+
+      for (String key : this.db.getKeys("resource_price_history")) {
+         Material histMat = Material.matchMaterial(key);
+         if (histMat != null) {
+            LinkedList<Double> hist = new LinkedList<>();
+
+            for (String v : this.db.getStringList("resource_price_history", key)) {
+               try {
+                  hist.add(Double.parseDouble(v));
+               } catch (NumberFormatException ignored) {
+               }
+            }
+
+            this.resourcePriceHistory.put(histMat, hist);
+         }
+      }
    }
 
    private void saveExtraFeatureData() {
@@ -14464,6 +14812,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       this.db.setStringList("standing_transfers", "_", this.standingTransfers.stream().map(MinecraftBank.StandingTransfer::serialize).toList());
+      this.db.removeSection("tax_paid");
+
+      for (Entry<UUID, Double> entry : this.taxPaidTotal.entrySet()) {
+         this.db.setDouble("tax_paid", entry.getKey().toString(), entry.getValue());
+      }
+
+      this.db.setDouble("tax_state", "revenue", this.taxRevenueTotal);
+      this.db.setLong("tax_state", "wealth_next_at", this.wealthTaxNextAt);
+      this.db.removeSection("resource_price_history");
+
+      for (Entry<Material, LinkedList<Double>> entry : this.resourcePriceHistory.entrySet()) {
+         this.db.setStringList("resource_price_history", entry.getKey().name(), entry.getValue().stream().map(String::valueOf).toList());
+      }
    }
 
    private void addLog(UUID u, String content) {
@@ -15285,6 +15646,20 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       DEFAULT_MESSAGES.put("merchant.funds-insufficient", "<red>手持ち資金が足りません。</red>");
       DEFAULT_MESSAGES.put("merchant.bought", "<green><bold>{item} を購入しました。（{amount}）</bold></green>");
       DEFAULT_MESSAGES.put("merchant.location-hint", "<gold><bold>巡回商人は現在 {world} ({x}, {y}, {z}) 付近にいます。</bold></gold>");
+      DEFAULT_MESSAGES.put("tax.sales-deducted", "<gray>（取引税 {rate}: {amount} が国庫に納められました）</gray>");
+      DEFAULT_MESSAGES.put("tax.wealth-paid", "<gold>【資産税】</gold> <white>資産 {wealth} のうち {threshold} を超える分に課税され、{amount} を納めました。</white>");
+      DEFAULT_MESSAGES.put("tax.wealth-broadcast", "<gold><bold>【資産税】</bold></gold> <white>資産税を徴収しました。総額 {total}（{count}人）は国庫に入りました。</white>");
+      DEFAULT_MESSAGES.put("tax.info-header", "<gold><bold>===== 税金 =====</bold></gold>");
+      DEFAULT_MESSAGES.put("tax.info-disabled", "<gray>このサーバーでは税金は無効になっています。</gray>");
+      DEFAULT_MESSAGES.put("tax.info-sales", "<gray>取引税:</gray> <white>{rate}</white> <dark_gray>(資源ショップの売却・オークションの売上)</dark_gray>");
+      DEFAULT_MESSAGES.put("tax.info-wealth", "<gray>資産税:</gray> <white>{threshold} を超える資産の {rate}</white> <dark_gray>({hours}時間ごと / 次回まで あと {time})</dark_gray>");
+      DEFAULT_MESSAGES.put("tax.info-estimate", "<gray>あなたの資産:</gray> <white>{wealth}</white> <gray>→ 次回の資産税(見込み):</gray> <yellow>{amount}</yellow>");
+      DEFAULT_MESSAGES.put("tax.info-paid", "<gray>あなたの納税額(累計):</gray> <yellow>{mine}</yellow> <gray>/ サーバーの税収(累計):</gray> <gold>{total}</gold>");
+      DEFAULT_MESSAGES.put("chart.usage", "<yellow>使用法: /meco chart <資源名(例: diamond) | 銘柄コード(例: AAPL)></yellow>");
+      DEFAULT_MESSAGES.put("chart.header", "<aqua><bold>===== {name} の相場チャート ({span}) =====</bold></aqua>");
+      DEFAULT_MESSAGES.put("chart.no-data", "<gray>まだ十分な価格データがありません。しばらくしてからもう一度見てください。</gray>");
+      DEFAULT_MESSAGES.put("chart.fetching", "<gray>{symbol} の株価履歴を取得しています…</gray>");
+      DEFAULT_MESSAGES.put("chart.fetch-failed", "<red>{symbol} の株価履歴を取得できませんでした。銘柄コードを確認してください。</red>");
       DEFAULT_MESSAGES.put("common.shortfall", "<gray>→ あと <red>{amount}</red> 足りません。</gray>");
       DEFAULT_MESSAGES.put("common.presets-label", "<gray>クイック入力(クリック→Enter):</gray>");
       DEFAULT_MESSAGES.put(
