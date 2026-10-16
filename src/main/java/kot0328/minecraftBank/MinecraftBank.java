@@ -464,6 +464,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final List<MinecraftBank.StandingTransfer> standingTransfers = new ArrayList<>();
    private int cfgStandingTransferMaxPerPlayer = 5;
    private int cfgStandingTransferMinIntervalHours = 1;
+   private String cfgStorageType = "sqlite";
+   private String cfgMysqlHost = "localhost";
+   private int cfgMysqlPort = 3306;
+   private String cfgMysqlDatabase = "minecraft";
+   private String cfgMysqlUser = "root";
+   private String cfgMysqlPassword = "";
+   private String cfgMysqlTablePrefix = "mbank_";
+   private boolean cfgMysqlSsl = false;
    private volatile String ledgerStatsJson = "null";
    private static final List<String> FEATURE_NAMES = List.of("auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate");
    private final HashMap<String, Boolean> featureEnabled = new HashMap<>();
@@ -813,14 +821,31 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          boolean dbFileExistedBeforeStartup = dbFile.exists();
 
          try {
-            this.db = new MinecraftBank.PluginDataStore(dbFile, this.getLogger());
+            if (this.cfgStorageType.equals("mysql")) {
+               this.db = MinecraftBank.PluginDataStore.mysql(
+                  this.cfgMysqlHost,
+                  this.cfgMysqlPort,
+                  this.cfgMysqlDatabase,
+                  this.cfgMysqlUser,
+                  this.cfgMysqlPassword,
+                  this.cfgMysqlTablePrefix,
+                  this.cfgMysqlSsl,
+                  this.getLogger(),
+                  dbFile
+               );
+               this.getLogger().info("[データベース] MySQL (" + this.cfgMysqlHost + ":" + this.cfgMysqlPort + "/" + this.cfgMysqlDatabase + ") に接続しました。");
+               this.getLogger().warning("[データベース] 同じ table-prefix を複数のサーバーで同時に使わないでください（データが上書きし合います）。");
+            } else {
+               this.db = new MinecraftBank.PluginDataStore(dbFile, this.getLogger());
+            }
          } catch (SQLException ex) {
-            this.getLogger().severe("SQLiteデータベース(data.db)の初期化に失敗しました。プラグインを停止します: " + ex.getMessage());
+            this.getLogger().severe("データベース(" + this.cfgStorageType + ")の初期化に失敗しました。プラグインを停止します: " + ex.getMessage());
             this.getServer().getPluginManager().disablePlugin(this);
             return;
          }
 
-         if (!dbFileExistedBeforeStartup && this.hasLegacyManagedDataInConfig()) {
+         boolean storageHadData = this.db.isMySql() ? this.db.hadDataAtStartup() : dbFileExistedBeforeStartup;
+         if (!storageHadData && this.hasLegacyManagedDataInConfig()) {
             this.migrateLegacyYamlDataToSqlite();
          } else {
             this.loadData();
@@ -993,6 +1018,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("economy.admin-confirm-threshold", this.cfgAdminConfirmThreshold);
       c.addDefault("economy.standing-transfer-max-per-player", this.cfgStandingTransferMaxPerPlayer);
       c.addDefault("economy.standing-transfer-min-interval-hours", this.cfgStandingTransferMinIntervalHours);
+      c.addDefault("storage.type", this.cfgStorageType);
+      c.addDefault("storage.mysql.host", this.cfgMysqlHost);
+      c.addDefault("storage.mysql.port", this.cfgMysqlPort);
+      c.addDefault("storage.mysql.database", this.cfgMysqlDatabase);
+      c.addDefault("storage.mysql.username", this.cfgMysqlUser);
+      c.addDefault("storage.mysql.password", this.cfgMysqlPassword);
+      c.addDefault("storage.mysql.table-prefix", this.cfgMysqlTablePrefix);
+      c.addDefault("storage.mysql.use-ssl", this.cfgMysqlSsl);
 
       for (String feature : FEATURE_NAMES) {
          c.addDefault("features." + feature, true);
@@ -1224,6 +1257,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgAdminConfirmThreshold = Math.max(0.0, c.getDouble("economy.admin-confirm-threshold", this.cfgAdminConfirmThreshold));
       this.cfgStandingTransferMaxPerPlayer = Math.max(1, c.getInt("economy.standing-transfer-max-per-player", this.cfgStandingTransferMaxPerPlayer));
       this.cfgStandingTransferMinIntervalHours = Math.max(1, c.getInt("economy.standing-transfer-min-interval-hours", this.cfgStandingTransferMinIntervalHours));
+      this.cfgStorageType = c.getString("storage.type", this.cfgStorageType).trim().toLowerCase();
+      this.cfgMysqlHost = c.getString("storage.mysql.host", this.cfgMysqlHost);
+      this.cfgMysqlPort = c.getInt("storage.mysql.port", this.cfgMysqlPort);
+      this.cfgMysqlDatabase = c.getString("storage.mysql.database", this.cfgMysqlDatabase);
+      this.cfgMysqlUser = c.getString("storage.mysql.username", this.cfgMysqlUser);
+      this.cfgMysqlPassword = c.getString("storage.mysql.password", this.cfgMysqlPassword);
+      this.cfgMysqlTablePrefix = c.getString("storage.mysql.table-prefix", this.cfgMysqlTablePrefix);
+      this.cfgMysqlSsl = c.getBoolean("storage.mysql.use-ssl", this.cfgMysqlSsl);
 
       for (String feature : FEATURE_NAMES) {
          this.featureEnabled.put(feature, c.getBoolean("features." + feature, true));
@@ -1859,6 +1900,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       {
          try {
             File srcFile = new File(this.getDataFolder(), "data.db");
+            if (this.db.isMySql()) {
+               File backupsDirM = new File(this.getDataFolder(), "backups");
+               backupsDirM.mkdirs();
+               File destM = new File(backupsDirM, "data-" + new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + ".db");
+               this.db.writeSqliteSnapshot(destM);
+               this.getLogger().info("[自動バックアップ] MySQLの内容を " + destM.getName() + " (SQLite形式) に書き出しました。");
+               this.pruneOldBackups(backupsDirM);
+               return;
+            }
+
             if (!srcFile.exists()) {
                return;
             }
@@ -1873,7 +1924,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             this.getLogger().info("[自動バックアップ] " + destFile.getName() + " を作成しました。");
             this.pruneOldBackups(backupsDir);
-         } catch (IOException e) {
+         } catch (IOException | SQLException e) {
             this.getLogger().warning("[自動バックアップ] バックアップの作成に失敗しました: " + e.getMessage());
          }
       }
@@ -12886,10 +12937,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          long since = System.currentTimeMillis() - 86400000L;
          this.db
             .queryAsync(
-               "SELECT COALESCE(SUM(CASE WHEN delta > 0 THEN delta ELSE 0 END), 0), COALESCE(SUM(CASE WHEN delta < 0 THEN delta ELSE 0 END), 0), COUNT(*) FROM ledger WHERE ts >= ?",
+               "SELECT COALESCE(SUM(CASE WHEN delta > 0 THEN delta ELSE 0 END), 0), COALESCE(SUM(CASE WHEN delta < 0 THEN delta ELSE 0 END), 0), COUNT(*) FROM {ledger} WHERE ts >= ?",
                since
             )
-            .thenCombine(this.db.queryAsync("SELECT source, SUM(delta), COUNT(*) FROM ledger WHERE ts >= ? GROUP BY source", since), (totals, sources) -> {
+            .thenCombine(this.db.queryAsync("SELECT source, SUM(delta), COUNT(*) FROM {ledger} WHERE ts >= ? GROUP BY source", since), (totals, sources) -> {
                Object[] t = totals.get(0);
                LinkedHashMap<String, double[]> grouped = new LinkedHashMap<>();
 
@@ -13084,7 +13135,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             StringBuilder ledger = new StringBuilder(",\"ledger\":[");
             if (this.db != null && this.cfgLedgerEnabled) {
                List<Object[]> rows = this.db
-                  .queryAsync("SELECT ts, delta, source FROM ledger WHERE player = ? ORDER BY id DESC LIMIT 30", owner.toString())
+                  .queryAsync("SELECT ts, delta, source FROM {ledger} WHERE player = ? ORDER BY id DESC LIMIT 30", owner.toString())
                   .get(5L, TimeUnit.SECONDS);
 
                for (int i = 0; i < rows.size(); i++) {
@@ -14870,13 +14921,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          long since = System.currentTimeMillis() - hours * 3600000L;
          this.db
             .queryAsync(
-               "SELECT COALESCE(SUM(CASE WHEN delta > 0 THEN delta ELSE 0 END), 0), COALESCE(SUM(CASE WHEN delta < 0 THEN delta ELSE 0 END), 0), COUNT(*) FROM ledger WHERE ts >= ?",
+               "SELECT COALESCE(SUM(CASE WHEN delta > 0 THEN delta ELSE 0 END), 0), COALESCE(SUM(CASE WHEN delta < 0 THEN delta ELSE 0 END), 0), COUNT(*) FROM {ledger} WHERE ts >= ?",
                since
             )
             .thenCombine(
                this.db
                   .queryAsync(
-                     "SELECT source, SUM(delta) AS s, COUNT(*) FROM ledger WHERE ts >= ? GROUP BY source ORDER BY ABS(SUM(delta)) DESC LIMIT 10", since
+                     "SELECT source, SUM(delta) AS s, COUNT(*) FROM {ledger} WHERE ts >= ? GROUP BY source ORDER BY ABS(SUM(delta)) DESC LIMIT 10", since
                   ),
                (totals, sources) -> new Object[]{totals, sources}
             )
@@ -14933,7 +14984,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             int pg = page;
             String name = target.getName() != null ? target.getName() : args[2];
             this.db
-               .queryAsync("SELECT ts, delta, source FROM ledger WHERE player = ? ORDER BY id DESC LIMIT 11 OFFSET ?", target.getUniqueId().toString(), (pg - 1) * 10)
+               .queryAsync("SELECT ts, delta, source FROM {ledger} WHERE player = ? ORDER BY id DESC LIMIT 11 OFFSET ?", target.getUniqueId().toString(), (pg - 1) * 10)
                .whenComplete((rows, err) -> Bukkit.getScheduler().runTask(this, () -> {
                   if (p.isOnline()) {
                      if (err != null) {
@@ -16894,7 +16945,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private static final class PluginDataStore {
-      private final Connection conn;
+      private Connection conn;
       private final java.util.logging.Logger log;
       private final Map<String, Map<String, String>> mirror = new HashMap<>();
       private final Map<String, Map<String, String>> persisted = new HashMap<>();
@@ -16908,24 +16959,75 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          return t;
       });
 
+      private final String url;
+      private final String user;
+      private final String password;
+      private final boolean mysql;
+      private final String dataTable;
+      private final String ledgerTable;
+      private final boolean hadDataAtStartup;
+
       PluginDataStore(File dbFile, java.util.logging.Logger log) throws SQLException {
+         this("jdbc:sqlite:" + dbFile.getAbsolutePath(), null, null, false, "", log, null);
+      }
+
+      static MinecraftBank.PluginDataStore mysql(
+         String host, int port, String database, String user, String password, String prefix, boolean ssl, java.util.logging.Logger log, File importFrom
+      ) throws SQLException {
+         String url = "jdbc:mysql://"
+            + host
+            + ":"
+            + port
+            + "/"
+            + database
+            + "?useSSL="
+            + ssl
+            + "&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectTimeout=10000&socketTimeout=60000";
+         return new MinecraftBank.PluginDataStore(url, user, password, true, prefix, log, importFrom);
+      }
+
+      private PluginDataStore(String url, String user, String password, boolean mysql, String prefix, java.util.logging.Logger log, File importFrom) throws SQLException {
          this.log = log;
+         this.url = url;
+         this.user = user;
+         this.password = password;
+         this.mysql = mysql;
+         String safePrefix = prefix == null ? "" : prefix.replaceAll("[^A-Za-z0-9_]", "");
+         this.dataTable = safePrefix + "plugin_data";
+         this.ledgerTable = safePrefix + "ledger";
 
          try {
-            Class.forName("org.sqlite.JDBC");
-         } catch (ClassNotFoundException var6) {
+            Class.forName(mysql ? "com.mysql.cj.jdbc.Driver" : "org.sqlite.JDBC");
+         } catch (ClassNotFoundException var13) {
          }
 
-         this.conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
+         this.conn = this.openConnection();
 
          try (Statement st = this.conn.createStatement()) {
-            st.execute("CREATE TABLE IF NOT EXISTS plugin_data (section TEXT NOT NULL, path TEXT NOT NULL, value TEXT, PRIMARY KEY (section, path))");
-            st.execute("CREATE INDEX IF NOT EXISTS idx_plugin_data_section ON plugin_data(section)");
-            st.execute("CREATE TABLE IF NOT EXISTS ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, player TEXT NOT NULL, delta REAL NOT NULL, source TEXT)");
-            st.execute("CREATE INDEX IF NOT EXISTS idx_ledger_player ON ledger(player, id)");
-            st.execute("CREATE INDEX IF NOT EXISTS idx_ledger_ts ON ledger(ts)");
+            if (mysql) {
+               st.execute(
+                  "CREATE TABLE IF NOT EXISTS "
+                     + this.dataTable
+                     + " (section VARCHAR(191) NOT NULL, path VARCHAR(255) NOT NULL, value LONGTEXT, PRIMARY KEY (section, path)) DEFAULT CHARSET=utf8mb4"
+               );
+               st.execute(
+                  "CREATE TABLE IF NOT EXISTS "
+                     + this.ledgerTable
+                     + " (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, ts BIGINT NOT NULL, player VARCHAR(36) NOT NULL, delta DOUBLE NOT NULL, source VARCHAR(191), INDEX idx_ledger_player (player, id), INDEX idx_ledger_ts (ts)) DEFAULT CHARSET=utf8mb4"
+               );
+            } else {
+               st.execute("CREATE TABLE IF NOT EXISTS plugin_data (section TEXT NOT NULL, path TEXT NOT NULL, value TEXT, PRIMARY KEY (section, path))");
+               st.execute("CREATE INDEX IF NOT EXISTS idx_plugin_data_section ON plugin_data(section)");
+               st.execute("CREATE TABLE IF NOT EXISTS ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, player TEXT NOT NULL, delta REAL NOT NULL, source TEXT)");
+               st.execute("CREATE INDEX IF NOT EXISTS idx_ledger_player ON ledger(player, id)");
+               st.execute("CREATE INDEX IF NOT EXISTS idx_ledger_ts ON ledger(ts)");
+            }
 
-            try (ResultSet rs = st.executeQuery("SELECT section, path, value FROM plugin_data ORDER BY rowid")) {
+            if (mysql && importFrom != null && importFrom.exists() && this.isTableEmpty(st)) {
+               this.importFromSqlite(importFrom);
+            }
+
+            try (ResultSet rs = st.executeQuery("SELECT section, path, value FROM " + this.dataTable + (mysql ? "" : " ORDER BY rowid"))) {
                while (rs.next()) {
                   String value = rs.getString(3);
                   if (value != null) {
@@ -16935,10 +17037,141 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                }
             }
          }
+
+         this.hadDataAtStartup = !this.mirror.isEmpty();
       }
 
-      synchronized void close() {
-         this.flushTouched();
+      private Connection openConnection() throws SQLException {
+         return this.user == null ? DriverManager.getConnection(this.url) : DriverManager.getConnection(this.url, this.user, this.password);
+      }
+
+      private void ensureConnection() throws SQLException {
+         boolean valid;
+         try {
+            valid = this.conn != null && this.conn.isValid(3);
+         } catch (SQLException var3) {
+            valid = false;
+         }
+
+         if (!valid) {
+            try {
+               if (this.conn != null) {
+                  this.conn.close();
+               }
+            } catch (SQLException var2) {
+            }
+
+            this.conn = this.openConnection();
+            this.log.info("[データベース] 接続を再確立しました。");
+         }
+      }
+
+      private boolean isTableEmpty(Statement st) throws SQLException {
+         try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + this.dataTable)) {
+            return rs.next() && rs.getLong(1) == 0L;
+         }
+      }
+
+      private void importFromSqlite(File sqliteFile) throws SQLException {
+         int rows = 0;
+         int ledgerRows = 0;
+
+         try (Connection src = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile.getAbsolutePath())) {
+            this.conn.setAutoCommit(false);
+
+            try (
+               Statement read = src.createStatement();
+               ResultSet rs = read.executeQuery("SELECT section, path, value FROM plugin_data");
+               PreparedStatement ins = this.conn.prepareStatement("REPLACE INTO " + this.dataTable + "(section, path, value) VALUES (?, ?, ?)");
+            ) {
+               while (rs.next()) {
+                  ins.setString(1, rs.getString(1));
+                  ins.setString(2, rs.getString(2));
+                  ins.setString(3, rs.getString(3));
+                  ins.addBatch();
+                  if (++rows % 500 == 0) {
+                     ins.executeBatch();
+                  }
+               }
+
+               ins.executeBatch();
+            }
+
+            try (
+               Statement read = src.createStatement();
+               ResultSet rs = read.executeQuery("SELECT ts, player, delta, source FROM ledger");
+               PreparedStatement ins = this.conn.prepareStatement("INSERT INTO " + this.ledgerTable + "(ts, player, delta, source) VALUES (?, ?, ?, ?)");
+            ) {
+               while (rs.next()) {
+                  ins.setLong(1, rs.getLong(1));
+                  ins.setString(2, rs.getString(2));
+                  ins.setDouble(3, rs.getDouble(3));
+                  ins.setString(4, rs.getString(4));
+                  ins.addBatch();
+                  if (++ledgerRows % 500 == 0) {
+                     ins.executeBatch();
+                  }
+               }
+
+               ins.executeBatch();
+            } catch (SQLException var14) {
+            }
+
+            this.conn.commit();
+            this.log.info("[MySQL移行] data.db(SQLite) から " + rows + " 件のデータと " + ledgerRows + " 件の台帳をMySQLへ移しました。");
+         } catch (SQLException e) {
+            this.conn.rollback();
+            throw e;
+         } finally {
+            this.conn.setAutoCommit(true);
+         }
+      }
+
+      boolean isMySql() {
+         return this.mysql;
+      }
+
+      boolean hadDataAtStartup() {
+         return this.hadDataAtStartup;
+      }
+
+      void writeSqliteSnapshot(File dest) throws SQLException {
+         List<String[]> rows = new ArrayList<>();
+         synchronized (this) {
+            for (Entry<String, Map<String, String>> sec : this.persisted.entrySet()) {
+               for (Entry<String, String> e : sec.getValue().entrySet()) {
+                  rows.add(new String[]{sec.getKey(), e.getKey(), e.getValue()});
+               }
+            }
+         }
+
+         try (Connection out = DriverManager.getConnection("jdbc:sqlite:" + dest.getAbsolutePath())) {
+            try (Statement st = out.createStatement()) {
+               st.execute("CREATE TABLE IF NOT EXISTS plugin_data (section TEXT NOT NULL, path TEXT NOT NULL, value TEXT, PRIMARY KEY (section, path))");
+            }
+
+            out.setAutoCommit(false);
+
+            try (PreparedStatement ps = out.prepareStatement("INSERT OR REPLACE INTO plugin_data(section, path, value) VALUES (?, ?, ?)")) {
+               for (String[] row : rows) {
+                  ps.setString(1, row[0]);
+                  ps.setString(2, row[1]);
+                  ps.setString(3, row[2]);
+                  ps.addBatch();
+               }
+
+               ps.executeBatch();
+            }
+
+            out.commit();
+         }
+      }
+
+      void close() {
+         synchronized (this) {
+            this.flushTouched();
+         }
+
          this.writer.submit(this::drainLedger);
          this.writer.shutdown();
 
@@ -17033,11 +17266,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ops.addAll(newOps);
 
          try {
+            this.ensureConnection();
             this.conn.setAutoCommit(false);
 
             try (
-               PreparedStatement up = this.conn.prepareStatement("INSERT OR REPLACE INTO plugin_data(section, path, value) VALUES (?, ?, ?)");
-               PreparedStatement del = this.conn.prepareStatement("DELETE FROM plugin_data WHERE section=? AND path=?");
+               PreparedStatement up = this.conn
+                  .prepareStatement((this.mysql ? "REPLACE INTO " : "INSERT OR REPLACE INTO ") + this.dataTable + "(section, path, value) VALUES (?, ?, ?)");
+               PreparedStatement del = this.conn.prepareStatement("DELETE FROM " + this.dataTable + " WHERE section=? AND path=?");
             ) {
                for (String[] op : ops) {
                   if (op[2] == null) {
@@ -17083,15 +17318,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       private void drainLedger() {
          if (!this.ledgerQueue.isEmpty()) {
             try {
+               this.ensureConnection();
                this.conn.setAutoCommit(false);
 
-               try (PreparedStatement ps = this.conn.prepareStatement("INSERT INTO ledger(ts, player, delta, source) VALUES (?, ?, ?, ?)")) {
+               try (PreparedStatement ps = this.conn.prepareStatement("INSERT INTO " + this.ledgerTable + "(ts, player, delta, source) VALUES (?, ?, ?, ?)")) {
                   Object[] row;
                   while ((row = this.ledgerQueue.poll()) != null) {
                      ps.setLong(1, (Long)row[0]);
                      ps.setString(2, (String)row[1]);
                      ps.setDouble(3, (Double)row[2]);
-                     ps.setString(4, (String)row[3]);
+                     String src = (String)row[3];
+                     ps.setString(4, src != null && src.length() > 190 ? src.substring(0, 190) : src);
                      ps.executeUpdate();
                   }
                }
@@ -17116,7 +17353,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       void pruneLedgerAsync(long cutoff) {
          if (!this.writer.isShutdown()) {
             this.writer.submit(() -> {
-               try (PreparedStatement ps = this.conn.prepareStatement("DELETE FROM ledger WHERE ts < ?")) {
+               try {
+                  this.ensureConnection();
+               } catch (SQLException e) {
+                  this.log.warning("[台帳] データベースに接続できません: " + e.getMessage());
+                  return;
+               }
+
+               try (PreparedStatement ps = this.conn.prepareStatement("DELETE FROM " + this.ledgerTable + " WHERE ts < ?")) {
                   ps.setLong(1, cutoff);
                   int n = ps.executeUpdate();
                   if (n > 0) {
@@ -17134,7 +17378,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.drainLedger();
             List<Object[]> rows = new ArrayList<>();
 
-            try (PreparedStatement ps = this.conn.prepareStatement(sql)) {
+            try {
+               this.ensureConnection();
+            } catch (SQLException e) {
+               throw new RuntimeException(e);
+            }
+
+            try (PreparedStatement ps = this.conn.prepareStatement(sql.replace("{ledger}", this.ledgerTable))) {
                for (int i = 0; i < params.length; i++) {
                   ps.setObject(i + 1, params[i]);
                }

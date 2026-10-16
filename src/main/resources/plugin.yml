@@ -12,6 +12,7 @@ author: kot0328
 # バージョン文字列はbuild.gradle.ktsのcompileOnly("org.xerial:sqlite-jdbc:...")と必ず一致させること。
 libraries:
   - org.xerial:sqlite-jdbc:3.53.4.0
+  - com.mysql:mysql-connector-j:9.7.0
 
 commands:
   meco:
