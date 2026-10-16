@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>家計簿 | MinecraftBank</title>
+<style>
+  :root {
+    --bg: #0b0f19;
+    --panel: #141b2c;
+    --panel-alt: #101625;
+    --panel-border: #232c42;
+    --text: #eaeefb;
+    --text-dim: #8b93a7;
+    --accent: #5b8cff;
+    --div-pos: #e66767;
+    --div-neg: #3987e5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; }
+  header { padding: 20px 16px 8px; max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; }
+  header h1 { margin: 0; font-size: 22px; }
+  header a { color: var(--accent); font-size: 14px; }
+  main { max-width: 1000px; margin: 0 auto; padding: 0 16px 40px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0 20px; }
+  .tile { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 16px; }
+  .tile .label { color: var(--text-dim); font-size: 12px; }
+  .tile .value { font-size: 20px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  section { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; margin-bottom: 20px; min-width: 0; }
+  section h2 { margin: 0 0 10px; font-size: 16px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { padding: 6px 0; border-bottom: 1px solid var(--panel-border); font-size: 13px; overflow-wrap: anywhere; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--panel-border); }
+  td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .sign { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+  .empty { color: var(--text-dim); font-size: 13px; }
+  .scroll { max-height: 360px; overflow: auto; }
+  .err { color: var(--div-pos); padding: 40px 16px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📒 家計簿</h1>
+  <span id="who" style="color:var(--text-dim)"></span>
+  <a id="me-link" href="#">個人ページへ</a>
+  <a href="/economy.html">経済マーケット</a>
+</header>
+<main id="main">
+  <div class="tiles" id="tiles"></div>
+  <div class="cols">
+    <section><h2>📅 期限一覧</h2><ul id="due"></ul></section>
+    <section><h2>🔁 定期送金</h2><div id="standing"></div></section>
+  </div>
+  <div class="cols">
+    <section><h2>💸 振り込み履歴</h2><ul class="scroll" id="transfers"></ul></section>
+    <section><h2>📜 所持金の台帳（最新30件）</h2><div class="scroll" id="ledger"></div></section>
+  </div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const token = new URLSearchParams(location.search).get('token') || '';
+$('me-link').href = '/me.html?token=' + encodeURIComponent(token);
+const fmtNum = (v) => Number(v).toLocaleString('ja-JP', { maximumFractionDigits: 2 });
+
+function el(tag, attrs = {}, text) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+function list(id, items, emptyText) {
+  const box = $(id);
+  box.replaceChildren();
+  if (!items.length) { box.append(el('li', { class: 'empty' }, emptyText)); return; }
+  for (const t of items) box.append(el('li', {}, t));
+}
+
+function remain(ms) {
+  if (ms <= 0) return 'まもなく';
+  const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60;
+  return h >= 24 ? `${Math.floor(h / 24)}日${h % 24}時間` : `${h}時間${m}分`;
+}
+
+async function load() {
+  const res = await fetch('/me/extra.json?token=' + encodeURIComponent(token), { cache: 'no-store' });
+  if (!res.ok) {
+    $('main').replaceChildren(el('p', { class: 'err' }, 'リンクが無効です。ゲーム内で /meco webpage を実行して新しいリンクを取得してください。'));
+    return;
+  }
+  const d = await res.json();
+  $('who').textContent = d.name + ' さん';
+  const tiles = $('tiles');
+  tiles.replaceChildren();
+  const t = (label, value) => { const x = el('div', { class: 'tile' }); x.append(el('div', { class: 'label' }, label), el('div', { class: 'value' }, value)); tiles.append(x); };
+  t('総資産（手持ち＋預金）', d.wealth_text);
+  t('納税額（累計）', d.tax_paid_text);
+  t('次回の資産税（見込み）', d.wealth_tax_estimate_text);
+  if (d.next_wealth_at > 0) t('次の資産税まで', remain(d.next_wealth_at - Date.now()));
+
+  list('due', d.due, '期限のある契約はありません。');
+  list('transfers', d.transfers, '振り込み履歴はまだありません。');
+
+  const st = $('standing');
+  st.replaceChildren();
+  if (!d.standing.length) {
+    st.append(el('p', { class: 'empty' }, '登録されている定期送金はありません。（/meco standing add で登録）'));
+  } else {
+    const tb = el('table');
+    const hr = el('tr');
+    hr.append(el('th', {}, '送金先'), el('th', { class: 'r' }, '金額'), el('th', { class: 'r' }, '間隔'), el('th', { class: 'r' }, '次回'));
+    tb.append(hr);
+    for (const s of d.standing) {
+      const tr = el('tr');
+      tr.append(el('td', {}, s.to), el('td', { class: 'r' }, s.amount_text), el('td', { class: 'r' }, s.hours + '時間'), el('td', { class: 'r' }, s.next));
+      tb.append(tr);
+    }
+    st.append(tb);
+  }
+
+  const lg = $('ledger');
+  lg.replaceChildren();
+  if (!d.ledger.length) {
+    lg.append(el('p', { class: 'empty' }, '記録がありません。'));
+  } else {
+    const tb = el('table');
+    const hr = el('tr');
+    hr.append(el('th', {}, '日時'), el('th', {}, '内容'), el('th', { class: 'r' }, '増減'));
+    tb.append(hr);
+    for (const r of d.ledger) {
+      const tr = el('tr');
+      const dt = new Date(r.ts);
+      const when = `${dt.getMonth() + 1}/${dt.getDate()} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+      const amt = el('td', { class: 'r' });
+      const sw = el('span', { class: 'sign', 'aria-hidden': 'true' });
+      sw.style.background = r.delta >= 0 ? 'var(--div-pos)' : 'var(--div-neg)';
+      amt.append(sw, document.createTextNode((r.delta >= 0 ? '+' : '−') + fmtNum(Math.abs(r.delta))));
+      tr.append(el('td', {}, when), el('td', {}, r.source), amt);
+      tb.append(tr);
+    }
+    lg.append(tb);
+  }
+}
+load().catch(() => $('main').replaceChildren(el('p', { class: 'err' }, '読み込みに失敗しました。')));
+setInterval(() => load().catch(() => {}), 60000);
+</script>
+</body>
+</html>
