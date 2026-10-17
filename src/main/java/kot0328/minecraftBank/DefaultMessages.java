@@ -379,6 +379,8 @@ final class DefaultMessages {
       "webpage.link-plus",
       "<gray>家計簿ページ(期限・振り込み・納税・台帳):</gray> <click:open_url:'{url}'><aqua><u>{url}</u></aqua></click>\n<gray>経済マーケット(税収・お金の流れ・全資源チャート):</gray> <click:open_url:'{base}/economy.html'><aqua><u>{base}/economy.html</u></aqua></click>"
    );
+   m.put("sounds.on", "<green>メニューの効果音をONにしました。</green>");
+   m.put("sounds.off", "<gray>メニューの効果音をOFFにしました。（/meco sounds でON）</gray>");
    m.put("common.shortfall", "<gray>→ あと <red>{amount}</red> 足りません。</gray>");
    m.put("common.presets-label", "<gray>クイック入力(クリック→Enter):</gray>");
    m.put(
