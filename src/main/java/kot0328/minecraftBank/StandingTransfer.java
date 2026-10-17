@@ -3,6 +3,7 @@ package kot0328.minecraftBank;
 import java.util.UUID;
 
 class StandingTransfer {
+   String id = UUID.randomUUID().toString();
    UUID from;
    UUID to;
    double amount;

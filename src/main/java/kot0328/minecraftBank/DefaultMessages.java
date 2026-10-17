@@ -389,6 +389,21 @@ final class DefaultMessages {
    m.put("trade.no-session", "<gray>取引は終了しています。</gray>");
    m.put("admin.economy-failed", "<red>経済プラグイン側で処理が拒否されました（残高不足・上限など）。</red>");
    m.put("webpage.admin-password-issued", "<yellow>管理者 {admin} があなたのWebページ用の管理パスワードを発行しました。</yellow>");
+   m.put("invoice.usage", "<yellow>使用法: /meco invoice <プレイヤー> <金額> [メモ] ・ 一覧: /meco invoices</yellow>");
+   m.put("invoice.self", "<red>自分自身には請求できません。</red>");
+   m.put("invoice.invalid-amount", "<red>金額は 0 より大きく 1億 以下で指定してください。</red>");
+   m.put("invoice.limit", "<red>請求の上限に達しています（送信は20件まで、1人あたりの受信は50件まで）。</red>");
+   m.put("invoice.created", "<green>{player} に {amount} を請求しました。（期限: 7日）</green>");
+   m.put("invoice.received", "<gold>【請求書】</gold> <white>{player} から {amount} の請求が届きました。</white> <gray>{memo}</gray> <click:run_command:'/meco invoices'><yellow><u>[確認する]</u></yellow></click>");
+   m.put("invoice.join-notice", "<gold>【請求書】</gold> <white>未払いの請求が {count} 件あります。</white> <click:run_command:'/meco invoices'><yellow><u>[確認する]</u></yellow></click>");
+   m.put("invoice.not-found", "<red>その請求はすでに処理されています。</red>");
+   m.put("invoice.paid", "<green>{player} への請求 {amount} を支払いました。</green>");
+   m.put("invoice.paid-notify", "<green>【請求書】{player} が {amount} を支払いました。</green>");
+   m.put("invoice.rejected", "<gray>請求を断りました。</gray>");
+   m.put("invoice.rejected-notify", "<red>【請求書】{player} が {amount} の請求を断りました。</red>");
+   m.put("invoice.cancelled", "<gray>請求を取り消しました。</gray>");
+   m.put("invoice.cancelled-notify", "<gray>【請求書】{player} が {amount} の請求を取り消しました。</gray>");
+   m.put("invoice.expired-notify", "<gray>【請求書】{player} への {amount} の請求は期限切れになりました。</gray>");
    m.put("common.shortfall", "<gray>→ あと <red>{amount}</red> 足りません。</gray>");
    m.put("common.presets-label", "<gray>クイック入力(クリック→Enter):</gray>");
    m.put(

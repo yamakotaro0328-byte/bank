@@ -240,7 +240,16 @@ final class PluginDataStore {
                st.execute("CREATE INDEX idx_" + this.dataTable + "_updated ON " + this.dataTable + "(updated_at)");
             }
 
-            st.execute("CREATE TABLE IF NOT EXISTS " + this.counterTable() + " (name VARCHAR(64) NOT NULL PRIMARY KEY, value DOUBLE NOT NULL) DEFAULT CHARSET=utf8mb4");
+            st.execute("CREATE TABLE IF NOT EXISTS " + this.counterTable() + " (name VARCHAR(191) NOT NULL PRIMARY KEY, value DOUBLE NOT NULL) DEFAULT CHARSET=utf8mb4");
+            boolean counterHasUpdated;
+            try (ResultSet rs = meta.getColumns(this.conn.getCatalog(), null, this.counterTable(), "updated_at")) {
+               counterHasUpdated = rs.next();
+            }
+
+            if (!counterHasUpdated) {
+               st.execute("ALTER TABLE " + this.counterTable() + " MODIFY name VARCHAR(191) NOT NULL, ADD COLUMN updated_at BIGINT NOT NULL DEFAULT 0, ADD COLUMN origin VARCHAR(64) NOT NULL DEFAULT ''");
+               st.execute("CREATE INDEX idx_" + this.counterTable() + "_updated ON " + this.counterTable() + "(updated_at)");
+            }
 
             try (ResultSet rs = st.executeQuery("SELECT ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)")) {
                this.lastPullAt = rs.next() ? rs.getLong(1) : 0L;
@@ -249,6 +258,106 @@ final class PluginDataStore {
 
          this.syncOrigin = origin;
       }
+   }
+
+   private volatile long lastKeyedPullAt = 0L;
+
+   CompletableFuture<Map<String, Double>> syncKeyedAsync(Map<String, Double> seeds, Map<String, Double> deltas) {
+      return CompletableFuture.supplyAsync(() -> {
+         Map<String, Double> totals = new HashMap<>();
+         String nowExpr = "ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)";
+
+         try {
+            this.ensureConnection();
+            if (this.lastKeyedPullAt == 0L) {
+               this.lastKeyedPullAt = this.lastPullAt;
+            }
+
+            this.conn.setAutoCommit(false);
+
+            try (
+               PreparedStatement seed = this.conn
+                  .prepareStatement("INSERT IGNORE INTO " + this.counterTable() + "(name, value, updated_at, origin) VALUES (?, ?, " + nowExpr + ", ?)");
+               PreparedStatement add = this.conn
+                  .prepareStatement(
+                     "INSERT INTO "
+                        + this.counterTable()
+                        + "(name, value, updated_at, origin) VALUES (?, ?, "
+                        + nowExpr
+                        + ", ?) ON DUPLICATE KEY UPDATE value = value + ?, updated_at = VALUES(updated_at), origin = VALUES(origin)"
+                  );
+            ) {
+               for (Entry<String, Double> en : seeds.entrySet()) {
+                  seed.setString(1, en.getKey());
+                  seed.setDouble(2, en.getValue());
+                  seed.setString(3, this.syncOrigin);
+                  seed.addBatch();
+               }
+
+               seed.executeBatch();
+
+               for (Entry<String, Double> en : deltas.entrySet()) {
+                  add.setString(1, en.getKey());
+                  add.setDouble(2, en.getValue());
+                  add.setString(3, this.syncOrigin);
+                  add.setDouble(4, en.getValue());
+                  add.addBatch();
+               }
+
+               add.executeBatch();
+            }
+
+            this.conn.commit();
+            List<String> seedKeys = new ArrayList<>(seeds.keySet());
+
+            for (int i = 0; i < seedKeys.size(); i += 500) {
+               List<String> chunk = seedKeys.subList(i, Math.min(seedKeys.size(), i + 500));
+               String marks = String.join(",", Collections.nCopies(chunk.size(), "?"));
+
+               try (PreparedStatement sel = this.conn.prepareStatement("SELECT name, value FROM " + this.counterTable() + " WHERE name IN (" + marks + ")")) {
+                  for (int j = 0; j < chunk.size(); j++) {
+                     sel.setString(j + 1, chunk.get(j));
+                  }
+
+                  try (ResultSet rs = sel.executeQuery()) {
+                     while (rs.next()) {
+                        totals.put(rs.getString(1), rs.getDouble(2));
+                     }
+                  }
+               }
+            }
+
+            try (PreparedStatement sel = this.conn
+                  .prepareStatement("SELECT name, value, updated_at FROM " + this.counterTable() + " WHERE updated_at > ? AND name LIKE '%:%'")) {
+               sel.setLong(1, this.lastKeyedPullAt - 5000L);
+
+               try (ResultSet rs = sel.executeQuery()) {
+                  long max = this.lastKeyedPullAt;
+
+                  while (rs.next()) {
+                     totals.put(rs.getString(1), rs.getDouble(2));
+                     max = Math.max(max, rs.getLong(3));
+                  }
+
+                  this.lastKeyedPullAt = max;
+               }
+            }
+
+            return totals;
+         } catch (SQLException e) {
+            try {
+               this.conn.rollback();
+            } catch (SQLException var10) {
+            }
+
+            throw new RuntimeException(e);
+         } finally {
+            try {
+               this.conn.setAutoCommit(true);
+            } catch (SQLException var9) {
+            }
+         }
+      }, this.writer);
    }
 
    boolean isSyncEnabled() {
@@ -291,11 +400,15 @@ final class PluginDataStore {
    }
 
    synchronized Set<String> applyRemote(List<String[]> rows, Set<String> skipKeys) {
+      return this.applyRemote(rows, (section, path) -> skipKeys.contains(section + "\u0000" + path));
+   }
+
+   synchronized Set<String> applyRemote(List<String[]> rows, java.util.function.BiPredicate<String, String> skip) {
       Set<String> changed = new HashSet<>();
 
       for (String[] row : rows) {
          String key = row[0] + "\u0000" + row[1];
-         if (!this.pushedSincePull.contains(key) && !skipKeys.contains(key)) {
+         if (!this.pushedSincePull.contains(key) && !skip.test(row[0], row[1])) {
             Map<String, String> m = this.mirror.get(row[0]);
             String cur = m != null ? m.get(row[1]) : null;
             if (!Objects.equals(cur, row[2])) {

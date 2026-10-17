@@ -469,6 +469,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final List<StandingTransfer> standingTransfers = new ArrayList<>();
    private int cfgStandingTransferMaxPerPlayer = 5;
    private int cfgStandingTransferMinIntervalHours = 1;
+   private Map<String, Double> syncedKeyed = null;
+   private boolean keyedInFlight = false;
+   private final String syncInstanceId = UUID.randomUUID().toString().substring(0, 8);
+   private long lastSyncNodeWarning = 0L;
    private volatile String economyJsonCache = "{}";
    private final java.util.concurrent.ConcurrentHashMap<UUID, long[]> webAuthFailures = new java.util.concurrent.ConcurrentHashMap<>();
    private final HashMap<UUID, Long> chartCooldown = new HashMap<>();
@@ -504,7 +508,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private boolean syncInFlight = false;
    private double[] syncedCounters = null;
    private volatile String ledgerStatsJson = "null";
-   private static final List<String> FEATURE_NAMES = List.of("auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate");
+   private static final List<String> FEATURE_NAMES = List.of("auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate", "invoice");
    private final HashMap<String, Boolean> featureEnabled = new HashMap<>();
    private final HashMap<String, YamlConfiguration> langMessages = new HashMap<>();
    private boolean cfgLanguagePerPlayer = true;
@@ -543,6 +547,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final Component tFundInfo = this.mm("<bold><dark_green>【共同投資ファンド・情報】</dark_green></bold>");
    private final Component tFundStock = this.mm("<bold><dark_green>【共同投資ファンド・運用】</dark_green></bold>");
    private final Component tFundStockDetail = this.mm("<bold><dark_green>【共同投資ファンド・銘柄詳細】</dark_green></bold>");
+   private final Component tInvoice = this.mm("<bold><gold>【請求書】</gold></bold>");
+   private final LinkedHashMap<String, Invoice> invoices = new LinkedHashMap<>();
+   private NamespacedKey invoiceIdKey;
    private final Component tVipLounge = this.mm("<bold><light_purple>【\ud83d\udc8e VIPラウンジ】</light_purple></bold>");
    private PluginDataStore db;
    private FileConfiguration messages;
@@ -737,6 +744,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.loanSlotKey = new NamespacedKey(this, "loan_slot");
          this.loanPlanKey = new NamespacedKey(this, "loan_plan");
          this.auctionIdKey = new NamespacedKey(this, "auction_id");
+         this.invoiceIdKey = new NamespacedKey(this, "invoice_id");
          this.hubItemKey = new NamespacedKey(this, "economy_hub_item");
          this.adminTargetKey = new NamespacedKey(this, "admin_target");
          this.questIdKey = new NamespacedKey(this, "quest_id");
@@ -777,7 +785,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   dbFile
                );
                this.getLogger().info("[データベース] MySQL (" + this.cfgMysqlHost + ":" + this.cfgMysqlPort + "/" + this.cfgMysqlDatabase + ") に接続しました。");
-               if (this.cfgSyncEnabled) {
+               if (this.cfgSyncEnabled && (this.cfgSyncServerId.isEmpty() || this.cfgSyncServerId.length() > 60 || !this.cfgSyncServerId.matches("[A-Za-z0-9_.-]+"))) {
+                  this.getLogger().severe("[サーバー間同期] storage.sync.server-id が不正です（英数字・_ . - で60文字以内）。同期を無効にして起動します。");
+               } else if (this.cfgSyncEnabled) {
                   this.db.enableSync(this.cfgSyncServerId);
                   this.getLogger().info("[サーバー間同期] 有効: server-id=" + this.cfgSyncServerId + (this.cfgSyncLeader ? " (リーダー: 定期処理を担当)" : " (定期処理はリーダーに任せます)"));
                } else {
@@ -809,6 +819,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          if (this.db != null && this.db.isSyncEnabled()) {
             this.initCounterSync();
+            this.runKeyedSync(true);
+            this.checkSyncNodes(true);
          }
 
          boolean startupLeader = this.db == null || !this.db.isSyncEnabled() || this.cfgSyncLeader;
@@ -847,9 +859,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkGovLoanDeadlines), 1200L, 1200L);
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkCollateralDeadlines), 1200L, 1200L);
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::processStandingTransfers), 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::expireInvoices), 2400L, 12000L);
          if (this.db != null && this.db.isSyncEnabled()) {
             long syncTicks = this.cfgSyncIntervalSeconds * 20L;
             Bukkit.getScheduler().runTaskTimer(this, this::runSyncTick, syncTicks, syncTicks);
+            Bukkit.getScheduler().runTaskTimer(this, () -> this.runKeyedSync(false), syncTicks + 10L, syncTicks);
+            Bukkit.getScheduler().runTaskTimer(this, () -> this.checkSyncNodes(false), 600L, 600L);
          }
          Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (this.db != null) {
@@ -2752,9 +2767,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.personalBank.put(UUID.fromString(key), this.db.getDouble("personal", key, 0.0));
       }
 
-      for (String s : this.db.getStringList("bankers", "_")) {
-         this.bankers.add(UUID.fromString(s));
-      }
+      this.loadUuidSet("bankers", this.bankers);
 
       for (String key : this.db.getKeys("capital")) {
          this.bankCapital.put(UUID.fromString(key), this.db.getDouble("capital", key, 0.0));
@@ -2904,13 +2917,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.publishedLoans3.put(UUID.fromString(key), this.db.getString("market3", key, null));
       }
 
-      for (String s : this.db.getStringList("news_off", "_")) {
-         this.newsBroadcastOff.add(UUID.fromString(s));
-      }
+      this.loadUuidSet("news_off", this.newsBroadcastOff);
 
-      for (String s : this.db.getStringList("hub_item_issued", "_")) {
-         this.hubItemIssued.add(UUID.fromString(s));
-      }
+      this.loadUuidSet("hub_item_issued", this.hubItemIssued);
 
       for (String key : this.db.getKeys("tx_logs")) {
          LinkedList<String> logs = new LinkedList<>(this.db.getStringList("tx_logs", key));
@@ -2958,7 +2967,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.activeEconomyEvent = this.db.getString("economy-event", "name", "通常");
       this.activeEconomyEventUntil = this.db.getLong("economy-event", "until", 0L);
-      this.tutorialSeen.addAll(this.db.getStringList("tutorial-seen", "_").stream().map(UUID::fromString).toList());
+      this.loadUuidSet("tutorial-seen", this.tutorialSeen);
 
       for (String uuidKey : this.db.getKeys("world_stocks")) {
          UUID owner = UUID.fromString(uuidKey);
@@ -3322,7 +3331,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.db.setDouble("personal", u.toString(), this.personalBank.get(u));
             }
 
-            this.db.setStringList("bankers", "_", this.bankers.stream().map(UUID::toString).toList());
+            this.saveUuidSet("bankers", this.bankers);
             this.db.removeSection("capital");
 
             for (UUID u : this.bankCapital.keySet()) {
@@ -3521,8 +3530,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.db.setString("market3", u.toString(), this.publishedLoans3.get(u));
             }
 
-            this.db.setStringList("news_off", "_", this.newsBroadcastOff.stream().map(UUID::toString).toList());
-            this.db.setStringList("hub_item_issued", "_", this.hubItemIssued.stream().map(UUID::toString).toList());
+            this.saveUuidSet("news_off", this.newsBroadcastOff);
+            this.saveUuidSet("hub_item_issued", this.hubItemIssued);
             this.db.removeSection("tx_logs");
 
             for (UUID u : this.transactionLogs.keySet()) {
@@ -3587,7 +3596,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
             this.db.setString("economy-event", "name", this.activeEconomyEvent);
             this.db.setLong("economy-event", "until", this.activeEconomyEventUntil);
-            this.db.setStringList("tutorial-seen", "_", this.tutorialSeen.stream().map(UUID::toString).toList());
+            this.saveUuidSet("tutorial-seen", this.tutorialSeen);
             this.db.removeSection("quests");
 
             for (Quest q : this.quests.values()) {
@@ -5359,6 +5368,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         }
 
                         return true;
+                     } else if (sub.equals("invoices")) {
+                        this.openInvoiceGUI(p);
+                        return true;
+                     } else if (sub.equals("invoice")) {
+                        this.handleInvoiceCommand(p, args);
+                        return true;
                      } else if (sub.equals("standing")) {
                         this.handleStandingCommand(p, args);
                         return true;
@@ -5896,6 +5911,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "treasure",
                "standing",
                "transfers",
+               "invoice",
+               "invoices",
                "tax",
                "chart",
                "sounds"
@@ -7695,8 +7712,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(22, this.createItem(Material.ENDER_CHEST, "<aqua><bold>\ud83d\udce6 受取箱を確認</bold></aqua>", "<gray>オークション落札品などを再受取します</gray>"));
       boolean pwSet = this.webPasswordHash.containsKey(u);
       gui.setItem(25, this.createItem(Material.MAP, "<light_purple><bold>\ud83c\udf10 Web個人ページのリンク</bold></light_purple>", "<gray>クリックでリンクをチャットに表示</gray>"));
+      long incomingInvoices = this.invoices.values().stream().filter(inv -> inv.to.equals(u)).count();
       gui.setItem(
-         31,
+         32,
+         this.createItem(
+            Material.PAPER,
+            "<gold><bold>\ud83e\uddfe 請求書</bold></gold>",
+            incomingInvoices > 0 ? "<yellow>未払いの請求: " + incomingInvoices + "件</yellow>" : "<gray>未払いの請求はありません</gray>",
+            "<gray>請求の送信: /meco invoice <プレイヤー> <金額> [メモ]</gray>",
+            "<yellow>クリックで一覧を開く</yellow>"
+         )
+      );
+      gui.setItem(
+         30,
          this.createItem(
             Material.TRIPWIRE_HOOK,
             "<light_purple><bold>\ud83d\udd11 オフライン操作用パスワード</bold></light_purple>",
@@ -10588,7 +10616,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             || t.equals(this.tFundStock)
             || t.equals(this.tFundStockDetail)
             || t.equals(this.tGroupMembers)
-            || t.equals(this.tVipLounge)) {
+            || t.equals(this.tVipLounge)
+            || t.equals(this.tInvoice)) {
             e.setCancelled(true);
             ItemStack item = e.getCurrentItem();
             if (item != null
@@ -11616,6 +11645,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                         this.clickSound(p);
                      }
+                  } else if (t.equals(this.tInvoice)) {
+                     this.handleInvoiceClick(p, e, item);
+                  } else if (t.equals(this.tMyPage) && mat == Material.PAPER) {
+                     this.openInvoiceGUI(p);
+                     this.clickSound(p);
                   } else if (t.equals(this.tMyPage)) {
                      if (mat == Material.IRON_DOOR) {
                         this.openHubGUI(p);
@@ -12665,7 +12699,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             || t.equals(this.tFundStock)
             || t.equals(this.tFundStockDetail)
             || t.equals(this.tGroupMembers)
-            || t.equals(this.tVipLounge)) {
+            || t.equals(this.tVipLounge)
+            || t.equals(this.tInvoice)) {
             e.setCancelled(true);
          }
       } else if (!(e.getWhoClicked() instanceof Player p)) {
@@ -13059,11 +13094,25 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    @EventHandler
    public void onPlayerJoin(PlayerJoinEvent e) {
       Player p = e.getPlayer();
-      UUID u = p.getUniqueId();
       if (this.db != null && this.db.isSyncEnabled()) {
          this.runSyncTick();
+         this.runKeyedSync(false);
+         Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (p.isOnline()) {
+               this.handlePlayerJoin(p);
+            }
+         }, 30L);
+      } else {
+         this.handlePlayerJoin(p);
       }
+   }
 
+   private void handlePlayerJoin(Player p) {
+      UUID u = p.getUniqueId();
+      long pendingInvoices = this.invoices.values().stream().filter(inv -> inv.to.equals(u)).count();
+      if (pendingInvoices > 0L) {
+         Bukkit.getScheduler().runTaskLater(this, () -> this.msgKey(p, "invoice.join-notice", "count", String.valueOf(pendingInvoices)), 60L);
+      }
       double pocket = econ.getBalance(p);
       Bukkit.getScheduler().runTaskLater(this, () -> this.updateScoreboard(p), 20L);
       if (!this.tutorialSeen.contains(u)) {
@@ -15479,7 +15528,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                try {
                   this.saveData();
-                  Set<String> changed = this.db.applyRemote(rows, SYNC_SKIP_KEYS);
+                  Set<String> changed = this.db.applyRemote(rows, MinecraftBank::isSyncedByDelta);
                   if (!changed.isEmpty()) {
                      this.clearPersistedState();
                      this.dataLoaded = false;
@@ -15499,6 +15548,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void clearPersistedState() {
+      this.invoices.clear();
       this.soundsOff.clear();
       this.activeDebts.clear();
       this.adminAuditLog.clear();
@@ -15702,6 +15752,427 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private static boolean isSecretConfigKey(String key) {
       String k = key.toLowerCase();
       return SECRET_CONFIG_WORDS.stream().anyMatch(k::contains);
+   }
+
+   private void loadUuidSet(String name, Set<UUID> target) {
+      List<String> raw = new ArrayList<>(this.db.getStringList(name, "_"));
+      raw.addAll(this.db.getKeys(name + "_set"));
+
+      for (String s : raw) {
+         try {
+            target.add(UUID.fromString(s));
+         } catch (IllegalArgumentException ignored) {
+         }
+      }
+   }
+
+   private void saveUuidSet(String name, Set<UUID> source) {
+      this.db.remove(name, "_");
+      this.db.removeSection(name + "_set");
+
+      for (UUID id : source) {
+         this.db.setString(name + "_set", id.toString(), "1");
+      }
+   }
+
+   /** Rows whose values are synchronised as additive deltas (counters table) instead of last-write-wins. */
+   private static boolean isSyncedByDelta(String section, String path) {
+      return SYNC_SKIP_KEYS.contains(section + "\u0000" + path)
+         || section.equals("personal")
+         || section.equals("capital")
+         || section.equals("group_accounts") && path.endsWith(".balance")
+         || section.equals("investment_funds") && (path.endsWith(".cash_balance") || path.contains(".contributions."));
+   }
+
+   private Map<String, Double> keyedValues() {
+      Map<String, Double> m = new HashMap<>();
+      this.personalBank.forEach((k, v) -> m.put("personal:" + k, v));
+      this.bankCapital.forEach((k, v) -> m.put("capital:" + k, v));
+
+      for (GroupAccount acc : this.groupAccounts.values()) {
+         m.put("group:" + acc.id, acc.balance);
+      }
+
+      for (InvestmentFund fund : this.investmentFunds.values()) {
+         m.put("fundcash:" + fund.id, fund.cashBalance);
+         fund.contributions.forEach((k, v) -> m.put("fundc:" + fund.id + ":" + k, v));
+      }
+
+      return m;
+   }
+
+   /** Value a key has when the entity exists but holds no entry, or null when the entity itself is gone. */
+   private Double absentKeyedValue(String key) {
+      try {
+         if (key.startsWith("personal:") || key.startsWith("capital:")) {
+            return 0.0;
+         } else if (key.startsWith("fundc:")) {
+            String[] parts = key.split(":");
+            return this.investmentFunds.containsKey(UUID.fromString(parts[1])) ? 0.0 : null;
+         } else {
+            return null;
+         }
+      } catch (IllegalArgumentException ex) {
+         return null;
+      }
+   }
+
+   private void applyKeyedValue(String key, double v) {
+      try {
+         String[] parts = key.split(":");
+         switch (parts[0]) {
+            case "personal" -> this.personalBank.put(UUID.fromString(parts[1]), v);
+            case "capital" -> this.bankCapital.put(UUID.fromString(parts[1]), v);
+            case "group" -> {
+               GroupAccount acc = this.groupAccounts.get(UUID.fromString(parts[1]));
+               if (acc != null) {
+                  acc.balance = v;
+               }
+            }
+            case "fundcash" -> {
+               InvestmentFund fund = this.investmentFunds.get(UUID.fromString(parts[1]));
+               if (fund != null) {
+                  fund.cashBalance = v;
+               }
+            }
+            case "fundc" -> {
+               InvestmentFund fund = this.investmentFunds.get(UUID.fromString(parts[1]));
+               UUID member = UUID.fromString(parts[2]);
+               if (fund != null) {
+                  if (Math.abs(v) < 1.0E-9) {
+                     fund.contributions.remove(member);
+                  } else {
+                     fund.contributions.put(member, v);
+                     this.playerInvestmentFunds.computeIfAbsent(member, k -> new HashSet<>()).add(fund.id);
+                  }
+               }
+            }
+            default -> {
+            }
+         }
+      } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException ignored) {
+      }
+   }
+
+   private void runKeyedSync(boolean blocking) {
+      if (this.db != null && this.db.isSyncEnabled() && !this.keyedInFlight && this.dataLoaded) {
+         Map<String, Double> snapshot = this.keyedValues();
+         Map<String, Double> synced = this.syncedKeyed != null ? this.syncedKeyed : new HashMap<>();
+         Map<String, Double> seeds = new HashMap<>();
+         Map<String, Double> deltas = new HashMap<>();
+
+         for (Entry<String, Double> en : snapshot.entrySet()) {
+            Double base = synced.get(en.getKey());
+            if (base == null) {
+               seeds.put(en.getKey(), en.getValue());
+            } else if (Math.abs(en.getValue() - base) > 1.0E-9) {
+               deltas.put(en.getKey(), en.getValue() - base);
+            }
+         }
+
+         for (Entry<String, Double> en : synced.entrySet()) {
+            if (!snapshot.containsKey(en.getKey())) {
+               Double absent = this.absentKeyedValue(en.getKey());
+               if (absent != null && Math.abs(absent - en.getValue()) > 1.0E-9) {
+                  deltas.put(en.getKey(), absent - en.getValue());
+                  snapshot.put(en.getKey(), absent);
+               }
+            }
+         }
+
+         this.keyedInFlight = true;
+         CompletableFuture<Map<String, Double>> future = this.db.syncKeyedAsync(seeds, deltas);
+         Consumer<Map<String, Double>> apply = totals -> {
+            Map<String, Double> now = this.keyedValues();
+            Map<String, Double> next = new HashMap<>();
+
+            for (Entry<String, Double> en : synced.entrySet()) {
+               if (now.containsKey(en.getKey()) || this.absentKeyedValue(en.getKey()) != null) {
+                  next.put(en.getKey(), en.getValue());
+               }
+            }
+
+            for (Entry<String, Double> en : totals.entrySet()) {
+               String key = en.getKey();
+               Double cur = now.containsKey(key) ? now.get(key) : this.absentKeyedValue(key);
+               if (cur != null) {
+                  double snap = snapshot.containsKey(key) ? snapshot.get(key) : (synced.containsKey(key) ? synced.get(key) : cur);
+                  this.applyKeyedValue(key, en.getValue() + (cur - snap));
+                  next.put(key, en.getValue());
+               }
+            }
+
+            this.syncedKeyed = next;
+         };
+         if (blocking) {
+            try {
+               apply.accept(future.get(20L, TimeUnit.SECONDS));
+            } catch (Exception ex) {
+               this.getLogger().severe("[サーバー間同期] 残高の初期同期に失敗しました: " + ex);
+            } finally {
+               this.keyedInFlight = false;
+            }
+         } else {
+            future.whenComplete((totals, err) -> Bukkit.getScheduler().runTask(this, () -> {
+               try {
+                  if (err != null) {
+                     this.getLogger().warning("[サーバー間同期] 残高の同期に失敗しました(次回再試行): " + err.getMessage());
+                  } else {
+                     apply.accept(totals);
+                  }
+               } finally {
+                  this.keyedInFlight = false;
+               }
+            }));
+         }
+      }
+   }
+
+   private void checkSyncNodes(boolean startup) {
+      if (this.db != null && this.db.isSyncEnabled()) {
+         long now = System.currentTimeMillis();
+         String own = this.db.getString("sync_nodes", this.cfgSyncServerId, null);
+         if (startup && own != null) {
+            String[] p = own.split("\\|");
+            if (p.length >= 3 && !p[0].equals(this.syncInstanceId) && now - Long.parseLong(p[2]) < 90000L) {
+               this.getLogger().severe("[サーバー間同期] 同じ server-id「" + this.cfgSyncServerId + "」のサーバーが既に動いているようです。server-id はサーバーごとに変えてください。");
+            }
+         }
+
+         int leaders = this.cfgSyncLeader ? 1 : 0;
+
+         for (String id : this.db.getKeys("sync_nodes")) {
+            if (!id.equals(this.cfgSyncServerId)) {
+               String[] p = this.db.getString("sync_nodes", id, "").split("\\|");
+
+               try {
+                  if (p.length >= 3 && "leader".equals(p[1]) && now - Long.parseLong(p[2]) < 180000L) {
+                     leaders++;
+                  }
+               } catch (NumberFormatException ignored) {
+               }
+            }
+         }
+
+         if (!startup && leaders != 1 && now - this.lastSyncNodeWarning > 600000L) {
+            this.lastSyncNodeWarning = now;
+            this.getLogger().warning(
+               leaders == 0
+                  ? "[サーバー間同期] リーダー(storage.sync.leader: true)のサーバーが見つかりません。利息・期限などの定期処理が止まっています。"
+                  : "[サーバー間同期] リーダーが " + leaders + " 台あります。定期処理が重複するため、リーダーは1台だけにしてください。"
+            );
+         }
+
+         this.db.setString("sync_nodes", this.cfgSyncServerId, this.syncInstanceId + "|" + (this.cfgSyncLeader ? "leader" : "follower") + "|" + now);
+      }
+   }
+
+   private void handleInvoiceCommand(Player p, String[] args) {
+      UUID u = p.getUniqueId();
+      if (args.length < 3) {
+         this.msgKey(p, "invoice.usage");
+         return;
+      }
+
+      OfflinePlayer target = this.lookupKnownPlayer(args[1]);
+      if (target == null) {
+         this.msgKey(p, "admin.player-not-found", "name", args[1]);
+         this.errorSound(p);
+         return;
+      }
+
+      if (target.getUniqueId().equals(u)) {
+         this.msgKey(p, "invoice.self");
+         this.errorSound(p);
+         return;
+      }
+
+      double amount;
+      try {
+         amount = parseFiniteDouble(args[2]);
+      } catch (NumberFormatException ex) {
+         this.msgKey(p, "common.invalid-amount");
+         this.errorSound(p);
+         return;
+      }
+
+      if (amount <= 0.0 || amount > 1.0E8) {
+         this.msgKey(p, "invoice.invalid-amount");
+         this.errorSound(p);
+         return;
+      }
+
+      long outgoing = this.invoices.values().stream().filter(inv -> inv.from.equals(u)).count();
+      long incomingForTarget = this.invoices.values().stream().filter(inv -> inv.to.equals(target.getUniqueId())).count();
+      if (outgoing >= 20L || incomingForTarget >= 50L) {
+         this.msgKey(p, "invoice.limit");
+         this.errorSound(p);
+         return;
+      }
+
+      String memo = args.length > 3 ? String.join(" ", Arrays.copyOfRange(args, 3, args.length)) : "";
+      memo = memo.replaceAll("\\p{Cntrl}", "");
+      if (memo.length() > 40) {
+         memo = memo.substring(0, 40);
+      }
+
+      Invoice inv = new Invoice();
+      inv.from = u;
+      inv.to = target.getUniqueId();
+      inv.amount = Math.floor(amount * 100.0) / 100.0;
+      inv.memo = memo;
+      inv.createdAt = System.currentTimeMillis();
+      inv.expiresAt = inv.createdAt + 7L * 86400000L;
+      this.invoices.put(inv.id, inv);
+      this.msgKey(p, "invoice.created", "player", this.nameOf(inv.to), "amount", this.fmtCur(inv.amount));
+      this.addLog(u, "請求書を送信: " + this.nameOf(inv.to) + " へ " + this.fmtCur(inv.amount));
+      this.clickSound(p);
+      Player online = Bukkit.getPlayer(inv.to);
+      if (online != null) {
+         this.msgKey(online, "invoice.received", "player", p.getName(), "amount", this.fmtCur(inv.amount), "memo", MiniMessage.miniMessage().escapeTags(memo));
+         this.playUiSound(online, "notify");
+      }
+   }
+
+   private void openInvoiceGUI(Player p) {
+      if (!this.featureAllowed(p, "invoice")) {
+         return;
+      }
+
+      UUID u = p.getUniqueId();
+      Inventory gui = Bukkit.createInventory(null, 54, this.tInvoice);
+      SimpleDateFormat fmt = new SimpleDateFormat("MM/dd HH:mm");
+      gui.setItem(
+         4,
+         this.createItem(
+            Material.BOOK,
+            "<gold><bold>請求書</bold></gold>",
+            "<gray>上段: あなた宛ての請求（左クリックで支払う / 右クリックで断る）</gray>",
+            "<gray>下段: あなたが送った請求（クリックで取り消す）</gray>",
+            "<gray>送信: /meco invoice <プレイヤー> <金額> [メモ]</gray>"
+         )
+      );
+      int in = 9;
+      int out = 27;
+
+      for (Invoice inv : this.invoices.values()) {
+         boolean incoming = inv.to.equals(u);
+         boolean outgoing = inv.from.equals(u);
+         if ((incoming && in < 27) || (outgoing && out < 45)) {
+            String memoLine = inv.memo.isEmpty() ? "<dark_gray>(メモなし)</dark_gray>" : "<white>" + MiniMessage.miniMessage().escapeTags(inv.memo) + "</white>";
+            ItemStack item = incoming
+               ? this.createItem(
+                  Material.PAPER,
+                  "<yellow><bold>" + this.nameOf(inv.from) + " からの請求</bold></yellow>",
+                  "<gray>金額:</gray> <gold>" + this.fmtCur(inv.amount) + "</gold>",
+                  memoLine,
+                  "<gray>期限:</gray> <white>" + fmt.format(new Date(inv.expiresAt)) + "</white>",
+                  "<green>左クリック: 支払う</green> <dark_gray>/</dark_gray> <red>右クリック: 断る</red>"
+               )
+               : this.createItem(
+                  Material.MAP,
+                  "<aqua><bold>" + this.nameOf(inv.to) + " への請求</bold></aqua>",
+                  "<gray>金額:</gray> <gold>" + this.fmtCur(inv.amount) + "</gold>",
+                  memoLine,
+                  "<gray>期限:</gray> <white>" + fmt.format(new Date(inv.expiresAt)) + "</white>",
+                  "<red>クリックで取り消す</red>"
+               );
+            ItemMeta meta = item.getItemMeta();
+            meta.getPersistentDataContainer().set(this.invoiceIdKey, PersistentDataType.STRING, inv.id);
+            item.setItemMeta(meta);
+            gui.setItem(incoming ? in++ : out++, item);
+         }
+      }
+
+      gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      this.fillGlass(gui);
+      p.openInventory(gui);
+   }
+
+   private void handleInvoiceClick(Player p, InventoryClickEvent e, ItemStack item) {
+      UUID u = p.getUniqueId();
+      if (e.getRawSlot() == 53) {
+         this.openMyPageGUI(p);
+         this.clickSound(p);
+         return;
+      }
+
+      ItemMeta meta = item.getItemMeta();
+      String id = meta != null ? (String)meta.getPersistentDataContainer().get(this.invoiceIdKey, PersistentDataType.STRING) : null;
+      Invoice inv = id != null ? this.invoices.get(id) : null;
+      if (id == null) {
+         return;
+      } else if (inv == null) {
+         this.msgKey(p, "invoice.not-found");
+         this.openInvoiceGUI(p);
+         return;
+      }
+
+      if (inv.to.equals(u)) {
+         if (e.getClick().isRightClick()) {
+            this.invoices.remove(inv.id);
+            this.msgKey(p, "invoice.rejected");
+            Player requester = Bukkit.getPlayer(inv.from);
+            if (requester != null) {
+               this.msgKey(requester, "invoice.rejected-notify", "player", p.getName(), "amount", this.fmtCur(inv.amount));
+            }
+         } else {
+            double pocket = econ.getBalance(p);
+            if (pocket < inv.amount) {
+               this.msgKey(p, "common.insufficient-funds-simple");
+               this.sendShortfall(p, inv.amount, pocket);
+               this.errorSound(p);
+               return;
+            }
+
+            if (!this.ecoWithdraw(p, inv.amount).transactionSuccess()) {
+               this.msgKey(p, "admin.economy-failed");
+               this.errorSound(p);
+               return;
+            }
+
+            this.invoices.remove(inv.id);
+            OfflinePlayer requester = Bukkit.getOfflinePlayer(inv.from);
+            this.ecoDeposit(requester, inv.amount);
+            String fromName = this.nameOf(inv.from);
+            this.addLog(u, "請求の支払い: " + fromName + " へ -" + this.fmtCur(inv.amount));
+            this.addLog(inv.from, "請求の入金: " + p.getName() + " から +" + this.fmtCur(inv.amount));
+            this.recordTransfer(u, "請求の支払い → " + fromName + " -" + this.fmtCur(inv.amount));
+            this.recordTransfer(inv.from, "請求の入金 ← " + p.getName() + " +" + this.fmtCur(inv.amount));
+            this.msgKey(p, "invoice.paid", "player", fromName, "amount", this.fmtCur(inv.amount));
+            this.playUiSound(p, "coin");
+            Player requesterOnline = Bukkit.getPlayer(inv.from);
+            if (requesterOnline != null) {
+               this.msgKey(requesterOnline, "invoice.paid-notify", "player", p.getName(), "amount", this.fmtCur(inv.amount));
+               this.playUiSound(requesterOnline, "coin");
+            }
+         }
+      } else if (inv.from.equals(u)) {
+         this.invoices.remove(inv.id);
+         this.msgKey(p, "invoice.cancelled");
+         Player payer = Bukkit.getPlayer(inv.to);
+         if (payer != null) {
+            this.msgKey(payer, "invoice.cancelled-notify", "player", p.getName(), "amount", this.fmtCur(inv.amount));
+         }
+      }
+
+      this.openInvoiceGUI(p);
+   }
+
+   private void expireInvoices() {
+      long now = System.currentTimeMillis();
+      Iterator<Invoice> it = this.invoices.values().iterator();
+
+      while (it.hasNext()) {
+         Invoice inv = it.next();
+         if (now >= inv.expiresAt) {
+            it.remove();
+            Player requester = Bukkit.getPlayer(inv.from);
+            if (requester != null) {
+               this.msgKey(requester, "invoice.expired-notify", "player", this.nameOf(inv.to), "amount", this.fmtCur(inv.amount));
+            }
+         }
+      }
    }
 
    private void sendShortfall(Player p, double need, double have) {
@@ -16215,7 +16686,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       synchronized (this.adminAuditLog) {
          this.adminAuditLog.clear();
-         this.adminAuditLog.addAll(this.db.getStringList("admin_audit", "_"));
+         List<String> auditLines = new ArrayList<>(this.db.getStringList("admin_audit", "_"));
+
+         for (String key : this.db.getKeys("admin_audit_v2")) {
+            auditLines.add(this.db.getString("admin_audit_v2", key, ""));
+         }
+
+         auditLines.removeIf(String::isEmpty);
+         auditLines.sort(Comparator.reverseOrder());
+         this.adminAuditLog.addAll(new LinkedHashSet<>(auditLines));
       }
 
       this.standingTransfers.clear();
@@ -16223,6 +16702,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       for (String raw : this.db.getStringList("standing_transfers", "_")) {
          StandingTransfer st = StandingTransfer.parse(raw);
          if (st != null) {
+            this.standingTransfers.add(st);
+         }
+      }
+
+      for (String key : this.db.getKeys("invoices")) {
+         Invoice inv = Invoice.parse(key, this.db.getString("invoices", key, ""));
+         if (inv != null) {
+            this.invoices.put(key, inv);
+         }
+      }
+
+      for (String key : this.db.getKeys("standing_v2")) {
+         StandingTransfer st = StandingTransfer.parse(this.db.getString("standing_v2", key, ""));
+         if (st != null) {
+            st.id = key;
             this.standingTransfers.add(st);
          }
       }
@@ -16236,12 +16730,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.taxRevenueTotal = this.db.getDouble("tax_state", "revenue", 0.0);
 
-      for (String raw : this.db.getStringList("sounds_off", "_")) {
-         try {
-            this.soundsOff.add(UUID.fromString(raw));
-         } catch (IllegalArgumentException ignored) {
-         }
-      }
+      this.loadUuidSet("sounds_off", this.soundsOff);
       this.wealthTaxNextAt = this.db.getLong("tax_state", "wealth_next_at", 0L);
 
       for (String key : this.db.getKeys("resource_price_history")) {
@@ -16287,11 +16776,27 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       synchronized (this.adminAuditLog) {
-         this.db.setStringList("admin_audit", "_", new ArrayList<>(this.adminAuditLog));
+         this.db.remove("admin_audit", "_");
+         this.db.removeSection("admin_audit_v2");
+
+         for (String line : this.adminAuditLog) {
+            this.db.setString("admin_audit_v2", Integer.toHexString(line.hashCode()) + Integer.toHexString(line.length()), line);
+         }
       }
 
-      this.db.setStringList("standing_transfers", "_", this.standingTransfers.stream().map(StandingTransfer::serialize).toList());
-      this.db.setStringList("sounds_off", "_", this.soundsOff.stream().map(UUID::toString).toList());
+      this.db.removeSection("invoices");
+
+      for (Invoice inv : this.invoices.values()) {
+         this.db.setString("invoices", inv.id, inv.serialize());
+      }
+
+      this.db.remove("standing_transfers", "_");
+      this.db.removeSection("standing_v2");
+
+      for (StandingTransfer st : this.standingTransfers) {
+         this.db.setString("standing_v2", st.id, st.serialize());
+      }
+      this.saveUuidSet("sounds_off", this.soundsOff);
       this.db.removeSection("tax_paid");
 
       for (Entry<UUID, Double> entry : this.taxPaidTotal.entrySet()) {
@@ -16705,6 +17210,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private String featureOfSubcommand(String sub) {
       return switch (sub) {
          case "auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate" -> sub;
+         case "invoice", "invoices" -> "invoice";
          default -> null;
       };
    }

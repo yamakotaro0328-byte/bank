@@ -88,6 +88,9 @@ permissions:
   bank.feature.donate:
     description: donate 機能を利用できる権限
     default: true
+  bank.feature.invoice:
+    description: invoice 機能を利用できる権限
+    default: true
   bank.feature.*:
     description: すべての機能の利用権限
     default: true
@@ -112,6 +115,7 @@ permissions:
       bank.feature.fund: true
       bank.feature.standing: true
       bank.feature.donate: true
+      bank.feature.invoice: true
   bank.*:
     description: MinecraftBank の全権限をまとめたワイルドカード
     default: op
