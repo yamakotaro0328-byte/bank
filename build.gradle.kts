@@ -25,6 +25,20 @@ dependencies {
     }
     compileOnly("me.clip:placeholderapi:2.12.3")
     compileOnly("org.xerial:sqlite-jdbc:3.53.4.0")
+
+    testImplementation(platform("org.junit:junit-bom:5.12.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("io.papermc.paper:paper-api:26.2.build.124-stable")
+    testImplementation("org.xerial:sqlite-jdbc:3.53.4.0")
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 tasks.withType<JavaCompile> {

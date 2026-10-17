@@ -2,7 +2,12 @@
 
 `minecraft_bank-1.jar` を Vineflower 1.12.0 でデコンパイルしたソースコードです（CFRは`onInventoryClick`の一部を正しく復元できなかったため切り替えました）。
 
-- `src/main/java/kot0328/minecraftBank/MinecraftBank.java`: プラグイン本体（内部クラスを含む）
+- `src/main/java/kot0328/minecraftBank/MinecraftBank.java`: プラグイン本体（コマンド・GUI・各機能）
+- `PluginDataStore.java`: 保存層（SQLite/MySQL・差分保存・台帳・サーバー間同期）
+- `DefaultMessages.java` / `ResourceCatalog.java`: 既定メッセージ / 資源ショップ等の価格表
+- `BankUtil.java`: 計算・表示用の共通関数
+- `Quest.java` `GroupAccount.java` `StandingTransfer.java` ほか: データ用クラス
+- `src/test/java/...`: 自動テスト（保存層・価格表の差益チェック・メッセージ書式など）。`./gradlew build` とGitHub Actionsで毎回実行されます
 - `src/main/java/kot0328/minecraftBank/MinecraftBankAPI.java`
 - `src/main/resources/plugin.yml`, `config.yml`
 

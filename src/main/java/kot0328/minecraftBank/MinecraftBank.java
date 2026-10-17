@@ -183,7 +183,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private int cfgSelfCheckReportIntervalMinutes = 360;
    private List<String> lastSelfCheckIssues = new ArrayList<>();
    private long lastSelfCheckAt = 0L;
-   private final LinkedHashMap<UUID, MinecraftBank.Quest> quests = new LinkedHashMap<>();
+   private final LinkedHashMap<UUID, Quest> quests = new LinkedHashMap<>();
    private final HashMap<UUID, UUID> playerActiveQuest = new HashMap<>();
    private long cfgQuestOfflineReleaseMinutes = 30L;
    private double cfgQuestRadius = 15.0;
@@ -271,7 +271,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private static final long GUI_CLICK_DEBOUNCE_MS = 250L;
    private final HashMap<UUID, HashMap<String, Integer>> playerWorldStocks = new HashMap<>();
    private final HashMap<UUID, HashMap<String, Double>> playerWorldStockAvgCost = new HashMap<>();
-   private final HashMap<String, MinecraftBank.WorldStockQuote> worldStockQuoteCache = new HashMap<>();
+   private final HashMap<String, WorldStockQuote> worldStockQuoteCache = new HashMap<>();
    private double cfgWorldStockCacheSeconds = 60.0;
    private double cfgWorldStockFeeRate = 0.005;
    private double cfgWorldStockDividendAnnualRate = 0.02;
@@ -299,7 +299,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private String cfgCustomMoneySymbol = "V";
    private double cfgCustomMoneyRate = 10.0;
    private static final Map<String, String> COUNTRY_CURRENCY_MAP = new HashMap<>();
-   private final HashMap<UUID, List<MinecraftBank.WorldStockAlert>> worldStockAlerts = new HashMap<>();
+   private final HashMap<UUID, List<WorldStockAlert>> worldStockAlerts = new HashMap<>();
    private static final LinkedHashMap<Material, Double> RESOURCE_BASE_PRICES = new LinkedHashMap<>();
    private static final Map<String, List<Material>> RESOURCE_CATEGORIES = new LinkedHashMap<>();
    private final HashMap<Material, Double> resourcePrices = new HashMap<>();
@@ -315,7 +315,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private double cfgResourcePriceReversionRate = 0.05;
    private int cfgResourcePriceDriftIntervalMinutes = 10;
    private static final LinkedHashMap<Material, Double> MERCHANT_ITEM_POOL = new LinkedHashMap<>();
-   private final List<MinecraftBank.MerchantDeal> merchantDeals = new ArrayList<>();
+   private final List<MerchantDeal> merchantDeals = new ArrayList<>();
    private long merchantRefreshAt = 0L;
    private int cfgMerchantRefreshHours = 24;
    private int cfgMerchantDealCount = 4;
@@ -339,7 +339,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private double cfgVipTradeLimitMultGold = 2.0;
    private double cfgVipTradeLimitMultPlatinum = 3.0;
    private static final LinkedHashMap<Material, Double> VIP_SHOP_POOL = new LinkedHashMap<>();
-   private final List<MinecraftBank.VipDeal> vipShopDeals = new ArrayList<>();
+   private final List<VipDeal> vipShopDeals = new ArrayList<>();
    private long vipShopRefreshAt = 0L;
    private boolean cfgVipShopEnabled = true;
    private int cfgVipShopRefreshHours = 24;
@@ -349,7 +349,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private int cfgVipShopMinStock = 2;
    private int cfgVipShopMaxStock = 6;
    private NamespacedKey vipDealKey;
-   private final HashMap<UUID, List<MinecraftBank.InstallmentPlan>> installmentPlans = new HashMap<>();
+   private final HashMap<UUID, List<InstallmentPlan>> installmentPlans = new HashMap<>();
    private boolean cfgInstallmentEnabled = true;
    private int cfgInstallmentMinCreditScore = 400;
    private int cfgInstallmentCount = 3;
@@ -388,16 +388,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<UUID, UUID> guarantorProposals = new HashMap<>();
    private final HashMap<UUID, Long> guarantorProposalTime = new HashMap<>();
    private long cfgGuarantorProposalTimeoutMs = 300000L;
-   private final HashMap<UUID, MinecraftBank.TradeSession> activeTradeSessions = new HashMap<>();
+   private final HashMap<UUID, TradeSession> activeTradeSessions = new HashMap<>();
    private final HashMap<UUID, UUID> tradeRequests = new HashMap<>();
    private final HashMap<UUID, Long> tradeRequestTime = new HashMap<>();
    private long cfgTradeRequestTimeoutMs = 60000L;
-   private final HashMap<UUID, MinecraftBank.GroupAccount> groupAccounts = new HashMap<>();
+   private final HashMap<UUID, GroupAccount> groupAccounts = new HashMap<>();
    private final HashMap<UUID, HashSet<UUID>> playerGroupAccounts = new HashMap<>();
    private final HashMap<UUID, UUID> groupAccountViewing = new HashMap<>();
    private double cfgGroupAccountCreateCost = 1000.0;
    private int cfgGroupAccountMaxMembers = 10;
-   private final HashMap<UUID, MinecraftBank.InvestmentFund> investmentFunds = new HashMap<>();
+   private final HashMap<UUID, InvestmentFund> investmentFunds = new HashMap<>();
    private final HashMap<UUID, HashSet<UUID>> playerInvestmentFunds = new HashMap<>();
    private final HashMap<UUID, UUID> fundViewing = new HashMap<>();
    private double cfgFundCreateCost = 2000.0;
@@ -463,7 +463,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<UUID, Long> adminPendingActionAt = new HashMap<>();
    private final Set<UUID> adminConfirmBypass = new HashSet<>();
    private final HashMap<UUID, LinkedList<String>> transferHistory = new HashMap<>();
-   private final List<MinecraftBank.StandingTransfer> standingTransfers = new ArrayList<>();
+   private final List<StandingTransfer> standingTransfers = new ArrayList<>();
    private int cfgStandingTransferMaxPerPlayer = 5;
    private int cfgStandingTransferMinIntervalHours = 1;
    private String cfgStorageType = "sqlite";
@@ -521,7 +521,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final Component tFundStock = this.mm("<bold><dark_green>【共同投資ファンド・運用】</dark_green></bold>");
    private final Component tFundStockDetail = this.mm("<bold><dark_green>【共同投資ファンド・銘柄詳細】</dark_green></bold>");
    private final Component tVipLounge = this.mm("<bold><light_purple>【\ud83d\udc8e VIPラウンジ】</light_purple></bold>");
-   private MinecraftBank.PluginDataStore db;
+   private PluginDataStore db;
    private FileConfiguration messages;
    private File messagesFile;
    private static final Set<String> MANAGED_DATA_PREFIXES = Set.of(
@@ -609,96 +609,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private boolean configDefaultsMigrated = false;
 
    static {
-      LEGACY_MESSAGE_HASHES.put("trade.request-instructions", new int[]{-1096766543});
-      LEGACY_MESSAGE_HASHES.put("common.insufficient-funds", new int[]{-177994242});
-      LEGACY_MESSAGE_HASHES.put("insurance.payout", new int[]{-756975550});
-      LEGACY_MESSAGE_HASHES.put("auction.won", new int[]{-714352911});
-      LEGACY_MESSAGE_HASHES.put("auction.sold", new int[]{610325462});
-      LEGACY_MESSAGE_HASHES.put("auction.outbid-refund", new int[]{-967018139});
-      LEGACY_MESSAGE_HASHES.put("loan.player-approved", new int[]{-575725092});
-      LEGACY_MESSAGE_HASHES.put("loan.gov-approved", new int[]{-967462664});
-      LEGACY_MESSAGE_HASHES.put("event.boom", new int[]{634323636});
-      LEGACY_MESSAGE_HASHES.put("event.bonus", new int[]{95605934, 1163847345});
-      LEGACY_MESSAGE_HASHES.put("event.recession", new int[]{-1192384585});
-      LEGACY_MESSAGE_HASHES.put("fixed-deposit.matured", new int[]{1671674389});
-      LEGACY_MESSAGE_HASHES.put("fixed-deposit.matured-2", new int[]{-1691157979});
-      LEGACY_MESSAGE_HASHES.put("fixed-deposit.matured-3", new int[]{683553010});
-      LEGACY_MESSAGE_HASHES.put("loan.gov-overdue-penalty", new int[]{952634153});
-      LEGACY_MESSAGE_HASHES.put("loan.gov-overdue-ceiling", new int[]{890495278});
-      LEGACY_MESSAGE_HASHES.put("admin.give-success", new int[]{-1214496614});
-      LEGACY_MESSAGE_HASHES.put("admin.take-success", new int[]{1743360000});
-      LEGACY_MESSAGE_HASHES.put("admin.setgovdebt-success", new int[]{-647949590});
-      LEGACY_MESSAGE_HASHES.put("admin.usage-event", new int[]{2144204572});
-      LEGACY_MESSAGE_HASHES.put("treasury.balance", new int[]{-1843989811});
-      LEGACY_MESSAGE_HASHES.put("treasury.set", new int[]{1405621390});
-      LEGACY_MESSAGE_HASHES.put("treasury.citizen-dividend", new int[]{389062148});
-      LEGACY_MESSAGE_HASHES.put("treasury.welfare", new int[]{-40994372});
-      LEGACY_MESSAGE_HASHES.put("common.amount-must-be-positive", new int[]{-1923942108});
-      LEGACY_MESSAGE_HASHES.put("donate.treasury-thanks", new int[]{-1345232759});
-      LEGACY_MESSAGE_HASHES.put("donate.player-success", new int[]{-1941543549});
-      LEGACY_MESSAGE_HASHES.put("donate.player-received", new int[]{-1921462460});
-      LEGACY_MESSAGE_HASHES.put("trade.money-set", new int[]{-673345384});
-      LEGACY_MESSAGE_HASHES.put("quest.withdrawn", new int[]{-994282165});
-      LEGACY_MESSAGE_HASHES.put("quest.team-completed", new int[]{-268511588});
-      LEGACY_MESSAGE_HASHES.put("event.boom-triggered", new int[]{-1272584613});
-      LEGACY_MESSAGE_HASHES.put("event.recession-triggered", new int[]{846962765});
-      LEGACY_MESSAGE_HASHES.put("collateral.borrowed", new int[]{-1237566893});
-      LEGACY_MESSAGE_HASHES.put("collateral.repay-insufficient", new int[]{502645380});
-      LEGACY_MESSAGE_HASHES.put("treasury.balance-gui", new int[]{766449214});
-      LEGACY_MESSAGE_HASHES.put("auction.bid-prompt", new int[]{2126074774});
-      LEGACY_MESSAGE_HASHES.put("insurance.premium-insufficient", new int[]{840917005});
-      LEGACY_MESSAGE_HASHES.put("personal.deposit-step", new int[]{-296641516});
-      LEGACY_MESSAGE_HASHES.put("personal.withdraw-step", new int[]{-1409275952});
-      LEGACY_MESSAGE_HASHES.put("loan.player-approved-notice", new int[]{421129573});
-      LEGACY_MESSAGE_HASHES.put("loan.repay-partial", new int[]{-128495752});
-      LEGACY_MESSAGE_HASHES.put("bank.establish-cost-insufficient", new int[]{623121614});
-      LEGACY_MESSAGE_HASHES.put("bank.capital-added", new int[]{-331331253});
-      LEGACY_MESSAGE_HASHES.put("bank.capital-withdrawn", new int[]{286688450});
-      LEGACY_MESSAGE_HASHES.put("loan.gov-cap-exceeded", new int[]{84935845});
-      LEGACY_MESSAGE_HASHES.put("deposit.slot1-created", new int[]{-209978585});
-      LEGACY_MESSAGE_HASHES.put("deposit.funds-insufficient", new int[]{-2010831193});
-      LEGACY_MESSAGE_HASHES.put("deposit.slot2-created", new int[]{719634499});
-      LEGACY_MESSAGE_HASHES.put("deposit.slot3-created", new int[]{873643202});
-      LEGACY_MESSAGE_HASHES.put("quest.completed", new int[]{-1318038673});
-      LEGACY_MESSAGE_HASHES.put("quest.relisted", new int[]{2138212723});
-      LEGACY_MESSAGE_HASHES.put("loan.login-seized-partial", new int[]{1215241651});
-      LEGACY_MESSAGE_HASHES.put("loan.guarantor-seized-notice", new int[]{-1744944605});
-      LEGACY_MESSAGE_HASHES.put("quest.posted", new int[]{-1610361478});
-      LEGACY_MESSAGE_HASHES.put("worldstock.bought", new int[]{1567769365});
-      LEGACY_MESSAGE_HASHES.put("worldstock.sold", new int[]{-2040651686});
-      LEGACY_MESSAGE_HASHES.put("worldstock.daily-amount-limit", new int[]{1170256295});
-      LEGACY_MESSAGE_HASHES.put("worldstock.daily-profit-limit", new int[]{-1691448355});
-      LEGACY_MESSAGE_HASHES.put("worldstock.dividend-paid", new int[]{831144035});
-      LEGACY_MESSAGE_HASHES.put("resourceshop.sold", new int[]{603927460});
-      LEGACY_MESSAGE_HASHES.put("resourceshop.bought", new int[]{-2058796131});
-      LEGACY_MESSAGE_HASHES.put("lottery.ticket-bought", new int[]{728145581});
-      LEGACY_MESSAGE_HASHES.put("merchant.bought", new int[]{-1661206188});
-      LEGACY_MESSAGE_HASHES.put("treasure.found", new int[]{1244599758});
-      LEGACY_MESSAGE_HASHES.put("merchant.installment-purchased", new int[]{1110857173});
-      LEGACY_MESSAGE_HASHES.put("installment.paid", new int[]{1515254977});
-      LEGACY_MESSAGE_HASHES.put("installment.missed", new int[]{600049425});
-      LEGACY_MESSAGE_HASHES.put("auction.bid-too-low", new int[]{1136280363});
-      LEGACY_MESSAGE_HASHES.put("auction.bid-placed", new int[]{1537615290});
-      LEGACY_MESSAGE_HASHES.put("personal.deposit-custom", new int[]{2023428476});
-      LEGACY_MESSAGE_HASHES.put("personal.withdraw-insufficient", new int[]{-1527741168});
-      LEGACY_MESSAGE_HASHES.put("personal.withdraw-custom", new int[]{1778165289});
-      LEGACY_MESSAGE_HASHES.put("bank.plan-amount-set", new int[]{-1405849161});
-      LEGACY_MESSAGE_HASHES.put("auction.buyout-too-low", new int[]{1064943401});
-      LEGACY_MESSAGE_HASHES.put("auction.listed", new int[]{405540210});
-      LEGACY_MESSAGE_HASHES.put("storage.rented", new int[]{-425280272});
-      LEGACY_MESSAGE_HASHES.put("storage.rent-paid", new int[]{-1971571477});
-      LEGACY_MESSAGE_HASHES.put("group.create-funds-insufficient", new int[]{2049322262});
-      LEGACY_MESSAGE_HASHES.put("group.disbanded", new int[]{1477975000});
-      LEGACY_MESSAGE_HASHES.put("group.deposited", new int[]{-1121822834});
-      LEGACY_MESSAGE_HASHES.put("group.withdraw-insufficient", new int[]{-1069227836});
-      LEGACY_MESSAGE_HASHES.put("group.withdrawn", new int[]{-1955394510});
-      LEGACY_MESSAGE_HASHES.put("fund.create-funds-insufficient", new int[]{2049322262});
-      LEGACY_MESSAGE_HASHES.put("fund.contributed", new int[]{-287906399});
-      LEGACY_MESSAGE_HASHES.put("fund.contribute-funds-insufficient", new int[]{-177994242});
-      LEGACY_MESSAGE_HASHES.put("fund.redeemed", new int[]{1979741579});
-      LEGACY_MESSAGE_HASHES.put("fund.disbanded", new int[]{1957300275});
-      LEGACY_MESSAGE_HASHES.put("vip.shop-bought", new int[]{-848800296});
-      LEGACY_MESSAGE_HASHES.put("vip.stipend-claimed", new int[]{424641851});
+      DefaultMessages.registerLegacyHashes(LEGACY_MESSAGE_HASHES);
    }
 
    private String resolveCurrencyByCountry(String country) {
@@ -830,7 +741,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          try {
             if (this.cfgStorageType.equals("mysql")) {
-               this.db = MinecraftBank.PluginDataStore.mysql(
+               this.db = PluginDataStore.mysql(
                   this.cfgMysqlHost,
                   this.cfgMysqlPort,
                   this.cfgMysqlDatabase,
@@ -849,7 +760,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.getLogger().warning("[データベース] 同じ table-prefix を複数のサーバーで同時に使う場合は storage.sync.enabled を true にしてください。");
                }
             } else {
-               this.db = new MinecraftBank.PluginDataStore(dbFile, this.getLogger());
+               this.db = new PluginDataStore(dbFile, this.getLogger());
             }
          } catch (SQLException ex) {
             this.getLogger().severe("データベース(" + this.cfgStorageType + ")の初期化に失敗しました。プラグインを停止します: " + ex.getMessage());
@@ -1405,14 +1316,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       long now = System.currentTimeMillis();
 
       for (UUID owner : new ArrayList<>(this.installmentPlans.keySet())) {
-         List<MinecraftBank.InstallmentPlan> plans = this.installmentPlans.get(owner);
+         List<InstallmentPlan> plans = this.installmentPlans.get(owner);
          if (plans != null) {
             OfflinePlayer offlineOwner = Bukkit.getOfflinePlayer(owner);
             Player online = Bukkit.getPlayer(owner);
-            Iterator<MinecraftBank.InstallmentPlan> it = plans.iterator();
+            Iterator<InstallmentPlan> it = plans.iterator();
 
             while (it.hasNext()) {
-               MinecraftBank.InstallmentPlan plan = it.next();
+               InstallmentPlan plan = it.next();
                if (plan.nextDueTime <= now) {
                   if (econ.getBalance(offlineOwner) >= plan.installmentAmount) {
                      this.ecoWithdraw(offlineOwner, plan.installmentAmount);
@@ -2438,13 +2349,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (c.getConfigurationSection("world_stock_alerts") != null) {
          for (String uuidKey : c.getConfigurationSection("world_stock_alerts").getKeys(false)) {
             UUID owner = UUID.fromString(uuidKey);
-            List<MinecraftBank.WorldStockAlert> list = new ArrayList<>();
+            List<WorldStockAlert> list = new ArrayList<>();
             if (c.getConfigurationSection("world_stock_alerts." + uuidKey) != null) {
                for (String alertIdKey : c.getConfigurationSection("world_stock_alerts." + uuidKey).getKeys(false)) {
                   String base = "world_stock_alerts." + uuidKey + "." + alertIdKey + ".";
                   String symbol = c.getString(base + "symbol");
                   if (symbol != null) {
-                     MinecraftBank.WorldStockAlert alert = new MinecraftBank.WorldStockAlert();
+                     WorldStockAlert alert = new WorldStockAlert();
                      alert.id = UUID.fromString(alertIdKey);
                      alert.symbol = symbol;
                      alert.baselinePrice = c.getDouble(base + "baseline", 0.0);
@@ -2494,7 +2405,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String matName = c.getString(base + "material");
             if (matName != null) {
                try {
-                  MinecraftBank.MerchantDeal deal = new MinecraftBank.MerchantDeal();
+                  MerchantDeal deal = new MerchantDeal();
                   deal.id = UUID.fromString(key);
                   deal.material = Material.valueOf(matName);
                   deal.normalPrice = c.getDouble(base + "normal_price", 0.0);
@@ -2515,7 +2426,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String matName = c.getString(base + "material");
             if (matName != null) {
                try {
-                  MinecraftBank.VipDeal deal = new MinecraftBank.VipDeal();
+                  VipDeal deal = new VipDeal();
                   deal.id = UUID.fromString(key);
                   deal.material = Material.valueOf(matName);
                   deal.normalPrice = c.getDouble(base + "normal_price", 0.0);
@@ -2546,7 +2457,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (c.getConfigurationSection("quests") != null) {
          for (String key : c.getConfigurationSection("quests").getKeys(false)) {
             String base = "quests." + key + ".";
-            MinecraftBank.Quest q = new MinecraftBank.Quest();
+            Quest q = new Quest();
             q.id = UUID.fromString(key);
             q.posterId = UUID.fromString(c.getString(base + "poster"));
             q.worldName = c.getString(base + "world");
@@ -2554,7 +2465,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             q.y = c.getDouble(base + "y");
             q.z = c.getDouble(base + "z");
             q.reward = c.getDouble(base + "reward");
-            q.state = MinecraftBank.QuestState.valueOf(c.getString(base + "state", "AVAILABLE"));
+            q.state = QuestState.valueOf(c.getString(base + "state", "AVAILABLE"));
             String acceptedByStr = c.getString(base + "acceptedBy");
             q.acceptedBy = acceptedByStr != null ? UUID.fromString(acceptedByStr) : null;
             q.cooldownUntil = c.getLong(base + "cooldownUntil");
@@ -2562,7 +2473,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             q.teamMembers = new HashSet<>(c.getStringList(base + "teamMembers").stream().map(UUID::fromString).toList());
             q.teamArrived = new HashSet<>(c.getStringList(base + "teamArrived").stream().map(UUID::fromString).toList());
             this.quests.put(q.id, q);
-            if (q.state == MinecraftBank.QuestState.IN_PROGRESS && q.acceptedBy != null) {
+            if (q.state == QuestState.IN_PROGRESS && q.acceptedBy != null) {
                this.playerActiveQuest.put(q.acceptedBy, q.id);
             }
 
@@ -2600,7 +2511,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   String base = "installment_plans." + ownerKey + "." + planKey + ".";
 
                   try {
-                     MinecraftBank.InstallmentPlan plan = new MinecraftBank.InstallmentPlan();
+                     InstallmentPlan plan = new InstallmentPlan();
                      plan.id = UUID.fromString(planKey);
                      plan.owner = owner;
                      plan.description = c.getString(base + "description", "");
@@ -2661,7 +2572,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          for (String key : c.getConfigurationSection("group_accounts").getKeys(false)) {
             try {
                String base = "group_accounts." + key + ".";
-               MinecraftBank.GroupAccount acc = new MinecraftBank.GroupAccount();
+               GroupAccount acc = new GroupAccount();
                acc.id = UUID.fromString(key);
                acc.name = c.getString(base + "name", "");
                acc.owner = UUID.fromString(c.getString(base + "owner"));
@@ -2675,7 +2586,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.playerGroupAccounts.clear();
 
-      for (MinecraftBank.GroupAccount acc : this.groupAccounts.values()) {
+      for (GroupAccount acc : this.groupAccounts.values()) {
          this.playerGroupAccounts.computeIfAbsent(acc.owner, k -> new HashSet<>()).add(acc.id);
 
          for (UUID m : acc.members) {
@@ -2687,7 +2598,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          for (String key : c.getConfigurationSection("investment_funds").getKeys(false)) {
             try {
                String base = "investment_funds." + key + ".";
-               MinecraftBank.InvestmentFund fund = new MinecraftBank.InvestmentFund();
+               InvestmentFund fund = new InvestmentFund();
                fund.id = UUID.fromString(key);
                fund.name = c.getString(base + "name", "");
                fund.manager = UUID.fromString(c.getString(base + "manager"));
@@ -2711,7 +2622,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.playerInvestmentFunds.clear();
 
-      for (MinecraftBank.InvestmentFund fund : this.investmentFunds.values()) {
+      for (InvestmentFund fund : this.investmentFunds.values()) {
          this.playerInvestmentFunds.computeIfAbsent(fund.manager, k -> new HashSet<>()).add(fund.id);
 
          for (UUID contributor : fund.contributions.keySet()) {
@@ -2988,13 +2899,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       for (String uuidKey : this.db.getKeys("world_stock_alerts")) {
          UUID owner = UUID.fromString(uuidKey);
-         List<MinecraftBank.WorldStockAlert> list = new ArrayList<>();
+         List<WorldStockAlert> list = new ArrayList<>();
 
          for (String alertIdKey : this.db.getKeys("world_stock_alerts", uuidKey)) {
             String base = uuidKey + "." + alertIdKey + ".";
             String symbol = this.db.getString("world_stock_alerts", base + "symbol", null);
             if (symbol != null) {
-               MinecraftBank.WorldStockAlert alert = new MinecraftBank.WorldStockAlert();
+               WorldStockAlert alert = new WorldStockAlert();
                alert.id = UUID.fromString(alertIdKey);
                alert.symbol = symbol;
                alert.baselinePrice = this.db.getDouble("world_stock_alerts", base + "baseline", 0.0);
@@ -3038,7 +2949,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          String matName = this.db.getString("traveling_merchant", base + "material", null);
          if (matName != null) {
             try {
-               MinecraftBank.MerchantDeal deal = new MinecraftBank.MerchantDeal();
+               MerchantDeal deal = new MerchantDeal();
                deal.id = UUID.fromString(key);
                deal.material = Material.valueOf(matName);
                deal.normalPrice = this.db.getDouble("traveling_merchant", base + "normal_price", 0.0);
@@ -3058,7 +2969,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          String matName = this.db.getString("vip_shop", base + "material", null);
          if (matName != null) {
             try {
-               MinecraftBank.VipDeal deal = new MinecraftBank.VipDeal();
+               VipDeal deal = new VipDeal();
                deal.id = UUID.fromString(key);
                deal.material = Material.valueOf(matName);
                deal.normalPrice = this.db.getDouble("vip_shop", base + "normal_price", 0.0);
@@ -3089,7 +3000,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       for (String key : this.db.getKeys("quests")) {
          String base = key + ".";
-         MinecraftBank.Quest q = new MinecraftBank.Quest();
+         Quest q = new Quest();
          q.id = UUID.fromString(key);
          q.posterId = UUID.fromString(this.db.getString("quests", base + "poster", null));
          q.worldName = this.db.getString("quests", base + "world", null);
@@ -3097,7 +3008,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          q.y = this.db.getDouble("quests", base + "y", 0.0);
          q.z = this.db.getDouble("quests", base + "z", 0.0);
          q.reward = this.db.getDouble("quests", base + "reward", 0.0);
-         q.state = MinecraftBank.QuestState.valueOf(this.db.getString("quests", base + "state", "AVAILABLE"));
+         q.state = QuestState.valueOf(this.db.getString("quests", base + "state", "AVAILABLE"));
          String acceptedByStr = this.db.getString("quests", base + "acceptedBy", null);
          q.acceptedBy = acceptedByStr != null ? UUID.fromString(acceptedByStr) : null;
          q.cooldownUntil = this.db.getLong("quests", base + "cooldownUntil", 0L);
@@ -3105,7 +3016,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          q.teamMembers = new HashSet<>(this.db.getStringList("quests", base + "teamMembers").stream().map(UUID::fromString).toList());
          q.teamArrived = new HashSet<>(this.db.getStringList("quests", base + "teamArrived").stream().map(UUID::fromString).toList());
          this.quests.put(q.id, q);
-         if (q.state == MinecraftBank.QuestState.IN_PROGRESS && q.acceptedBy != null) {
+         if (q.state == QuestState.IN_PROGRESS && q.acceptedBy != null) {
             this.playerActiveQuest.put(q.acceptedBy, q.id);
          }
 
@@ -3128,7 +3039,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String base = ownerKey + "." + planKey + ".";
 
             try {
-               MinecraftBank.InstallmentPlan plan = new MinecraftBank.InstallmentPlan();
+               InstallmentPlan plan = new InstallmentPlan();
                plan.id = UUID.fromString(planKey);
                plan.owner = owner;
                plan.description = this.db.getString("installment_plans", base + "description", "");
@@ -3181,7 +3092,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       for (String key : this.db.getKeys("group_accounts")) {
          try {
             String base = key + ".";
-            MinecraftBank.GroupAccount acc = new MinecraftBank.GroupAccount();
+            GroupAccount acc = new GroupAccount();
             acc.id = UUID.fromString(key);
             acc.name = this.db.getString("group_accounts", base + "name", "");
             acc.owner = UUID.fromString(this.db.getString("group_accounts", base + "owner", null));
@@ -3194,7 +3105,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.playerGroupAccounts.clear();
 
-      for (MinecraftBank.GroupAccount acc : this.groupAccounts.values()) {
+      for (GroupAccount acc : this.groupAccounts.values()) {
          this.playerGroupAccounts.computeIfAbsent(acc.owner, k -> new HashSet<>()).add(acc.id);
 
          for (UUID m : acc.members) {
@@ -3205,7 +3116,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       for (String key : this.db.getKeys("investment_funds")) {
          try {
             String base = key + ".";
-            MinecraftBank.InvestmentFund fund = new MinecraftBank.InvestmentFund();
+            InvestmentFund fund = new InvestmentFund();
             fund.id = UUID.fromString(key);
             fund.name = this.db.getString("investment_funds", base + "name", "");
             fund.manager = UUID.fromString(this.db.getString("investment_funds", base + "manager", null));
@@ -3227,7 +3138,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.playerInvestmentFunds.clear();
 
-      for (MinecraftBank.InvestmentFund fund : this.investmentFunds.values()) {
+      for (InvestmentFund fund : this.investmentFunds.values()) {
          this.playerInvestmentFunds.computeIfAbsent(fund.manager, k -> new HashSet<>()).add(fund.id);
 
          for (UUID contributor : fund.contributions.keySet()) {
@@ -3558,7 +3469,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.db.setStringList("tutorial-seen", "_", this.tutorialSeen.stream().map(UUID::toString).toList());
             this.db.removeSection("quests");
 
-            for (MinecraftBank.Quest q : this.quests.values()) {
+            for (Quest q : this.quests.values()) {
                String base = q.id + ".";
                this.db.setString("quests", base + "poster", q.posterId.toString());
                this.db.setString("quests", base + "world", q.worldName);
@@ -3618,8 +3529,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
             this.db.removeSection("world_stock_alerts");
 
-            for (Entry<UUID, List<MinecraftBank.WorldStockAlert>> entry : this.worldStockAlerts.entrySet()) {
-               for (MinecraftBank.WorldStockAlert alert : entry.getValue()) {
+            for (Entry<UUID, List<WorldStockAlert>> entry : this.worldStockAlerts.entrySet()) {
+               for (WorldStockAlert alert : entry.getValue()) {
                   String base = entry.getKey() + "." + alert.id + ".";
                   this.db.setString("world_stock_alerts", base + "symbol", alert.symbol);
                   this.db.setDouble("world_stock_alerts", base + "baseline", alert.baselinePrice);
@@ -3650,7 +3561,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.db.setLong("traveling_merchant", "refresh_at", this.merchantRefreshAt);
             this.db.removeByPathPrefix("traveling_merchant", "deals");
 
-            for (MinecraftBank.MerchantDeal deal : this.merchantDeals) {
+            for (MerchantDeal deal : this.merchantDeals) {
                String base = "deals." + deal.id + ".";
                this.db.setString("traveling_merchant", base + "material", deal.material.name());
                this.db.setDouble("traveling_merchant", base + "normal_price", deal.normalPrice);
@@ -3662,7 +3573,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.db.setLong("vip_shop", "refresh_at", this.vipShopRefreshAt);
             this.db.removeByPathPrefix("vip_shop", "deals");
 
-            for (MinecraftBank.VipDeal deal : this.vipShopDeals) {
+            for (VipDeal deal : this.vipShopDeals) {
                String base = "deals." + deal.id + ".";
                this.db.setString("vip_shop", base + "material", deal.material.name());
                this.db.setDouble("vip_shop", base + "normal_price", deal.normalPrice);
@@ -3687,8 +3598,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.db.setLong("treasure", "next-spawn-at", this.treasureNextSpawnAt);
             this.db.removeSection("installment_plans");
 
-            for (Entry<UUID, List<MinecraftBank.InstallmentPlan>> entry : this.installmentPlans.entrySet()) {
-               for (MinecraftBank.InstallmentPlan plan : entry.getValue()) {
+            for (Entry<UUID, List<InstallmentPlan>> entry : this.installmentPlans.entrySet()) {
+               for (InstallmentPlan plan : entry.getValue()) {
                   String base = entry.getKey() + "." + plan.id + ".";
                   this.db.setString("installment_plans", base + "description", plan.description);
                   this.db.setDouble("installment_plans", base + "installment_amount", plan.installmentAmount);
@@ -3709,7 +3620,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
             this.db.removeSection("group_accounts");
 
-            for (MinecraftBank.GroupAccount acc : this.groupAccounts.values()) {
+            for (GroupAccount acc : this.groupAccounts.values()) {
                String base = acc.id + ".";
                this.db.setString("group_accounts", base + "name", acc.name);
                this.db.setString("group_accounts", base + "owner", acc.owner.toString());
@@ -3719,7 +3630,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
             this.db.removeSection("investment_funds");
 
-            for (MinecraftBank.InvestmentFund fund : this.investmentFunds.values()) {
+            for (InvestmentFund fund : this.investmentFunds.values()) {
                String base = fund.id + ".";
                this.db.setString("investment_funds", base + "name", fund.name);
                this.db.setString("investment_funds", base + "manager", fund.manager.toString());
@@ -3774,13 +3685,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private boolean isDailyCounterResetDue(UUID u, HashMap<UUID, Long> resetAtMap, long now) {
-      long resetAt = resetAtMap.getOrDefault(u, 0L);
-      if (now >= resetAt) {
-         resetAtMap.put(u, now + 86400000L);
-         return true;
-      } else {
-         return false;
-      }
+      return BankUtil.isDailyCounterResetDue(u, resetAtMap, now);
    }
 
    private void grantRepaymentCreditScore(UUID u, int points) {
@@ -3908,7 +3813,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private double worldStockYenPrice(MinecraftBank.WorldStockQuote q) {
+   private double worldStockYenPrice(WorldStockQuote q) {
       return q.price * this.fxRateToJpy(q.currency);
    }
 
@@ -3918,17 +3823,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          : String.format("%,.0f", v) + this.cfgCurrencyUnit;
    }
 
-   private String worldStockNativePrice(MinecraftBank.WorldStockQuote q) {
+   private String worldStockNativePrice(WorldStockQuote q) {
       return q.currency != null && !q.currency.equalsIgnoreCase("JPY")
          ? String.format("%,.2f", q.price) + " " + q.currency
          : String.format("%,.2f", q.price) + "円";
    }
 
-   private String worldStockNativeAmountLabel(MinecraftBank.WorldStockQuote q, int qty) {
+   private String worldStockNativeAmountLabel(WorldStockQuote q, int qty) {
       return this.worldStockNativePrice(q) + "/株";
    }
 
-   private double worldStockPositionValue(MinecraftBank.WorldStockQuote q, double avgCostFallback, int qty) {
+   private double worldStockPositionValue(WorldStockQuote q, double avgCostFallback, int qty) {
       double unitValue = q != null ? this.worldStockYenPrice(q) : avgCostFallback;
       return unitValue * qty;
    }
@@ -3937,21 +3842,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return pnl >= 0.0 ? "<green>評価損益: +" + (long)pnl + "円</green>" : "<red>評価損益: " + (long)pnl + "円</red>";
    }
 
-   private String worldStockPriceLine(String prefix, MinecraftBank.WorldStockQuote q) {
+   private String worldStockPriceLine(String prefix, WorldStockQuote q) {
       double yen = this.worldStockYenPrice(q);
       return q.currency != null && !q.currency.equalsIgnoreCase("JPY")
          ? prefix + "<white>" + String.format("%,.2f", q.price) + " " + q.currency + "</white> <gray>(≈ " + this.fmtYenAmount(yen) + ")</gray>"
          : prefix + "<white>" + String.format("%,.2f", q.price) + "円</white>";
    }
 
-   private boolean isWorldStockQuoteStale(MinecraftBank.WorldStockQuote q) {
+   private boolean isWorldStockQuoteStale(WorldStockQuote q) {
       return q != null && System.currentTimeMillis() - q.fetchedAt >= (long)(this.cfgWorldStockCacheSeconds * 1000.0);
    }
 
-   private void executeWorldStockBuy(OfflinePlayer actor, String symbol, int qty, MinecraftBank.InvestmentFund fund) {
+   private void executeWorldStockBuy(OfflinePlayer actor, String symbol, int qty, InvestmentFund fund) {
       UUID actorU = actor.getUniqueId();
       Player online = actor instanceof Player pl && pl.isOnline() ? pl : null;
-      MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+      WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
       if (this.isWorldStockQuoteStale(q)) {
          this.fetchWorldStockQuote(symbol, fresh -> {
             if (fresh != null && !this.isWorldStockQuoteStale(fresh)) {
@@ -4052,9 +3957,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void executeWorldStockSell(Player actor, String symbol, int qty, MinecraftBank.InvestmentFund fund) {
+   private void executeWorldStockSell(Player actor, String symbol, int qty, InvestmentFund fund) {
       UUID actorU = actor.getUniqueId();
-      MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+      WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
       if (this.isWorldStockQuoteStale(q)) {
          this.fetchWorldStockQuote(symbol, fresh -> {
             if (fresh != null && !this.isWorldStockQuoteStale(fresh) && actor.isOnline()) {
@@ -4186,12 +4091,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private static double parseFiniteDouble(String raw) {
-      double v = Double.parseDouble(raw.trim());
-      if (!Double.isFinite(v)) {
-         throw new NumberFormatException("not a finite number: " + raw);
-      }
-
-      return v;
+      return BankUtil.parseFiniteDouble(raw);
    }
 
    private double getResourcePrice(Material mat) {
@@ -4555,13 +4455,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void checkWorldStockAlerts() {
-      Map<String, List<Entry<UUID, MinecraftBank.WorldStockAlert>>> alertsBySymbol = new HashMap<>();
+      Map<String, List<Entry<UUID, WorldStockAlert>>> alertsBySymbol = new HashMap<>();
 
-      for (Entry<UUID, List<MinecraftBank.WorldStockAlert>> entry : new HashMap<>(this.worldStockAlerts).entrySet()) {
+      for (Entry<UUID, List<WorldStockAlert>> entry : new HashMap<>(this.worldStockAlerts).entrySet()) {
          UUID owner = entry.getKey();
-         List<MinecraftBank.WorldStockAlert> alerts = entry.getValue();
+         List<WorldStockAlert> alerts = entry.getValue();
          if (alerts != null && !alerts.isEmpty()) {
-            for (MinecraftBank.WorldStockAlert alert : new ArrayList<>(alerts)) {
+            for (WorldStockAlert alert : new ArrayList<>(alerts)) {
                if (!(alert.baselinePrice <= 0.0)) {
                   alertsBySymbol.computeIfAbsent(alert.symbol, k -> new ArrayList<>()).add(Map.entry(owner, alert));
                }
@@ -4569,19 +4469,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
       }
 
-      for (Entry<String, List<Entry<UUID, MinecraftBank.WorldStockAlert>>> symbolEntry : alertsBySymbol.entrySet()) {
+      for (Entry<String, List<Entry<UUID, WorldStockAlert>>> symbolEntry : alertsBySymbol.entrySet()) {
          String symbol = symbolEntry.getKey();
-         List<Entry<UUID, MinecraftBank.WorldStockAlert>> pending = symbolEntry.getValue();
+         List<Entry<UUID, WorldStockAlert>> pending = symbolEntry.getValue();
          this.fetchWorldStockQuote(
             symbol,
             quote -> {
                if (quote != null) {
-                  for (Entry<UUID, MinecraftBank.WorldStockAlert> pair : pending) {
+                  for (Entry<UUID, WorldStockAlert> pair : pending) {
                      UUID owner = pair.getKey();
-                     MinecraftBank.WorldStockAlert alertx = pair.getValue();
+                     WorldStockAlert alertx = pair.getValue();
                      double moveRatio = Math.abs((quote.price - alertx.baselinePrice) / alertx.baselinePrice);
                      if (!(moveRatio < alertx.thresholdPercent / 100.0)) {
-                        List<MinecraftBank.WorldStockAlert> list = this.worldStockAlerts.get(owner);
+                        List<WorldStockAlert> list = this.worldStockAlerts.get(owner);
                         if (list != null) {
                            list.remove(alertx);
                            if (list.isEmpty()) {
@@ -4639,7 +4539,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (h.getValue() > 0) {
                anyStock = true;
                String symbol = h.getKey();
-               MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+               WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                double value = this.worldStockPositionValue(q, avgCosts.getOrDefault(symbol, 0.0), h.getValue());
                sender.sendMessage("  株 " + symbol + ": " + h.getValue() + "株 (評価額 " + this.fmtCur(value) + ")");
             }
@@ -5445,7 +5345,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.group");
                                  return true;
                               } else {
-                                 MinecraftBank.GroupAccount acc = this.findOwnedGroupAccount(u, args[2]);
+                                 GroupAccount acc = this.findOwnedGroupAccount(u, args[2]);
                                  if (acc == null) {
                                     this.msgKey(p, this.findAnyRoleGroupAccount(u, args[2]) != null ? "group.not-owner" : "group.not-found");
                                     return true;
@@ -5483,7 +5383,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.group");
                                  return true;
                               } else {
-                                 MinecraftBank.GroupAccount acc = this.findOwnedGroupAccount(u, args[2]);
+                                 GroupAccount acc = this.findOwnedGroupAccount(u, args[2]);
                                  if (acc == null) {
                                     this.msgKey(p, this.findAnyRoleGroupAccount(u, args[2]) != null ? "group.not-owner" : "group.not-found");
                                     return true;
@@ -5522,7 +5422,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "group.owner-cannot-leave");
                                  return true;
                               } else {
-                                 MinecraftBank.GroupAccount acc = this.findMemberGroupAccount(u, args[2]);
+                                 GroupAccount acc = this.findMemberGroupAccount(u, args[2]);
                                  if (acc == null) {
                                     this.msgKey(p, "group.not-found");
                                     return true;
@@ -5551,7 +5451,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.group");
                                  return true;
                               } else {
-                                 MinecraftBank.GroupAccount acc = this.findOwnedGroupAccount(u, args[2]);
+                                 GroupAccount acc = this.findOwnedGroupAccount(u, args[2]);
                                  if (acc == null) {
                                     this.msgKey(p, this.findAnyRoleGroupAccount(u, args[2]) != null ? "group.not-owner" : "group.not-found");
                                     return true;
@@ -5585,7 +5485,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.fund");
                                  return true;
                               } else {
-                                 MinecraftBank.InvestmentFund fund = this.findManagedFund(u, args[2]);
+                                 InvestmentFund fund = this.findManagedFund(u, args[2]);
                                  if (fund == null) {
                                     this.msgKey(p, this.findMemberFund(u, args[2]) != null ? "fund.not-manager" : "fund.not-found");
                                     return true;
@@ -5621,7 +5521,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.fund");
                                  return true;
                               } else {
-                                 MinecraftBank.InvestmentFund fund = this.findMemberFund(u, args[2]);
+                                 InvestmentFund fund = this.findMemberFund(u, args[2]);
                                  if (fund == null) {
                                     this.msgKey(p, "fund.not-invited");
                                     return true;
@@ -5664,7 +5564,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.fund");
                                  return true;
                               } else {
-                                 MinecraftBank.InvestmentFund fund = this.findMemberFund(u, args[2]);
+                                 InvestmentFund fund = this.findMemberFund(u, args[2]);
                                  if (fund == null) {
                                     this.msgKey(p, "fund.not-found");
                                     return true;
@@ -5678,7 +5578,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.msgKey(p, "help.fund");
                                  return true;
                               } else {
-                                 MinecraftBank.InvestmentFund fund = this.findManagedFund(u, args[2]);
+                                 InvestmentFund fund = this.findManagedFund(u, args[2]);
                                  if (fund == null) {
                                     this.msgKey(p, this.findMemberFund(u, args[2]) != null ? "fund.not-manager" : "fund.not-found");
                                     return true;
@@ -5915,7 +5815,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String cur = args[2].toLowerCase();
 
             for (UUID id : this.playerGroupAccounts.getOrDefault(senderPlayer.getUniqueId(), new HashSet<>())) {
-               MinecraftBank.GroupAccount acc = this.groupAccounts.get(id);
+               GroupAccount acc = this.groupAccounts.get(id);
                if (acc != null && acc.name.toLowerCase().startsWith(cur)) {
                   result.add(acc.name);
                }
@@ -5935,7 +5835,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                String cur = args[2].toLowerCase();
 
                for (UUID id : this.playerInvestmentFunds.getOrDefault(senderPlayer.getUniqueId(), new HashSet<>())) {
-                  MinecraftBank.InvestmentFund fund = this.investmentFunds.get(id);
+                  InvestmentFund fund = this.investmentFunds.get(id);
                   if (fund != null && fund.name.toLowerCase().startsWith(cur)) {
                      result.add(fund.name);
                   }
@@ -6104,8 +6004,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       p.openInventory(gui);
    }
 
-   private MinecraftBank.GroupAccount findOwnedGroupAccount(UUID owner, String name) {
-      for (MinecraftBank.GroupAccount acc : this.groupAccounts.values()) {
+   private GroupAccount findOwnedGroupAccount(UUID owner, String name) {
+      for (GroupAccount acc : this.groupAccounts.values()) {
          if (acc.owner.equals(owner) && acc.name.equalsIgnoreCase(name)) {
             return acc;
          }
@@ -6114,8 +6014,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return null;
    }
 
-   private MinecraftBank.GroupAccount findMemberGroupAccount(UUID member, String name) {
-      for (MinecraftBank.GroupAccount acc : this.groupAccounts.values()) {
+   private GroupAccount findMemberGroupAccount(UUID member, String name) {
+      for (GroupAccount acc : this.groupAccounts.values()) {
          if (acc.members.contains(member) && acc.name.equalsIgnoreCase(name)) {
             return acc;
          }
@@ -6124,8 +6024,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return null;
    }
 
-   private MinecraftBank.GroupAccount findAnyRoleGroupAccount(UUID u, String name) {
-      for (MinecraftBank.GroupAccount acc : this.groupAccounts.values()) {
+   private GroupAccount findAnyRoleGroupAccount(UUID u, String name) {
+      for (GroupAccount acc : this.groupAccounts.values()) {
          if (this.isGroupAccountMember(acc, u) && acc.name.equalsIgnoreCase(name)) {
             return acc;
          }
@@ -6134,7 +6034,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return null;
    }
 
-   private boolean isGroupAccountMember(MinecraftBank.GroupAccount acc, UUID u) {
+   private boolean isGroupAccountMember(GroupAccount acc, UUID u) {
       return acc.owner.equals(u) || acc.members.contains(u);
    }
 
@@ -6162,7 +6062,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          } else {
             this.ecoWithdraw(p, cost);
             this.treasury += cost;
-            MinecraftBank.GroupAccount acc = new MinecraftBank.GroupAccount();
+            GroupAccount acc = new GroupAccount();
             acc.id = UUID.randomUUID();
             acc.name = name;
             acc.owner = u;
@@ -6181,7 +6081,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void disbandGroupAccount(Player p, MinecraftBank.GroupAccount acc) {
+   private void disbandGroupAccount(Player p, GroupAccount acc) {
       UUID u = p.getUniqueId();
       HashSet<UUID> allMembers = new HashSet<>(acc.members);
       allMembers.add(acc.owner);
@@ -6227,7 +6127,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       int slot = 0;
 
       for (UUID id : mine) {
-         MinecraftBank.GroupAccount acc = this.groupAccounts.get(id);
+         GroupAccount acc = this.groupAccounts.get(id);
          if (acc != null) {
             if (slot >= 45) {
                break;
@@ -6271,7 +6171,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openGroupAccountGUI(Player p, UUID accountId) {
-      MinecraftBank.GroupAccount acc = this.groupAccounts.get(accountId);
+      GroupAccount acc = this.groupAccounts.get(accountId);
       if (acc == null) {
          this.openGroupListGUI(p);
       } else {
@@ -6324,7 +6224,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openGroupMembersGUI(Player p, UUID accountId) {
-      MinecraftBank.GroupAccount acc = this.groupAccounts.get(accountId);
+      GroupAccount acc = this.groupAccounts.get(accountId);
       if (acc != null && acc.owner.equals(p.getUniqueId())) {
          this.groupAccountViewing.put(p.getUniqueId(), acc.id);
          Inventory gui = Bukkit.createInventory(null, 54, this.tGroupMembers);
@@ -6388,8 +6288,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private MinecraftBank.InvestmentFund findManagedFund(UUID manager, String name) {
-      for (MinecraftBank.InvestmentFund f : this.investmentFunds.values()) {
+   private InvestmentFund findManagedFund(UUID manager, String name) {
+      for (InvestmentFund f : this.investmentFunds.values()) {
          if (f.manager.equals(manager) && f.name.equalsIgnoreCase(name)) {
             return f;
          }
@@ -6398,8 +6298,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return null;
    }
 
-   private MinecraftBank.InvestmentFund findMemberFund(UUID u, String name) {
-      for (MinecraftBank.InvestmentFund f : this.investmentFunds.values()) {
+   private InvestmentFund findMemberFund(UUID u, String name) {
+      for (InvestmentFund f : this.investmentFunds.values()) {
          if (this.isFundMember(f, u) && f.name.equalsIgnoreCase(name)) {
             return f;
          }
@@ -6408,11 +6308,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return null;
    }
 
-   private boolean isFundMember(MinecraftBank.InvestmentFund f, UUID u) {
+   private boolean isFundMember(InvestmentFund f, UUID u) {
       return f.manager.equals(u) || f.contributions.containsKey(u);
    }
 
-   private double getFundNav(MinecraftBank.InvestmentFund fund) {
+   private double getFundNav(InvestmentFund fund) {
       double nav = fund.cashBalance;
       HashMap<String, Integer> holdings = this.playerWorldStocks.getOrDefault(fund.id, new HashMap<>());
       HashMap<String, Double> avgCosts = this.playerWorldStockAvgCost.getOrDefault(fund.id, new HashMap<>());
@@ -6421,7 +6321,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          int qty = holding.getValue();
          if (qty > 0) {
             String symbol = holding.getKey();
-            MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+            WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             nav += this.worldStockPositionValue(q, avgCosts.getOrDefault(symbol, 0.0), qty);
          }
       }
@@ -6429,7 +6329,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return nav;
    }
 
-   private double totalFundContributions(MinecraftBank.InvestmentFund fund) {
+   private double totalFundContributions(InvestmentFund fund) {
       double total = 0.0;
 
       for (double v : fund.contributions.values()) {
@@ -6439,7 +6339,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return total;
    }
 
-   private boolean fundHasHoldings(MinecraftBank.InvestmentFund fund) {
+   private boolean fundHasHoldings(InvestmentFund fund) {
       HashMap<String, Integer> holdings = this.playerWorldStocks.get(fund.id);
       if (holdings == null) {
          return false;
@@ -6474,7 +6374,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          } else {
             this.ecoWithdraw(p, cost);
             this.treasury += cost;
-            MinecraftBank.InvestmentFund fund = new MinecraftBank.InvestmentFund();
+            InvestmentFund fund = new InvestmentFund();
             fund.id = UUID.randomUUID();
             fund.name = name;
             fund.manager = u;
@@ -6493,7 +6393,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void redeemFundStake(Player p, MinecraftBank.InvestmentFund fund) {
+   private void redeemFundStake(Player p, InvestmentFund fund) {
       UUID u = p.getUniqueId();
       if (!fund.contributions.containsKey(u)) {
          this.msgKey(p, "fund.not-invited");
@@ -6530,7 +6430,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void disbandInvestmentFund(Player p, MinecraftBank.InvestmentFund fund) {
+   private void disbandInvestmentFund(Player p, InvestmentFund fund) {
       UUID u = p.getUniqueId();
       double totalContrib = this.totalFundContributions(fund);
       double totalCash = fund.cashBalance;
@@ -6605,7 +6505,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       int slot = 9;
 
       for (UUID id : mine) {
-         MinecraftBank.InvestmentFund fund = this.investmentFunds.get(id);
+         InvestmentFund fund = this.investmentFunds.get(id);
          if (fund != null) {
             if (slot >= 45) {
                break;
@@ -6657,7 +6557,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openFundInfoGUI(Player p, UUID fundId) {
-      MinecraftBank.InvestmentFund fund = this.investmentFunds.get(fundId);
+      InvestmentFund fund = this.investmentFunds.get(fundId);
       UUID u = p.getUniqueId();
       if (fund != null && this.isFundMember(fund, u) && !fund.manager.equals(u)) {
          this.fundViewing.put(u, fund.id);
@@ -6690,7 +6590,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          for (Entry<String, Integer> h : holdings.entrySet()) {
             if (h.getValue() > 0 && slot < 17) {
                String symbol = h.getKey();
-               MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+               WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                double avgCost = avgCosts.getOrDefault(symbol, 0.0);
                List<String> hl = new ArrayList<>();
                hl.add("<gray>保有:</gray> <white>" + h.getValue() + "株</white>");
@@ -6722,7 +6622,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openFundStockGUI(Player p, UUID fundId) {
-      MinecraftBank.InvestmentFund fund = this.investmentFunds.get(fundId);
+      InvestmentFund fund = this.investmentFunds.get(fundId);
       UUID u = p.getUniqueId();
       if (fund != null && fund.manager.equals(u)) {
          this.fundViewing.put(u, fund.id);
@@ -6750,7 +6650,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             int qty = entry.getValue();
             if (qty > 0 && slot < 45) {
                double avgCost = avgCosts.getOrDefault(symbol, 0.0);
-               MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+               WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                List<String> lore = new ArrayList<>();
                lore.add("<gray>保有:</gray> <white>" + qty + "株</white>");
                lore.add("<gray>平均取得単価:</gray> <white>" + this.fmtCurPrecise(avgCost) + "</white>");
@@ -6781,7 +6681,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openFundStockDetailGUI(Player p, UUID fundId, String symbol) {
-      MinecraftBank.InvestmentFund fund = this.investmentFunds.get(fundId);
+      InvestmentFund fund = this.investmentFunds.get(fundId);
       UUID u = p.getUniqueId();
       if (fund != null && fund.manager.equals(u)) {
          this.fundViewing.put(u, fund.id);
@@ -6791,12 +6691,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void openWorldStockDetailGUICommon(Player p, String symbol, MinecraftBank.InvestmentFund fund) {
+   private void openWorldStockDetailGUICommon(Player p, String symbol, InvestmentFund fund) {
       UUID actorU = p.getUniqueId();
       UUID trackedUuid = fund != null ? fund.id : actorU;
       UUID feeContextUuid = fund != null ? fund.manager : actorU;
       Inventory gui = Bukkit.createInventory(null, 27, fund != null ? this.tFundStockDetail : this.tWorldStockDetail);
-      MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+      WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
       int qty = this.playerWorldStocks.getOrDefault(trackedUuid, new HashMap<>()).getOrDefault(symbol, 0);
       double avgCost = this.playerWorldStockAvgCost.getOrDefault(trackedUuid, new HashMap<>()).getOrDefault(symbol, 0.0);
       List<String> infoLore = new ArrayList<>();
@@ -6900,8 +6800,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.setWorldStockTag(refreshItem, symbol);
       gui.setItem(22, refreshItem);
       if (fund == null) {
-         List<MinecraftBank.WorldStockAlert> myAlerts = this.worldStockAlerts.getOrDefault(actorU, new ArrayList<>());
-         MinecraftBank.WorldStockAlert existingAlert = myAlerts.stream().filter(a -> a.symbol.equals(symbol)).findFirst().orElse(null);
+         List<WorldStockAlert> myAlerts = this.worldStockAlerts.getOrDefault(actorU, new ArrayList<>());
+         WorldStockAlert existingAlert = myAlerts.stream().filter(a -> a.symbol.equals(symbol)).findFirst().orElse(null);
          ItemStack bellItem = existingAlert != null
             ? this.createItem(
                Material.BELL,
@@ -6925,7 +6825,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       p.openInventory(gui);
    }
 
-   private void handleWorldStockDetailClick(Player p, UUID u, Material mat, ItemStack item, MinecraftBank.InvestmentFund fund) {
+   private void handleWorldStockDetailClick(Player p, UUID u, Material mat, ItemStack item, InvestmentFund fund) {
       if (mat == Material.IRON_DOOR) {
          if (fund != null) {
             this.openFundStockGUI(p, fund.id);
@@ -6945,8 +6845,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.fetchWorldStockQuote(symbol, quote -> this.openWorldStockDetailGUI(p, symbol));
                }
             } else if (fund == null && mat == Material.BELL) {
-               List<MinecraftBank.WorldStockAlert> myAlerts = this.worldStockAlerts.computeIfAbsent(u, k -> new ArrayList<>());
-               MinecraftBank.WorldStockAlert existingAlert = myAlerts.stream().filter(a -> a.symbol.equals(symbol)).findFirst().orElse(null);
+               List<WorldStockAlert> myAlerts = this.worldStockAlerts.computeIfAbsent(u, k -> new ArrayList<>());
+               WorldStockAlert existingAlert = myAlerts.stream().filter(a -> a.symbol.equals(symbol)).findFirst().orElse(null);
                if (existingAlert != null) {
                   myAlerts.remove(existingAlert);
                   this.msgKey(p, "worldstock.alert-cancelled", "symbol", symbol);
@@ -6958,7 +6858,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   this.msgKey(p, "worldstock.alert-prompt", "symbol", symbol);
                }
             } else {
-               MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+               WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                if (q != null) {
                   String action = (String)item.getItemMeta().getPersistentDataContainer().get(this.worldStockActionKey, PersistentDataType.STRING);
                   if (action != null) {
@@ -7070,7 +6970,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void startTradeSession(Player a, Player b) {
-      MinecraftBank.TradeSession session = new MinecraftBank.TradeSession();
+      TradeSession session = new TradeSession();
       session.id = UUID.randomUUID();
       session.playerA = a.getUniqueId();
       session.playerB = b.getUniqueId();
@@ -7102,7 +7002,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void refreshTradeGui(MinecraftBank.TradeSession session) {
+   private void refreshTradeGui(TradeSession session) {
       Inventory inv = session.inventory;
       OfflinePlayer a = Bukkit.getOfflinePlayer(session.playerA);
       OfflinePlayer b = Bukkit.getOfflinePlayer(session.playerB);
@@ -7158,7 +7058,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void handleTradeClick(InventoryClickEvent e) {
       if (e.getWhoClicked() instanceof Player p) {
-         MinecraftBank.TradeSession session = this.activeTradeSessions.get(p.getUniqueId());
+         TradeSession session = this.activeTradeSessions.get(p.getUniqueId());
          if (session == null) {
             e.setCancelled(true);
          } else if (e.getClick() == ClickType.DOUBLE_CLICK) {
@@ -7272,7 +7172,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void resetTradeConfirmations(MinecraftBank.TradeSession session) {
+   private void resetTradeConfirmations(TradeSession session) {
       if (session.confirmedA || session.confirmedB) {
          session.confirmedA = false;
          session.confirmedB = false;
@@ -7280,7 +7180,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void cancelTradeSession(MinecraftBank.TradeSession session, String reason) {
+   private void cancelTradeSession(TradeSession session, String reason) {
       if (!session.finished) {
          session.finished = true;
          Player a = Bukkit.getPlayer(session.playerA);
@@ -7326,7 +7226,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void executeTradeSession(MinecraftBank.TradeSession session) {
+   private void executeTradeSession(TradeSession session) {
       if (!session.finished) {
          session.finished = true;
          OfflinePlayer offA = Bukkit.getOfflinePlayer(session.playerA);
@@ -7508,7 +7408,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       gui.setItem(27, this.createItem(Material.SUNFLOWER, "<gold><bold>\ud83c\udf81 国庫へ寄付する</bold></gold>", "<gray>国庫へ任意の金額を寄付できます</gray>"));
-      List<MinecraftBank.InstallmentPlan> myPlans = this.installmentPlans.get(u);
+      List<InstallmentPlan> myPlans = this.installmentPlans.get(u);
       int planCount = myPlans == null ? 0 : myPlans.size();
       gui.setItem(
          29,
@@ -7555,12 +7455,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void openInstallmentListGUI(Player p) {
       Inventory gui = Bukkit.createInventory(null, 54, this.tInstallmentList);
       UUID u = p.getUniqueId();
-      List<MinecraftBank.InstallmentPlan> plans = this.installmentPlans.get(u);
+      List<InstallmentPlan> plans = this.installmentPlans.get(u);
       long now = System.currentTimeMillis();
       if (plans != null && !plans.isEmpty()) {
          int slot = 0;
 
-         for (MinecraftBank.InstallmentPlan plan : plans) {
+         for (InstallmentPlan plan : plans) {
             if (slot >= 45) {
                break;
             }
@@ -8419,11 +8319,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private double getInstallmentOutstanding(UUID u) {
-      List<MinecraftBank.InstallmentPlan> plans = this.installmentPlans.get(u);
+      List<InstallmentPlan> plans = this.installmentPlans.get(u);
       if (plans != null && !plans.isEmpty()) {
          double total = 0.0;
 
-         for (MinecraftBank.InstallmentPlan plan : plans) {
+         for (InstallmentPlan plan : plans) {
             total += plan.installmentAmount * plan.installmentsRemaining;
          }
 
@@ -8520,7 +8420,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          int qty = entry.getValue();
          if (qty > 0 && slot < 45) {
             double avgCost = avgCosts.getOrDefault(symbol, 0.0);
-            MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+            WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             List<String> lore = new ArrayList<>();
             lore.add("<gray>保有: </gray><white>" + qty + "株</white>");
             lore.add("<gray>平均取得単価: </gray><white>" + String.format("%.2f", avgCost) + "円</white>");
@@ -8568,14 +8468,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                for (Entry<String, Integer> holding : holdings.entrySet()) {
                   int qty = holding.getValue();
                   if (qty > 0) {
-                     MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(holding.getKey());
+                     WorldStockQuote q = this.worldStockQuoteCache.get(holding.getKey());
                      double positionValue = this.worldStockPositionValue(q, avgCosts.getOrDefault(holding.getKey(), 0.0), qty);
                      totalDividend += positionValue * perRunRate;
                   }
                }
 
                if (totalDividend > 0.0) {
-                  MinecraftBank.InvestmentFund fund = this.investmentFunds.get(owner);
+                  InvestmentFund fund = this.investmentFunds.get(owner);
                   if (fund != null) {
                      fund.cashBalance += totalDividend;
                      this.addLog(fund.manager, "共同投資ファンド「" + fund.name + "」の世界株配当金 +" + this.fmtCur(totalDividend) + "(ファンド現金へ計上)");
@@ -8618,7 +8518,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                int qty = holding.getValue();
                if (qty > 0) {
                   symbols++;
-                  MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(holding.getKey());
+                  WorldStockQuote q = this.worldStockQuoteCache.get(holding.getKey());
                   total += this.worldStockPositionValue(q, avgCosts.getOrDefault(holding.getKey(), 0.0), qty);
                }
             }
@@ -9323,7 +9223,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.cfgVipShopMinStock,
          this.cfgVipShopMaxStock,
          (id, mat, normalPrice, discountPercent, stock) -> {
-            MinecraftBank.VipDeal deal = new MinecraftBank.VipDeal();
+            VipDeal deal = new VipDeal();
             deal.id = id;
             deal.material = mat;
             deal.normalPrice = normalPrice;
@@ -9365,7 +9265,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.cfgMerchantMinStock,
          this.cfgMerchantMaxStock,
          (id, mat, normalPrice, discountPercent, stock) -> {
-            MinecraftBank.MerchantDeal deal = new MinecraftBank.MerchantDeal();
+            MerchantDeal deal = new MerchantDeal();
             deal.id = id;
             deal.material = mat;
             deal.normalPrice = normalPrice;
@@ -9599,7 +9499,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       );
       int slot = 9;
 
-      for (MinecraftBank.MerchantDeal deal : this.merchantDeals) {
+      for (MerchantDeal deal : this.merchantDeals) {
          if (slot >= 18) {
             break;
          }
@@ -9632,14 +9532,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       p.openInventory(gui);
    }
 
-   private void executeMerchantPurchase(Player p, MinecraftBank.MerchantDeal deal) {
+   private void executeMerchantPurchase(Player p, MerchantDeal deal) {
       UUID u = p.getUniqueId();
       if (deal.stockRemaining <= 0) {
          this.errorSound(p);
       } else {
          double price = deal.normalPrice * (1.0 - deal.discountPercent / 100.0);
          if (econ.getBalance(p) < price) {
-            MinecraftBank.InstallmentPlan plan = this.tryStartMerchantInstallment(p, deal, price);
+            InstallmentPlan plan = this.tryStartMerchantInstallment(p, deal, price);
             if (plan == null) {
                this.msgKey(p, "merchant.funds-insufficient");
                this.sendShortfall(p, price, econ.getBalance(p));
@@ -9699,7 +9599,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private MinecraftBank.InstallmentPlan tryStartMerchantInstallment(Player p, MinecraftBank.MerchantDeal deal, double price) {
+   private InstallmentPlan tryStartMerchantInstallment(Player p, MerchantDeal deal, double price) {
       if (!this.cfgInstallmentEnabled) {
          return null;
       }
@@ -9725,7 +9625,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       this.ecoWithdraw(p, perInstallment);
-      MinecraftBank.InstallmentPlan plan = new MinecraftBank.InstallmentPlan();
+      InstallmentPlan plan = new InstallmentPlan();
       plan.id = UUID.randomUUID();
       plan.owner = u;
       plan.description = this.merchantDisplayName(deal.material);
@@ -9830,7 +9730,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          );
          int slot = 9;
 
-         for (MinecraftBank.VipDeal deal : this.vipShopDeals) {
+         for (VipDeal deal : this.vipShopDeals) {
             if (slot >= 18) {
                break;
             }
@@ -9903,7 +9803,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void executeVipShopPurchase(Player p, MinecraftBank.VipDeal deal) {
+   private void executeVipShopPurchase(Player p, VipDeal deal) {
       UUID u = p.getUniqueId();
       if (this.getVipTier(u) < 1) {
          this.msgKey(p, "vip.not-eligible");
@@ -9946,7 +9846,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       long now = System.currentTimeMillis();
       int slot = 0;
 
-      for (MinecraftBank.Quest q : this.quests.values()) {
+      for (Quest q : this.quests.values()) {
          if (slot >= 44) {
             break;
          }
@@ -9987,7 +9887,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             lores.add("");
             boolean isMember = q.teamMembers.contains(u);
             if (isPoster) {
-               if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+               if (q.state == QuestState.AVAILABLE) {
                   lores.add("<gray>募集状況: </gray><white>" + q.teamMembers.size() + " / " + q.requiredTeamSize + "人</white>");
                   if (q.teamMembers.isEmpty()) {
                      mat = Material.MAP;
@@ -9998,7 +9898,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      name = "<yellow><bold>\ud83e\udd1d あなたのチーム依頼(募集中)</bold></yellow>";
                      lores.add("<gray>参加者がいるため取り下げられません</gray>");
                   }
-               } else if (q.state == MinecraftBank.QuestState.IN_PROGRESS) {
+               } else if (q.state == QuestState.IN_PROGRESS) {
                   mat = Material.RECOVERY_COMPASS;
                   name = "<yellow><bold>\ud83e\udd1d あなたのチーム依頼(挑戦中)</bold></yellow>";
                   lores.add("<gray>到達状況: </gray><white>" + q.teamArrived.size() + " / " + q.teamMembers.size() + "人</white>");
@@ -10008,7 +9908,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   name = "<gray><bold>\ud83e\udd1d あなたのチーム依頼(クールダウン中)</bold></gray>";
                   lores.add("<gray>再出品まで: </gray><white>" + remain + "分</white>");
                }
-            } else if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+            } else if (q.state == QuestState.AVAILABLE) {
                lores.add("<gray>募集状況: </gray><white>" + q.teamMembers.size() + " / " + q.requiredTeamSize + "人</white>");
                mat = Material.MAP;
                if (isMember) {
@@ -10018,12 +9918,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   name = "<green><bold>\ud83e\udd1d チーム依頼(募集中) - クリックで参加</bold></green>";
                   lores.add("<yellow>▶ クリックで参加する</yellow>");
                }
-            } else if (q.state == MinecraftBank.QuestState.IN_PROGRESS && isMember) {
+            } else if (q.state == QuestState.IN_PROGRESS && isMember) {
                mat = Material.RECOVERY_COMPASS;
                name = "<gold><bold>\ud83e\udd1d チーム依頼(挑戦中) - クリックで放棄</bold></gold>";
                lores.add("<gray>到達状況: </gray><white>" + q.teamArrived.size() + " / " + q.teamMembers.size() + "人</white>");
                lores.add("<red>▶ クリックで放棄する(チーム全体が募集中に戻ります)</red>");
-            } else if (q.state == MinecraftBank.QuestState.IN_PROGRESS) {
+            } else if (q.state == QuestState.IN_PROGRESS) {
                mat = Material.GRAY_DYE;
                name = "<dark_gray>\ud83e\udd1d 他プレイヤーのチームが挑戦中</dark_gray>";
                lores.add("<gray>到達状況: </gray><white>" + q.teamArrived.size() + " / " + q.teamMembers.size() + "人</white>");
@@ -10036,11 +9936,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             lores.add("<gray>報酬: </gray><gold>" + this.fmtCur(q.reward) + "</gold>");
             lores.add("");
             if (isPoster) {
-               if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+               if (q.state == QuestState.AVAILABLE) {
                   mat = Material.PAPER;
                   name = "<green><bold>あなたの依頼(未受注) - クリックで取り下げ</bold></green>";
                   lores.add("<red>▶ クリックで取り下げて報酬を返金</red>");
-               } else if (q.state == MinecraftBank.QuestState.IN_PROGRESS) {
+               } else if (q.state == QuestState.IN_PROGRESS) {
                   String accepterName = Bukkit.getOfflinePlayer(q.acceptedBy).getName();
                   mat = Material.COMPASS;
                   name = "<yellow><bold>あなたの依頼(受注中)</bold></yellow>";
@@ -10051,7 +9951,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   name = "<gray><bold>あなたの依頼(クールダウン中)</bold></gray>";
                   lores.add("<gray>再出品まで: </gray><white>" + remain + "分</white>");
                }
-            } else if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+            } else if (q.state == QuestState.AVAILABLE) {
                mat = Material.PAPER;
                name = "<green><bold>探索依頼 - クリックで受注</bold></green>";
                lores.add("<yellow>▶ クリックで受注する</yellow>");
@@ -10059,7 +9959,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                mat = Material.COMPASS;
                name = "<gold><bold>受注中の依頼 - クリックで放棄</bold></gold>";
                lores.add("<red>▶ クリックで放棄する</red>");
-            } else if (q.state == MinecraftBank.QuestState.IN_PROGRESS) {
+            } else if (q.state == QuestState.IN_PROGRESS) {
                mat = Material.GRAY_DYE;
                name = "<dark_gray>他プレイヤーが受注中</dark_gray>";
             } else {
@@ -10573,7 +10473,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               return;
                            }
 
-                           MinecraftBank.MerchantDeal deal = this.merchantDeals.stream().filter(d -> d.id.equals(dealId)).findFirst().orElse(null);
+                           MerchantDeal deal = this.merchantDeals.stream().filter(d -> d.id.equals(dealId)).findFirst().orElse(null);
                            if (deal != null) {
                               this.executeMerchantPurchase(p, deal);
                            }
@@ -10596,7 +10496,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               return;
                            }
 
-                           MinecraftBank.VipDeal vipDeal = this.vipShopDeals.stream().filter(d -> d.id.equals(vipDealId)).findFirst().orElse(null);
+                           VipDeal vipDeal = this.vipShopDeals.stream().filter(d -> d.id.equals(vipDealId)).findFirst().orElse(null);
                            if (vipDeal != null) {
                               this.executeVipShopPurchase(p, vipDeal);
                            }
@@ -10629,14 +10529,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else if (item.hasItemMeta()) {
                         String qIdStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.questIdKey, PersistentDataType.STRING);
                         if (qIdStr != null) {
-                           MinecraftBank.Quest q = this.quests.get(UUID.fromString(qIdStr));
+                           Quest q = this.quests.get(UUID.fromString(qIdStr));
                            if (q == null) {
                               this.openQuestBoardGUI(p);
                            } else {
                               boolean isPoster = q.posterId.equals(u);
                               if (isPoster) {
                                  if (q.requiredTeamSize > 1) {
-                                    if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+                                    if (q.state == QuestState.AVAILABLE) {
                                        if (!q.teamMembers.isEmpty()) {
                                           this.msgKey(p, "quest.team-withdraw-blocked");
                                        } else {
@@ -10650,7 +10550,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     } else {
                                        this.msgKey(p, "quest.cannot-withdraw");
                                     }
-                                 } else if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+                                 } else if (q.state == QuestState.AVAILABLE) {
                                     this.ecoDeposit(p, q.reward);
                                     this.quests.remove(q.id);
                                     this.msgKey(p, "quest.withdrawn", "amount", this.fmtCur(q.reward));
@@ -10660,11 +10560,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     this.msgKey(p, "quest.cannot-withdraw");
                                  }
                               } else if (q.requiredTeamSize <= 1) {
-                                 if (q.state == MinecraftBank.QuestState.AVAILABLE && this.hasOtherActiveQuest(u, q.id)) {
+                                 if (q.state == QuestState.AVAILABLE && this.hasOtherActiveQuest(u, q.id)) {
                                     this.msgKey(p, "quest.already-active");
                                     this.errorSound(p);
-                                 } else if (q.state == MinecraftBank.QuestState.AVAILABLE) {
-                                    q.state = MinecraftBank.QuestState.IN_PROGRESS;
+                                 } else if (q.state == QuestState.AVAILABLE) {
+                                    q.state = QuestState.IN_PROGRESS;
                                     q.acceptedBy = u;
                                     this.playerActiveQuest.put(u, q.id);
                                     this.msgKey(
@@ -10687,7 +10587,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                                     this.openQuestBoardGUI(p);
                                  } else if (u.equals(q.acceptedBy)) {
-                                    q.state = MinecraftBank.QuestState.AVAILABLE;
+                                    q.state = QuestState.AVAILABLE;
                                     q.acceptedBy = null;
                                     this.playerActiveQuest.remove(u);
                                     this.msgKey(p, "quest.abandoned");
@@ -10697,7 +10597,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     this.msgKey(p, "quest.not-acceptable");
                                  }
                               } else {
-                                 if (q.state == MinecraftBank.QuestState.AVAILABLE) {
+                                 if (q.state == QuestState.AVAILABLE) {
                                     if (q.teamMembers.contains(u)) {
                                        q.teamMembers.remove(u);
                                        this.playerActiveQuest.remove(u);
@@ -10742,7 +10642,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                                        p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0F, 1.0F);
                                        if (q.teamMembers.size() == q.requiredTeamSize) {
-                                          q.state = MinecraftBank.QuestState.IN_PROGRESS;
+                                          q.state = QuestState.IN_PROGRESS;
 
                                           for (UUID member : q.teamMembers) {
                                              Player memberOnline = Bukkit.getPlayer(member);
@@ -10756,11 +10656,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     } else {
                                        this.msgKey(p, "quest.not-acceptable");
                                     }
-                                 } else if (q.state == MinecraftBank.QuestState.IN_PROGRESS && q.teamMembers.contains(u)) {
+                                 } else if (q.state == QuestState.IN_PROGRESS && q.teamMembers.contains(u)) {
                                     q.teamMembers.remove(u);
                                     this.playerActiveQuest.remove(u);
                                     q.teamArrived.clear();
-                                    q.state = MinecraftBank.QuestState.AVAILABLE;
+                                    q.state = QuestState.AVAILABLE;
 
                                     for (UUID member : q.teamMembers) {
                                        Player memberOnline = Bukkit.getPlayer(member);
@@ -11163,7 +11063,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tGroupAccount)) {
                      UUID accountId = this.groupAccountViewing.get(u);
-                     MinecraftBank.GroupAccount acc = accountId != null ? this.groupAccounts.get(accountId) : null;
+                     GroupAccount acc = accountId != null ? this.groupAccounts.get(accountId) : null;
                      if (acc == null || !this.isGroupAccountMember(acc, u)) {
                         this.openGroupListGUI(p);
                      } else if (mat == Material.IRON_DOOR) {
@@ -11202,7 +11102,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tGroupMembers)) {
                      UUID accountId = this.groupAccountViewing.get(u);
-                     MinecraftBank.GroupAccount acc = accountId != null ? this.groupAccounts.get(accountId) : null;
+                     GroupAccount acc = accountId != null ? this.groupAccounts.get(accountId) : null;
                      if (acc == null || !acc.owner.equals(u)) {
                         this.openGroupListGUI(p);
                      } else if (mat == Material.IRON_DOOR) {
@@ -11269,7 +11169,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               return;
                            }
 
-                           MinecraftBank.InvestmentFund fund = this.investmentFunds.get(UUID.fromString(idStr));
+                           InvestmentFund fund = this.investmentFunds.get(UUID.fromString(idStr));
                            if (fund == null) {
                               return;
                            }
@@ -11285,7 +11185,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tFundInfo)) {
                      UUID fundId = this.fundViewing.get(u);
-                     MinecraftBank.InvestmentFund fund = fundId != null ? this.investmentFunds.get(fundId) : null;
+                     InvestmentFund fund = fundId != null ? this.investmentFunds.get(fundId) : null;
                      if (fund == null || !this.isFundMember(fund, u) || fund.manager.equals(u)) {
                         this.openFundListGUI(p);
                      } else if (mat == Material.IRON_DOOR) {
@@ -11314,7 +11214,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tFundStock)) {
                      UUID fundId = this.fundViewing.get(u);
-                     MinecraftBank.InvestmentFund fund = fundId != null ? this.investmentFunds.get(fundId) : null;
+                     InvestmentFund fund = fundId != null ? this.investmentFunds.get(fundId) : null;
                      if (fund != null && fund.manager.equals(u)) {
                         if (mat == Material.IRON_DOOR) {
                            this.fundViewing.remove(u);
@@ -11334,7 +11234,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tFundStockDetail)) {
                      UUID fundId = this.fundViewing.get(u);
-                     MinecraftBank.InvestmentFund fund = fundId != null ? this.investmentFunds.get(fundId) : null;
+                     InvestmentFund fund = fundId != null ? this.investmentFunds.get(fundId) : null;
                      if (fund != null && fund.manager.equals(u)) {
                         this.handleWorldStockDetailClick(p, u, mat, item, fund);
                      }
@@ -12382,7 +12282,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       } else if (!(e.getWhoClicked() instanceof Player p)) {
          e.setCancelled(true);
       } else {
-         MinecraftBank.TradeSession session = this.activeTradeSessions.get(p.getUniqueId());
+         TradeSession session = this.activeTradeSessions.get(p.getUniqueId());
          if (session == null) {
             e.setCancelled(true);
          } else {
@@ -12441,7 +12341,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    public void onTradeInventoryClose(InventoryCloseEvent e) {
       if (e.getPlayer() instanceof Player p) {
          if (e.getView().title().equals(this.tTrade)) {
-            MinecraftBank.TradeSession session = this.activeTradeSessions.get(p.getUniqueId());
+            TradeSession session = this.activeTradeSessions.get(p.getUniqueId());
             if (session != null && !session.finished) {
                this.cancelTradeSession(session, "closed");
             }
@@ -12553,9 +12453,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          if (e.getFrom().getBlockX() != e.getTo().getBlockX()
             || e.getFrom().getBlockY() != e.getTo().getBlockY()
             || e.getFrom().getBlockZ() != e.getTo().getBlockZ()) {
-            MinecraftBank.Quest q = this.quests.get(qId);
+            Quest q = this.quests.get(qId);
             if (q != null && q.requiredTeamSize > 1) {
-               if (q.state == MinecraftBank.QuestState.IN_PROGRESS && q.teamMembers.contains(u)) {
+               if (q.state == QuestState.IN_PROGRESS && q.teamMembers.contains(u)) {
                   World tw = Bukkit.getWorld(q.worldName);
                   if (tw != null && tw.equals(p.getWorld())) {
                      if (!(p.getLocation().distance(new Location(tw, q.x, q.y, q.z)) > this.cfgQuestRadius)) {
@@ -12592,7 +12492,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
 
                               this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** たちのチームが探索依頼を達成しました。一人あたり報酬: " + this.fmtCur(q.reward));
-                              q.state = MinecraftBank.QuestState.COOLDOWN;
+                              q.state = QuestState.COOLDOWN;
                               q.cooldownUntil = System.currentTimeMillis() + this.cfgQuestCooldownMs;
                               q.teamMembers.clear();
                               q.teamArrived.clear();
@@ -12601,11 +12501,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   }
                } else {
-                  if (q.state != MinecraftBank.QuestState.AVAILABLE || !q.teamMembers.contains(u)) {
+                  if (q.state != QuestState.AVAILABLE || !q.teamMembers.contains(u)) {
                      this.playerActiveQuest.remove(u);
                   }
                }
-            } else if (q != null && q.state == MinecraftBank.QuestState.IN_PROGRESS && u.equals(q.acceptedBy)) {
+            } else if (q != null && q.state == QuestState.IN_PROGRESS && u.equals(q.acceptedBy)) {
                World w = Bukkit.getWorld(q.worldName);
                if (w != null && w.equals(p.getWorld())) {
                   if (!(p.getLocation().distance(new Location(w, q.x, q.y, q.z)) > this.cfgQuestRadius)) {
@@ -12622,7 +12522,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                      this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** が探索依頼を達成しました。報酬: " + this.fmtCur(q.reward));
                      this.playerActiveQuest.remove(u);
-                     q.state = MinecraftBank.QuestState.COOLDOWN;
+                     q.state = QuestState.COOLDOWN;
                      q.acceptedBy = null;
                      q.cooldownUntil = System.currentTimeMillis() + this.cfgQuestCooldownMs;
                   }
@@ -12657,17 +12557,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void refreshQuestBoard() {
       long now = System.currentTimeMillis();
-      Iterator<MinecraftBank.Quest> it = this.quests.values().iterator();
+      Iterator<Quest> it = this.quests.values().iterator();
 
       while (it.hasNext()) {
-         MinecraftBank.Quest q = it.next();
-         if (q.state == MinecraftBank.QuestState.IN_PROGRESS && q.acceptedBy != null && this.isLongOffline(q.acceptedBy, now)) {
+         Quest q = it.next();
+         if (q.state == QuestState.IN_PROGRESS && q.acceptedBy != null && this.isLongOffline(q.acceptedBy, now)) {
             this.playerActiveQuest.remove(q.acceptedBy);
             q.acceptedBy = null;
-            q.state = MinecraftBank.QuestState.AVAILABLE;
+            q.state = QuestState.AVAILABLE;
          }
 
-         if (q.state == MinecraftBank.QuestState.AVAILABLE && q.teamMembers != null && !q.teamMembers.isEmpty()) {
+         if (q.state == QuestState.AVAILABLE && q.teamMembers != null && !q.teamMembers.isEmpty()) {
             Iterator<UUID> members = q.teamMembers.iterator();
 
             while (members.hasNext()) {
@@ -12682,12 +12582,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             }
          }
 
-         if (q.state == MinecraftBank.QuestState.COOLDOWN && now >= q.cooldownUntil) {
+         if (q.state == QuestState.COOLDOWN && now >= q.cooldownUntil) {
             double totalReward = q.reward * q.requiredTeamSize;
             if (q.posterId.equals(SYSTEM_QUEST_POSTER_ID)) {
                if (this.treasury >= totalReward) {
                   this.treasury -= totalReward;
-                  q.state = MinecraftBank.QuestState.AVAILABLE;
+                  q.state = QuestState.AVAILABLE;
                } else {
                   it.remove();
                }
@@ -12695,7 +12595,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                OfflinePlayer poster = Bukkit.getOfflinePlayer(q.posterId);
                if (econ.getBalance(poster) >= totalReward) {
                   this.ecoWithdraw(poster, totalReward);
-                  q.state = MinecraftBank.QuestState.AVAILABLE;
+                  q.state = QuestState.AVAILABLE;
                   Player posterOnline = Bukkit.getPlayer(q.posterId);
                   if (posterOnline != null) {
                      this.msgKey(posterOnline, "quest.relisted", "amount", this.fmtCur(totalReward));
@@ -12714,7 +12614,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void generateSystemQuestsIfNeeded() {
-      long availableCount = this.quests.values().stream().filter(qx -> qx.state == MinecraftBank.QuestState.AVAILABLE).count();
+      long availableCount = this.quests.values().stream().filter(qx -> qx.state == QuestState.AVAILABLE).count();
       if (availableCount < this.cfgQuestSystemMinAvailable) {
          World world = (World)Bukkit.getWorlds().get(0);
          Location spawn = world.getSpawnLocation();
@@ -12732,7 +12632,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double x = spawn.getX() + Math.cos(angle) * dist;
             double z = spawn.getZ() + Math.sin(angle) * dist;
             double y = world.getHighestBlockYAt((int)x, (int)z) + 1;
-            MinecraftBank.Quest q = new MinecraftBank.Quest();
+            Quest q = new Quest();
             q.id = UUID.randomUUID();
             q.posterId = SYSTEM_QUEST_POSTER_ID;
             q.worldName = world.getName();
@@ -12740,7 +12640,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             q.y = y;
             q.z = z;
             q.reward = reward;
-            q.state = MinecraftBank.QuestState.AVAILABLE;
+            q.state = QuestState.AVAILABLE;
             this.quests.put(q.id, q);
             generated++;
          }
@@ -12931,40 +12831,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private static String ledgerSourceLabel(String raw) {
-      String method = raw == null ? "?" : raw;
-      int colon = method.indexOf(58);
-      if (colon >= 0) {
-         method = method.substring(0, colon);
-      }
-
-      if (method.startsWith("lambda$")) {
-         method = method.substring(7);
-         int dollar = method.indexOf(36);
-         if (dollar >= 0) {
-            method = method.substring(0, dollar);
-         }
-      }
-
-      return switch (method) {
-         case "executeResourceSell" -> "資源ショップ売却";
-         case "executeResourceBuy" -> "資源ショップ購入";
-         case "finalizeAuctionSale" -> "オークション売上";
-         case "processWealthTax" -> "資産税";
-         case "processStandingTransfers" -> "定期送金";
-         case "onPlayerInteractTreasureChest" -> "埋蔵金";
-         case "checkTreasureLocationPaid" -> "埋蔵金の位置調査";
-         case "executeTradeSession" -> "プレイヤー間取引";
-         case "executeMerchantPurchase" -> "行商人";
-         case "fireEconomyEvent" -> "経済イベント";
-         case "payWorldStockDividends" -> "世界株の配当";
-         case "onCommand" -> "コマンド操作";
-         case "onInventoryClick" -> "GUI操作";
-         case "onPlayerChatInput" -> "チャット入力操作";
-         case "handleMyActionOnMainThread" -> "Web操作";
-         default -> method;
-      };
-   }
 
    private void refreshLedgerStatsCache() {
       if (this.db != null && this.cfgLedgerEnabled) {
@@ -12979,7 +12845,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                LinkedHashMap<String, double[]> grouped = new LinkedHashMap<>();
 
                for (Object[] row : sources) {
-                  double[] acc = grouped.computeIfAbsent(ledgerSourceLabel(String.valueOf(row[0])), k -> new double[2]);
+                  double[] acc = grouped.computeIfAbsent(BankUtil.ledgerSourceLabel(String.valueOf(row[0])), k -> new double[2]);
                   acc[0] += ((Number)row[1]).doubleValue();
                   acc[1] += ((Number)row[2]).doubleValue();
                }
@@ -13141,7 +13007,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       SimpleDateFormat fmt = new SimpleDateFormat("MM/dd HH:mm");
       int n = 0;
 
-      for (MinecraftBank.StandingTransfer st : this.standingTransfers) {
+      for (StandingTransfer st : this.standingTransfers) {
          if (st.from.equals(owner)) {
             sb.append(n++ > 0 ? "," : "")
                .append("{\"to\":\"")
@@ -13180,7 +13046,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      .append(",\"delta\":")
                      .append(((Number)r[1]).doubleValue())
                      .append(",\"source\":\"")
-                     .append(this.jsonEscape(ledgerSourceLabel(String.valueOf(r[2]))))
+                     .append(this.jsonEscape(BankUtil.ledgerSourceLabel(String.valueOf(r[2]))))
                      .append("\"}");
                }
             }
@@ -13480,7 +13346,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             firstStock = false;
             String symbol = holding.getKey();
             double avgCost = avgCosts.getOrDefault(symbol, 0.0);
-            MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+            WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             double value = this.worldStockPositionValue(q, avgCost, holding.getValue());
             json.append("{\"symbol\":\"")
                .append(this.jsonEscape(symbol))
@@ -13716,7 +13582,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   distinctSymbols.add(symbol);
                   symbolHolders.merge(symbol, 1, Integer::sum);
                   symbolTotalShares.merge(symbol, qty, Integer::sum);
-                  MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+                  WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                   totalPortfolioValue += this.worldStockPositionValue(q, avgCosts.getOrDefault(symbol, 0.0), qty);
                }
             }
@@ -13794,7 +13660,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       json.append("\"merchant\":{").append("\"refresh_at\":").append(this.merchantRefreshAt).append(",").append("\"deals\":[");
       boolean firstx = true;
 
-      for (MinecraftBank.MerchantDeal deal : this.merchantDeals) {
+      for (MerchantDeal deal : this.merchantDeals) {
          if (!firstx) {
             json.append(",");
          }
@@ -13819,7 +13685,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       int qSystemPosted = 0;
       int qPlayerPosted = 0;
 
-      for (MinecraftBank.Quest q : this.quests.values()) {
+      for (Quest q : this.quests.values()) {
          switch (q.state) {
             case AVAILABLE:
                qAvailable++;
@@ -13857,8 +13723,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       int activePlans = 0;
       double totalOutstanding = 0.0;
 
-      for (List<MinecraftBank.InstallmentPlan> plans : this.installmentPlans.values()) {
-         for (MinecraftBank.InstallmentPlan plan : plans) {
+      for (List<InstallmentPlan> plans : this.installmentPlans.values()) {
+         for (InstallmentPlan plan : plans) {
             activePlans++;
             totalOutstanding += plan.installmentAmount * plan.installmentsRemaining;
          }
@@ -14140,7 +14006,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         }
                      } else if (type.startsWith("fund_stock_search:")) {
                         UUID fundId = UUID.fromString(type.substring("fund_stock_search:".length()));
-                        MinecraftBank.InvestmentFund fund = this.investmentFunds.get(fundId);
+                        InvestmentFund fund = this.investmentFunds.get(fundId);
                         if (fund != null && fund.manager.equals(u)) {
                            String symbol = raw.trim().toUpperCase();
                            if (!symbol.isEmpty() && symbol.matches("[A-Z0-9.\\-^=]{1,15}")) {
@@ -14195,7 +14061,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  this.sendShortfall(p, amount, pocket);
                               } else {
                                  this.ecoWithdraw(p, amount);
-                                 MinecraftBank.Quest q = new MinecraftBank.Quest();
+                                 Quest q = new Quest();
                                  q.id = UUID.randomUUID();
                                  q.posterId = u;
                                  Location loc = p.getLocation();
@@ -14204,7 +14070,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  q.y = loc.getY();
                                  q.z = loc.getZ();
                                  q.reward = amount;
-                                 q.state = MinecraftBank.QuestState.AVAILABLE;
+                                 q.state = QuestState.AVAILABLE;
                                  this.quests.put(q.id, q);
                                  this.msgKey(p, "quest.posted", "amount", this.fmtCur(amount));
                                  this.addLog(u, "依頼ボードに掲示 -" + this.fmtCur(amount) + "(エスクロー)");
@@ -14241,7 +14107,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                           this.sendShortfall(p, totalEscrow, pocket);
                                        } else {
                                           this.ecoWithdraw(p, totalEscrow);
-                                          MinecraftBank.Quest q = new MinecraftBank.Quest();
+                                          Quest q = new Quest();
                                           q.id = UUID.randomUUID();
                                           q.posterId = u;
                                           Location loc = p.getLocation();
@@ -14251,7 +14117,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                           q.z = loc.getZ();
                                           q.reward = teamReward;
                                           q.requiredTeamSize = teamSize;
-                                          q.state = MinecraftBank.QuestState.AVAILABLE;
+                                          q.state = QuestState.AVAILABLE;
                                           this.quests.put(q.id, q);
                                           this.msgKey(p, "quest.posted", "amount", this.fmtCur(totalEscrow));
                                           this.addLog(u, "チーム依頼をボードに掲示 -" + this.fmtCur(totalEscrow) + "(エスクロー、" + teamSize + "人×" + this.fmtCur(teamReward) + ")");
@@ -14265,9 +14131,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            } else if (type.startsWith("world_stock_alert:")) {
                               String symbol = type.substring("world_stock_alert:".length());
                               double thresholdPercent = amount;
-                              MinecraftBank.WorldStockQuote cachedQ = this.worldStockQuoteCache.get(symbol);
+                              WorldStockQuote cachedQ = this.worldStockQuoteCache.get(symbol);
                               if (cachedQ != null) {
-                                 MinecraftBank.WorldStockAlert alert = new MinecraftBank.WorldStockAlert();
+                                 WorldStockAlert alert = new WorldStockAlert();
                                  alert.id = UUID.randomUUID();
                                  alert.symbol = symbol;
                                  alert.baselinePrice = cachedQ.price;
@@ -14281,7 +14147,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        this.msgKey(p, "worldstock.not-found", "symbol", symbol);
                                        this.errorSound(p);
                                     } else {
-                                       MinecraftBank.WorldStockAlert alert = new MinecraftBank.WorldStockAlert();
+                                       WorldStockAlert alert = new WorldStockAlert();
                                        alert.id = UUID.randomUUID();
                                        alert.symbol = quote.symbol;
                                        alert.baselinePrice = quote.price;
@@ -14343,7 +14209,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  }
 
                                  String symbol = rest.substring(sep + 1);
-                                 MinecraftBank.InvestmentFund fund = this.investmentFunds.get(fundId);
+                                 InvestmentFund fund = this.investmentFunds.get(fundId);
                                  if (fund == null || !fund.manager.equals(u)) {
                                     this.msgKey(p, "fund.not-manager");
                                  } else if (amount != Math.floor(amount)) {
@@ -14421,7 +14287,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
                            } else if (type.startsWith("group_deposit:")) {
                               UUID accountId = UUID.fromString(type.substring("group_deposit:".length()));
-                              MinecraftBank.GroupAccount acc = this.groupAccounts.get(accountId);
+                              GroupAccount acc = this.groupAccounts.get(accountId);
                               if (acc == null || !this.isGroupAccountMember(acc, u)) {
                                  this.msgKey(p, "group.not-found");
                               } else if (pocket < amount) {
@@ -14436,7 +14302,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
                            } else if (type.startsWith("group_withdraw:")) {
                               UUID accountId = UUID.fromString(type.substring("group_withdraw:".length()));
-                              MinecraftBank.GroupAccount acc = this.groupAccounts.get(accountId);
+                              GroupAccount acc = this.groupAccounts.get(accountId);
                               if (acc == null || !this.isGroupAccountMember(acc, u)) {
                                  this.msgKey(p, "group.not-found");
                               } else if (acc.balance < amount) {
@@ -14597,7 +14463,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     );
                                     break;
                                  case "trade_money":
-                                    MinecraftBank.TradeSession session = this.activeTradeSessions.get(u);
+                                    TradeSession session = this.activeTradeSessions.get(u);
                                     if (session == null) {
                                        return;
                                     }
@@ -14651,8 +14517,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private String fmtPercent(double rate) {
-      double pct = rate * 100.0;
-      return (pct == Math.floor(pct) ? String.valueOf((long)pct) : String.format("%.2f", pct).replaceAll("0+$", "")) + "%";
+      return BankUtil.percentText(rate);
    }
 
    private double collectSalesTax(UUID u, double gross) {
@@ -14781,36 +14646,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private String sparkline(List<Double> vals) {
-      if (vals.size() < 2) {
-         return "<dark_gray>(データ収集中)</dark_gray>";
-      } else {
-         double min = Collections.min(vals);
-         double max = Collections.max(vals);
-         String bars = "▁▂▃▄▅▆▇█";
-         StringBuilder sb = new StringBuilder();
-
-         for (double v : vals) {
-            int idx = max - min < 1.0E-9 ? 3 : (int)Math.round((v - min) / (max - min) * 7.0);
-            sb.append(bars.charAt(Math.max(0, Math.min(7, idx))));
-         }
-
-         String color = vals.get(vals.size() - 1) >= vals.get(0) ? "green" : "red";
-         return "<" + color + ">" + sb + "</" + color + ">";
-      }
+      return BankUtil.sparkline(vals);
    }
 
    private String chartSummary(List<Double> vals, java.util.function.Function<Double, String> fmt) {
-      double first = vals.get(0);
-      double last = vals.get(vals.size() - 1);
-      double change = first > 0.0 ? (last - first) / first * 100.0 : 0.0;
-      return "最高 "
-         + fmt.apply(Collections.max(vals))
-         + " / 最安 "
-         + fmt.apply(Collections.min(vals))
-         + " / 変動 "
-         + (change >= 0.0 ? "+" : "")
-         + String.format("%.2f", change)
-         + "%";
+      return BankUtil.chartSummary(vals, fmt);
    }
 
    private void fetchWorldStockHistory(String rawSymbol, Consumer<List<Double>> callback) {
@@ -14893,7 +14733,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.fetchWorldStockHistory(symbol, hist -> {
                if (p.isOnline()) {
                   if (hist != null && hist.size() >= 2) {
-                     MinecraftBank.WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
+                     WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                      String cur = q != null && q.currency != null ? q.currency : "";
                      this.msgKey(p, "chart.header", "name", symbol, "span", "1ヶ月・日足");
                      p.sendMessage(this.mm(this.sparkline(hist)));
@@ -15104,34 +14944,39 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             deltas[i] = snapshot[i] - base[i];
          }
 
-         this.db.pullRemoteAsync().thenCombine(this.db.syncCountersAsync(SYNC_COUNTER_NAMES, snapshot, deltas, false), (rows, totals) -> new Object[]{rows, totals}).whenComplete((res, err) -> Bukkit.getScheduler().runTask(this, () -> {
-            try {
-               if (err != null) {
-                  this.getLogger().warning("[サーバー間同期] 同期に失敗しました(次回再試行): " + err.getMessage());
-               } else {
-                  List<String[]> rows = (List<String[]>)res[0];
-                  double[] totals = (double[])res[1];
-                  double[] now = this.counterValues();
-                  double[] merged = new double[now.length];
+         CompletableFuture<List<String[]>> pull = this.db.pullRemoteAsync();
+         CompletableFuture<double[]> counters = this.db.syncCountersAsync(SYNC_COUNTER_NAMES, snapshot, deltas, false);
+         counters.whenComplete((totals, err) -> Bukkit.getScheduler().runTask(this, () -> {
+            if (err != null) {
+               this.getLogger().warning("[サーバー間同期] 共有カウンターの同期に失敗しました(次回再試行): " + err.getMessage());
+            } else {
+               double[] now = this.counterValues();
+               double[] merged = new double[now.length];
 
-                  for (int i = 0; i < now.length; i++) {
-                     merged[i] = totals[i] + (now[i] - snapshot[i]);
-                  }
-
-                  this.syncedCounters = totals;
-                  this.saveData();
-                  Set<String> changed = this.db.applyRemote(rows, SYNC_SKIP_KEYS);
-                  if (!changed.isEmpty()) {
-                     this.clearPersistedState();
-                     this.loadData();
-                  }
-
-                  this.setCounterValues(merged);
+               for (int i = 0; i < now.length; i++) {
+                  merged[i] = totals[i] + (now[i] - snapshot[i]);
                }
-            } finally {
-               this.syncInFlight = false;
+
+               this.syncedCounters = totals;
+               this.setCounterValues(merged);
             }
          }));
+         pull.whenComplete((rows, err) -> Bukkit.getScheduler().runTask(this, () -> {
+            if (err != null) {
+               this.getLogger().warning("[サーバー間同期] 変更の取り込みに失敗しました(次回再試行): " + err.getMessage());
+            } else {
+               double[] keep = this.counterValues();
+               this.saveData();
+               Set<String> changed = this.db.applyRemote(rows, SYNC_SKIP_KEYS);
+               if (!changed.isEmpty()) {
+                  this.clearPersistedState();
+                  this.loadData();
+               }
+
+               this.setCounterValues(keep);
+            }
+         }));
+         CompletableFuture.allOf(pull, counters).whenComplete((v, err) -> Bukkit.getScheduler().runTask(this, () -> this.syncInFlight = false));
       }
    }
 
@@ -15407,14 +15252,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          items.add(Map.entry(this.fixedDepositUnlockTime3.get(u), "定期預金③ 満期"));
       }
 
-      List<MinecraftBank.InstallmentPlan> plans = this.installmentPlans.get(u);
+      List<InstallmentPlan> plans = this.installmentPlans.get(u);
       if (plans != null) {
-         for (MinecraftBank.InstallmentPlan plan : plans) {
+         for (InstallmentPlan plan : plans) {
             items.add(Map.entry(plan.nextDueTime, "分割払い「" + plan.description + "」 (" + this.fmtCurPrecise(plan.installmentAmount) + ")"));
          }
       }
 
-      for (MinecraftBank.StandingTransfer st : this.standingTransfers) {
+      for (StandingTransfer st : this.standingTransfers) {
          if (st.from.equals(u)) {
             items.add(Map.entry(st.nextAt, "定期送金 → " + this.nameOf(st.to) + " (" + this.fmtCur(st.amount) + ")"));
          }
@@ -15452,9 +15297,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private static String plainNumber(double v) {
-      return java.math.BigDecimal.valueOf(Math.floor(v * 100.0) / 100.0).stripTrailingZeros().toPlainString();
-   }
 
    private void sendInputPresets(Player p, String type) {
       String base = type.contains(":") ? type.substring(0, type.indexOf(58)) : type;
@@ -15477,7 +15319,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             values = new double[]{1000.0, 10000.0, 100000.0};
 
             try {
-               MinecraftBank.GroupAccount acc = this.groupAccounts.get(UUID.fromString(type.substring(type.indexOf(58) + 1)));
+               GroupAccount acc = this.groupAccounts.get(UUID.fromString(type.substring(type.indexOf(58) + 1)));
                max = acc != null ? acc.balance : 0.0;
             } catch (IllegalArgumentException ex) {
                max = 0.0;
@@ -15511,7 +15353,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          if (max < 0.0 || v <= max) {
             String label = qty ? (long)v + "個" : this.fmtCur(v);
             sb.append(" <click:suggest_command:'")
-               .append(plainNumber(v))
+               .append(BankUtil.plainNumber(v))
                .append("'><hover:show_text:'クリックで入力欄にセット'><aqua>[")
                .append(MiniMessage.miniMessage().escapeTags(label))
                .append("]</aqua></hover></click>");
@@ -15520,7 +15362,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       if (max > 0.0) {
          sb.append(" <click:suggest_command:'")
-            .append(plainNumber(max))
+            .append(BankUtil.plainNumber(max))
             .append("'><hover:show_text:'クリックで入力欄にセット'><gold>[全額 ")
             .append(MiniMessage.miniMessage().escapeTags(this.fmtCur(Math.floor(max * 100.0) / 100.0)))
             .append("]</gold></hover></click>");
@@ -15531,9 +15373,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void handleStandingCommand(Player p, String[] args) {
       UUID u = p.getUniqueId();
-      List<MinecraftBank.StandingTransfer> mine = new ArrayList<>();
+      List<StandingTransfer> mine = new ArrayList<>();
 
-      for (MinecraftBank.StandingTransfer st : this.standingTransfers) {
+      for (StandingTransfer st : this.standingTransfers) {
          if (st.from.equals(u)) {
             mine.add(st);
          }
@@ -15548,7 +15390,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
 
          for (int i = 0; i < mine.size(); i++) {
-            MinecraftBank.StandingTransfer st = mine.get(i);
+            StandingTransfer st = mine.get(i);
             this.msgKey(
                p,
                "standing.list-line",
@@ -15573,7 +15415,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
 
          if (idx >= 0 && idx < mine.size()) {
-            MinecraftBank.StandingTransfer st = mine.get(idx);
+            StandingTransfer st = mine.get(idx);
             this.standingTransfers.remove(st);
             this.msgKey(p, "standing.cancelled", "index", String.valueOf(idx + 1), "player", this.nameOf(st.to), "amount", this.fmtCur(st.amount));
             this.clickSound(p);
@@ -15623,7 +15465,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.msgKey(p, "standing.limit-reached", "max", String.valueOf(this.cfgStandingTransferMaxPerPlayer));
                this.errorSound(p);
             } else {
-               MinecraftBank.StandingTransfer st = new MinecraftBank.StandingTransfer();
+               StandingTransfer st = new StandingTransfer();
                st.from = u;
                st.to = target.getUniqueId();
                st.amount = amount;
@@ -15653,10 +15495,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void processStandingTransfers() {
       long now = System.currentTimeMillis();
-      Iterator<MinecraftBank.StandingTransfer> it = this.standingTransfers.iterator();
+      Iterator<StandingTransfer> it = this.standingTransfers.iterator();
 
       while (it.hasNext()) {
-         MinecraftBank.StandingTransfer st = it.next();
+         StandingTransfer st = it.next();
          if (now >= st.nextAt) {
             st.nextAt = st.nextAt + st.intervalHours * 3600000L;
             if (st.nextAt <= now) {
@@ -15739,7 +15581,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.standingTransfers.clear();
 
       for (String raw : this.db.getStringList("standing_transfers", "_")) {
-         MinecraftBank.StandingTransfer st = MinecraftBank.StandingTransfer.parse(raw);
+         StandingTransfer st = StandingTransfer.parse(raw);
          if (st != null) {
             this.standingTransfers.add(st);
          }
@@ -15801,7 +15643,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.db.setStringList("admin_audit", "_", new ArrayList<>(this.adminAuditLog));
       }
 
-      this.db.setStringList("standing_transfers", "_", this.standingTransfers.stream().map(MinecraftBank.StandingTransfer::serialize).toList());
+      this.db.setStringList("standing_transfers", "_", this.standingTransfers.stream().map(StandingTransfer::serialize).toList());
       this.db.removeSection("tax_paid");
 
       for (Entry<UUID, Double> entry : this.taxPaidTotal.entrySet()) {
@@ -15895,9 +15737,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void fetchWorldStockQuote(String rawSymbol, Consumer<MinecraftBank.WorldStockQuote> callback) {
+   private void fetchWorldStockQuote(String rawSymbol, Consumer<WorldStockQuote> callback) {
       String symbol = rawSymbol.trim().toUpperCase();
-      MinecraftBank.WorldStockQuote cached = this.worldStockQuoteCache.get(symbol);
+      WorldStockQuote cached = this.worldStockQuoteCache.get(symbol);
       long now = System.currentTimeMillis();
       if (cached != null && now - cached.fetchedAt < (long)(this.cfgWorldStockCacheSeconds * 1000.0)) {
          callback.accept(cached);
@@ -15906,7 +15748,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             .runTaskAsynchronously(
                this,
                () -> {
-                  MinecraftBank.WorldStockQuote result = null;
+                  WorldStockQuote result = null;
                   HttpURLConnection conn = null;
 
                   try {
@@ -15926,7 +15768,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            String currency = this.extractJsonString(body, "currency");
                            String exch = this.extractJsonString(body, "fullExchangeName");
                            String realSymbol = this.extractJsonString(body, "symbol");
-                           result = new MinecraftBank.WorldStockQuote(
+                           result = new WorldStockQuote(
                               realSymbol != null ? realSymbol : symbol, exch != null ? exch : "-", price, currency != null ? currency : "USD", now
                            );
                         }
@@ -15939,7 +15781,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   }
 
-                  MinecraftBank.WorldStockQuote finalResult = result;
+                  WorldStockQuote finalResult = result;
                   Bukkit.getScheduler().runTask(this, () -> {
                      if (finalResult != null) {
                         this.worldStockQuoteCache.put(symbol, finalResult);
@@ -16278,772 +16120,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    static {
-      COUNTRY_CURRENCY_MAP.put("japan", "円");
-      COUNTRY_CURRENCY_MAP.put("united states", "USD");
-      COUNTRY_CURRENCY_MAP.put("usa", "USD");
-      COUNTRY_CURRENCY_MAP.put("united kingdom", "GBP");
-      COUNTRY_CURRENCY_MAP.put("uk", "GBP");
-      COUNTRY_CURRENCY_MAP.put("germany", "EUR");
-      COUNTRY_CURRENCY_MAP.put("france", "EUR");
-      COUNTRY_CURRENCY_MAP.put("italy", "EUR");
-      COUNTRY_CURRENCY_MAP.put("spain", "EUR");
-      COUNTRY_CURRENCY_MAP.put("canada", "CAD");
-      COUNTRY_CURRENCY_MAP.put("australia", "AUD");
-      COUNTRY_CURRENCY_MAP.put("hong kong", "HKD");
-      COUNTRY_CURRENCY_MAP.put("china", "CNY");
-      COUNTRY_CURRENCY_MAP.put("south korea", "KRW");
-      COUNTRY_CURRENCY_MAP.put("korea", "KRW");
-      COUNTRY_CURRENCY_MAP.put("india", "INR");
-      COUNTRY_CURRENCY_MAP.put("brazil", "BRL");
-      COUNTRY_CURRENCY_MAP.put("switzerland", "CHF");
-      COUNTRY_CURRENCY_MAP.put("singapore", "SGD");
-      COUNTRY_CURRENCY_MAP.put("new zealand", "NZD");
-      COUNTRY_CURRENCY_MAP.put("mexico", "MXN");
-      COUNTRY_CURRENCY_MAP.put("taiwan", "TWD");
-      COUNTRY_CURRENCY_MAP.put("thailand", "THB");
-      COUNTRY_CURRENCY_MAP.put("russia", "RUB");
-      RESOURCE_BASE_PRICES.put(Material.COAL, 30.0);
-      RESOURCE_BASE_PRICES.put(Material.IRON_INGOT, 95.0);
-      RESOURCE_BASE_PRICES.put(Material.GOLD_INGOT, 150.0);
-      RESOURCE_BASE_PRICES.put(Material.COPPER_INGOT, 40.0);
-      RESOURCE_BASE_PRICES.put(Material.REDSTONE, 20.0);
-      RESOURCE_BASE_PRICES.put(Material.LAPIS_LAZULI, 25.0);
-      RESOURCE_BASE_PRICES.put(Material.DIAMOND, 950.0);
-      RESOURCE_BASE_PRICES.put(Material.EMERALD, 550.0);
-      RESOURCE_BASE_PRICES.put(Material.NETHERITE_SCRAP, 8000.0);
-      RESOURCE_BASE_PRICES.put(Material.WHEAT, 12.0);
-      RESOURCE_BASE_PRICES.put(Material.CARROT, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.POTATO, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.BEETROOT, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.MELON_SLICE, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.PUMPKIN, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.SUGAR_CANE, 12.0);
-      RESOURCE_BASE_PRICES.put(Material.NETHER_WART, 20.0);
-      RESOURCE_BASE_PRICES.put(Material.COCOA_BEANS, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.ROTTEN_FLESH, 4.0);
-      RESOURCE_BASE_PRICES.put(Material.BONE, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.STRING, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.GUNPOWDER, 23.0);
-      RESOURCE_BASE_PRICES.put(Material.SPIDER_EYE, 12.0);
-      RESOURCE_BASE_PRICES.put(Material.SLIME_BALL, 20.0);
-      RESOURCE_BASE_PRICES.put(Material.ENDER_PEARL, 150.0);
-      RESOURCE_BASE_PRICES.put(Material.BLAZE_ROD, 115.0);
-      RESOURCE_BASE_PRICES.put(Material.GHAST_TEAR, 225.0);
-      RESOURCE_BASE_PRICES.put(Material.OAK_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.SPRUCE_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.BIRCH_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.JUNGLE_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.ACACIA_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.DARK_OAK_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.MANGROVE_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.CHERRY_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.RAW_IRON, 85.0);
-      RESOURCE_BASE_PRICES.put(Material.RAW_GOLD, 135.0);
-      RESOURCE_BASE_PRICES.put(Material.RAW_COPPER, 35.0);
-      RESOURCE_BASE_PRICES.put(Material.IRON_NUGGET, 9.0);
-      RESOURCE_BASE_PRICES.put(Material.GOLD_NUGGET, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.QUARTZ, 30.0);
-      RESOURCE_BASE_PRICES.put(Material.AMETHYST_SHARD, 30.0);
-      RESOURCE_BASE_PRICES.put(Material.GLOWSTONE_DUST, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.FLINT, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.CLAY_BALL, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.NETHERITE_INGOT, 30000.0);
-      RESOURCE_BASE_PRICES.put(Material.SWEET_BERRIES, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.GLOW_BERRIES, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.APPLE, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.BAMBOO, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.CACTUS, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.KELP, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.CHORUS_FRUIT, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.BROWN_MUSHROOM, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.RED_MUSHROOM, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.SUGAR, 11.0);
-      RESOURCE_BASE_PRICES.put(Material.WHEAT_SEEDS, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.HAY_BLOCK, 95.0);
-      RESOURCE_BASE_PRICES.put(Material.MELON, 60.0);
-      RESOURCE_BASE_PRICES.put(Material.VINE, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.LILY_PAD, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.EGG, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.LEATHER, 20.0);
-      RESOURCE_BASE_PRICES.put(Material.FEATHER, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.INK_SAC, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.GLOW_INK_SAC, 25.0);
-      RESOURCE_BASE_PRICES.put(Material.PHANTOM_MEMBRANE, 60.0);
-      RESOURCE_BASE_PRICES.put(Material.RABBIT_HIDE, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.PRISMARINE_SHARD, 20.0);
-      RESOURCE_BASE_PRICES.put(Material.PRISMARINE_CRYSTALS, 25.0);
-      RESOURCE_BASE_PRICES.put(Material.MAGMA_CREAM, 40.0);
-      RESOURCE_BASE_PRICES.put(Material.SHULKER_SHELL, 1200.0);
-      RESOURCE_BASE_PRICES.put(Material.NAUTILUS_SHELL, 600.0);
-      RESOURCE_BASE_PRICES.put(Material.ARMADILLO_SCUTE, 60.0);
-      RESOURCE_BASE_PRICES.put(Material.TURTLE_SCUTE, 120.0);
-      RESOURCE_BASE_PRICES.put(Material.BREEZE_ROD, 150.0);
-      RESOURCE_BASE_PRICES.put(Material.WHITE_WOOL, 12.0);
-      RESOURCE_BASE_PRICES.put(Material.ECHO_SHARD, 800.0);
-      RESOURCE_BASE_PRICES.put(Material.HONEYCOMB, 20.0);
-      RESOURCE_BASE_PRICES.put(Material.BLAZE_POWDER, 50.0);
-      RESOURCE_BASE_PRICES.put(Material.PALE_OAK_LOG, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.CRIMSON_STEM, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.WARPED_STEM, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.BAMBOO_BLOCK, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.OAK_PLANKS, 1.8);
-      RESOURCE_BASE_PRICES.put(Material.STICK, 0.9);
-      RESOURCE_BASE_PRICES.put(Material.STONE, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.COBBLESTONE, 1.0);
-      RESOURCE_BASE_PRICES.put(Material.DEEPSLATE, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.COBBLED_DEEPSLATE, 1.5);
-      RESOURCE_BASE_PRICES.put(Material.GRANITE, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.DIORITE, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.ANDESITE, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.TUFF, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.CALCITE, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.DIRT, 1.0);
-      RESOURCE_BASE_PRICES.put(Material.GRAVEL, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.SAND, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.RED_SAND, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.SANDSTONE, 7.0);
-      RESOURCE_BASE_PRICES.put(Material.GLASS, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.BRICKS, 22.0);
-      RESOURCE_BASE_PRICES.put(Material.TERRACOTTA, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.CLAY, 22.0);
-      RESOURCE_BASE_PRICES.put(Material.SNOW_BLOCK, 4.0);
-      RESOURCE_BASE_PRICES.put(Material.ICE, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.PACKED_ICE, 50.0);
-      RESOURCE_BASE_PRICES.put(Material.BLUE_ICE, 400.0);
-      RESOURCE_BASE_PRICES.put(Material.OBSIDIAN, 60.0);
-      RESOURCE_BASE_PRICES.put(Material.CRYING_OBSIDIAN, 120.0);
-      RESOURCE_BASE_PRICES.put(Material.MOSS_BLOCK, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.MUD, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.END_STONE, 6.0);
-      RESOURCE_BASE_PRICES.put(Material.NETHERRACK, 1.0);
-      RESOURCE_BASE_PRICES.put(Material.SOUL_SAND, 4.0);
-      RESOURCE_BASE_PRICES.put(Material.BASALT, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.BLACKSTONE, 2.0);
-      RESOURCE_BASE_PRICES.put(Material.MAGMA_BLOCK, 145.0);
-      RESOURCE_BASE_PRICES.put(Material.PRISMARINE, 72.0);
-      RESOURCE_BASE_PRICES.put(Material.SEA_LANTERN, 185.0);
-      RESOURCE_BASE_PRICES.put(Material.GLOWSTONE, 54.0);
-      RESOURCE_BASE_PRICES.put(Material.QUARTZ_BLOCK, 108.0);
-      RESOURCE_BASE_PRICES.put(Material.BEEF, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKED_BEEF, 14.0);
-      RESOURCE_BASE_PRICES.put(Material.PORKCHOP, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKED_PORKCHOP, 14.0);
-      RESOURCE_BASE_PRICES.put(Material.CHICKEN, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKED_CHICKEN, 11.0);
-      RESOURCE_BASE_PRICES.put(Material.MUTTON, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKED_MUTTON, 11.0);
-      RESOURCE_BASE_PRICES.put(Material.COD, 8.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKED_COD, 11.0);
-      RESOURCE_BASE_PRICES.put(Material.SALMON, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKED_SALMON, 14.0);
-      RESOURCE_BASE_PRICES.put(Material.BREAD, 32.0);
-      RESOURCE_BASE_PRICES.put(Material.BAKED_POTATO, 11.0);
-      RESOURCE_BASE_PRICES.put(Material.PUMPKIN_PIE, 28.0);
-      RESOURCE_BASE_PRICES.put(Material.CAKE, 55.0);
-      RESOURCE_BASE_PRICES.put(Material.COOKIE, 4.0);
-      RESOURCE_BASE_PRICES.put(Material.MUSHROOM_STEW, 15.0);
-      RESOURCE_BASE_PRICES.put(Material.HONEY_BOTTLE, 25.0);
-      RESOURCE_BASE_PRICES.put(Material.GOLDEN_CARROT, 130.0);
-      RESOURCE_BASE_PRICES.put(Material.GOLDEN_APPLE, 1100.0);
-      RESOURCE_BASE_PRICES.put(Material.EXPERIENCE_BOTTLE, 120.0);
-      RESOURCE_BASE_PRICES.put(Material.ARROW, 3.0);
-      RESOURCE_BASE_PRICES.put(Material.TORCH, 7.0);
-      RESOURCE_BASE_PRICES.put(Material.PAPER, 11.0);
-      RESOURCE_BASE_PRICES.put(Material.BOOK, 34.0);
-      RESOURCE_BASE_PRICES.put(Material.LEAD, 24.0);
-      RESOURCE_BASE_PRICES.put(Material.BUCKET, 255.0);
-      RESOURCE_BASE_PRICES.put(Material.FIREWORK_ROCKET, 10.0);
-      RESOURCE_BASE_PRICES.put(Material.TNT, 110.0);
-      RESOURCE_BASE_PRICES.put(Material.SLIME_BLOCK, 160.0);
-      RESOURCE_BASE_PRICES.put(Material.HONEY_BLOCK, 90.0);
-      RESOURCE_BASE_PRICES.put(Material.COBWEB, 40.0);
-      RESOURCE_BASE_PRICES.put(Material.ENDER_EYE, 180.0);
-      RESOURCE_BASE_PRICES.put(Material.DRAGON_BREATH, 300.0);
-      RESOURCE_BASE_PRICES.put(Material.TRIAL_KEY, 500.0);
-      RESOURCE_BASE_PRICES.put(Material.SPONGE, 600.0);
-      RESOURCE_CATEGORIES.put(
-         "ore",
-         List.of(
-            Material.COAL,
-            Material.IRON_INGOT,
-            Material.GOLD_INGOT,
-            Material.COPPER_INGOT,
-            Material.REDSTONE,
-            Material.LAPIS_LAZULI,
-            Material.DIAMOND,
-            Material.EMERALD,
-            Material.NETHERITE_SCRAP
-         )
-      );
-      RESOURCE_CATEGORIES.put(
-         "crop",
-         List.of(
-            Material.WHEAT,
-            Material.CARROT,
-            Material.POTATO,
-            Material.BEETROOT,
-            Material.MELON_SLICE,
-            Material.PUMPKIN,
-            Material.SUGAR_CANE,
-            Material.NETHER_WART,
-            Material.COCOA_BEANS
-         )
-      );
-      RESOURCE_CATEGORIES.put(
-         "drop",
-         List.of(
-            Material.ROTTEN_FLESH,
-            Material.BONE,
-            Material.STRING,
-            Material.GUNPOWDER,
-            Material.SPIDER_EYE,
-            Material.SLIME_BALL,
-            Material.ENDER_PEARL,
-            Material.BLAZE_ROD,
-            Material.GHAST_TEAR
-         )
-      );
-      RESOURCE_CATEGORIES.put(
-         "wood",
-         List.of(
-            Material.OAK_LOG,
-            Material.SPRUCE_LOG,
-            Material.BIRCH_LOG,
-            Material.JUNGLE_LOG,
-            Material.ACACIA_LOG,
-            Material.DARK_OAK_LOG,
-            Material.MANGROVE_LOG,
-            Material.CHERRY_LOG
-         )
-      );
-      RESOURCE_CATEGORIES.merge("ore", List.of(Material.RAW_IRON, Material.RAW_GOLD, Material.RAW_COPPER, Material.IRON_NUGGET, Material.GOLD_NUGGET, Material.QUARTZ, Material.AMETHYST_SHARD, Material.GLOWSTONE_DUST, Material.FLINT, Material.CLAY_BALL, Material.NETHERITE_INGOT), (a, b) -> {
-         List<Material> merged = new ArrayList<>(a);
-         merged.addAll(b);
-         return List.copyOf(merged);
-      });
-      RESOURCE_CATEGORIES.merge("crop", List.of(Material.SWEET_BERRIES, Material.GLOW_BERRIES, Material.APPLE, Material.BAMBOO, Material.CACTUS, Material.KELP, Material.CHORUS_FRUIT, Material.BROWN_MUSHROOM, Material.RED_MUSHROOM, Material.SUGAR, Material.WHEAT_SEEDS, Material.HAY_BLOCK, Material.MELON, Material.VINE, Material.LILY_PAD, Material.EGG), (a, b) -> {
-         List<Material> merged = new ArrayList<>(a);
-         merged.addAll(b);
-         return List.copyOf(merged);
-      });
-      RESOURCE_CATEGORIES.merge("drop", List.of(Material.LEATHER, Material.FEATHER, Material.INK_SAC, Material.GLOW_INK_SAC, Material.PHANTOM_MEMBRANE, Material.RABBIT_HIDE, Material.PRISMARINE_SHARD, Material.PRISMARINE_CRYSTALS, Material.MAGMA_CREAM, Material.SHULKER_SHELL, Material.NAUTILUS_SHELL, Material.ARMADILLO_SCUTE, Material.TURTLE_SCUTE, Material.BREEZE_ROD, Material.WHITE_WOOL, Material.ECHO_SHARD, Material.HONEYCOMB, Material.BLAZE_POWDER), (a, b) -> {
-         List<Material> merged = new ArrayList<>(a);
-         merged.addAll(b);
-         return List.copyOf(merged);
-      });
-      RESOURCE_CATEGORIES.merge("wood", List.of(Material.PALE_OAK_LOG, Material.CRIMSON_STEM, Material.WARPED_STEM, Material.BAMBOO_BLOCK, Material.OAK_PLANKS, Material.STICK), (a, b) -> {
-         List<Material> merged = new ArrayList<>(a);
-         merged.addAll(b);
-         return List.copyOf(merged);
-      });
-      RESOURCE_CATEGORIES.put("block", List.of(Material.STONE, Material.COBBLESTONE, Material.DEEPSLATE, Material.COBBLED_DEEPSLATE, Material.GRANITE, Material.DIORITE, Material.ANDESITE, Material.TUFF, Material.CALCITE, Material.DIRT, Material.GRAVEL, Material.SAND, Material.RED_SAND, Material.SANDSTONE, Material.GLASS, Material.BRICKS, Material.TERRACOTTA, Material.CLAY, Material.SNOW_BLOCK, Material.ICE, Material.PACKED_ICE, Material.BLUE_ICE, Material.OBSIDIAN, Material.CRYING_OBSIDIAN, Material.MOSS_BLOCK, Material.MUD, Material.END_STONE, Material.NETHERRACK, Material.SOUL_SAND, Material.BASALT, Material.BLACKSTONE, Material.MAGMA_BLOCK, Material.PRISMARINE, Material.SEA_LANTERN, Material.GLOWSTONE, Material.QUARTZ_BLOCK));
-      RESOURCE_CATEGORIES.put("food", List.of(Material.BEEF, Material.COOKED_BEEF, Material.PORKCHOP, Material.COOKED_PORKCHOP, Material.CHICKEN, Material.COOKED_CHICKEN, Material.MUTTON, Material.COOKED_MUTTON, Material.COD, Material.COOKED_COD, Material.SALMON, Material.COOKED_SALMON, Material.BREAD, Material.BAKED_POTATO, Material.PUMPKIN_PIE, Material.CAKE, Material.COOKIE, Material.MUSHROOM_STEW, Material.HONEY_BOTTLE, Material.GOLDEN_CARROT, Material.GOLDEN_APPLE));
-      RESOURCE_CATEGORIES.put("misc", List.of(Material.EXPERIENCE_BOTTLE, Material.ARROW, Material.TORCH, Material.PAPER, Material.BOOK, Material.LEAD, Material.BUCKET, Material.FIREWORK_ROCKET, Material.TNT, Material.SLIME_BLOCK, Material.HONEY_BLOCK, Material.COBWEB, Material.ENDER_EYE, Material.DRAGON_BREATH, Material.TRIAL_KEY, Material.SPONGE));
-      MERCHANT_ITEM_POOL.put(Material.ELYTRA, 8000.0);
-      MERCHANT_ITEM_POOL.put(Material.TOTEM_OF_UNDYING, 6000.0);
-      MERCHANT_ITEM_POOL.put(Material.NETHERITE_INGOT, 4000.0);
-      MERCHANT_ITEM_POOL.put(Material.NETHERITE_BLOCK, 30000.0);
-      MERCHANT_ITEM_POOL.put(Material.ENCHANTED_GOLDEN_APPLE, 5000.0);
-      MERCHANT_ITEM_POOL.put(Material.SADDLE, 800.0);
-      MERCHANT_ITEM_POOL.put(Material.NAME_TAG, 600.0);
-      MERCHANT_ITEM_POOL.put(Material.SHULKER_BOX, 3000.0);
-      MERCHANT_ITEM_POOL.put(Material.TRIDENT, 3500.0);
-      MERCHANT_ITEM_POOL.put(Material.NETHER_STAR, 4500.0);
-      MERCHANT_ITEM_POOL.put(Material.DRAGON_EGG, 50000.0);
-      MERCHANT_ITEM_POOL.put(Material.BEACON, 8000.0);
-      MERCHANT_ITEM_POOL.put(Material.DIAMOND_BLOCK, 2200.0);
-      MERCHANT_ITEM_POOL.put(Material.EMERALD_BLOCK, 1300.0);
-      MERCHANT_ITEM_POOL.put(Material.MUSIC_DISC_PIGSTEP, 1500.0);
-      MERCHANT_ITEM_POOL.put(Material.MUSIC_DISC_OTHERSIDE, 1500.0);
-      MERCHANT_ITEM_POOL.put(Material.HEART_OF_THE_SEA, 2500.0);
-      MERCHANT_ITEM_POOL.put(Material.CONDUIT, 4000.0);
-      MERCHANT_ITEM_POOL.put(Material.END_CRYSTAL, 2000.0);
-      MERCHANT_ITEM_POOL.put(Material.GOLDEN_CARROT, 200.0);
-      VIP_SHOP_POOL.put(Material.ELYTRA, 8000.0);
-      VIP_SHOP_POOL.put(Material.TOTEM_OF_UNDYING, 6000.0);
-      VIP_SHOP_POOL.put(Material.NETHERITE_INGOT, 4000.0);
-      VIP_SHOP_POOL.put(Material.NETHERITE_BLOCK, 30000.0);
-      VIP_SHOP_POOL.put(Material.ENCHANTED_GOLDEN_APPLE, 5000.0);
-      VIP_SHOP_POOL.put(Material.NETHERITE_SCRAP, 2000.0);
-      VIP_SHOP_POOL.put(Material.SHULKER_BOX, 3000.0);
-      VIP_SHOP_POOL.put(Material.TRIDENT, 3500.0);
-      VIP_SHOP_POOL.put(Material.NETHER_STAR, 4500.0);
-      VIP_SHOP_POOL.put(Material.BEACON, 8000.0);
-      VIP_SHOP_POOL.put(Material.DIAMOND_BLOCK, 2200.0);
-      VIP_SHOP_POOL.put(Material.EMERALD_BLOCK, 1300.0);
-      VIP_SHOP_POOL.put(Material.HEART_OF_THE_SEA, 2500.0);
-      VIP_SHOP_POOL.put(Material.CONDUIT, 4000.0);
-      VIP_SHOP_POOL.put(Material.GOLDEN_APPLE, 800.0);
-      DEFAULT_MESSAGES.put("welcome.first-join", "<gold><bold>【経済手帳】</bold> あなたに経済手帳が配布されました。右クリックで経済総合メニューを開けます。</gold>");
-      DEFAULT_MESSAGES.put("welcome.no-permission", "<red>このコマンドを使用する権限がありません。</red>");
-      DEFAULT_MESSAGES.put("common.insufficient-funds", "<red>手持ち資金が足りません。（所持金: {amount}）</red>");
-      DEFAULT_MESSAGES.put("common.invalid-number", "<red>数値を入力してください。（例: 5000）</red>");
-      DEFAULT_MESSAGES.put("common.cancelled", "<gray>入力をキャンセルしました。</gray>");
-      DEFAULT_MESSAGES.put("insurance.payout", "<blue><bold>【保険金支払い】 加入していた生命保険から {amount} が振り込まれました。</bold></blue>");
-      DEFAULT_MESSAGES.put("auction.won", "<green><bold>【落札】 {item} を {amount} で落札しました。（受取箱を確認してください）</bold></green>");
-      DEFAULT_MESSAGES.put("auction.sold", "<green><bold>【落札成立】</bold> {item} が {amount} で落札されました。（手数料 {fee} 差引後 {net} を入金）</green>");
-      DEFAULT_MESSAGES.put("auction.outbid-refund", "<yellow>【オークション】 {item} へのあなたの入札は上回られました。入札金 {amount} を返金しました。</yellow>");
-      DEFAULT_MESSAGES.put("loan.player-approved", "<green><bold>融資契約が成立しました！ {amount} を受領しました。</bold></green>");
-      DEFAULT_MESSAGES.put("loan.gov-approved", "<green><bold>国営公庫から {amount} 融資を受けました！ (適用金利: {rate}% / 総返済額: {total} / 期限: {minutes}分)</bold></green>");
-      DEFAULT_MESSAGES.put("loan.repaid-full", "<green><bold>プレイヤー間の借金を全額完済しました！</bold></green>");
-      DEFAULT_MESSAGES.put("achievement.unlocked", "<gold><bold>\ud83c\udf96 実績「{title}」を解放しました！</bold></gold>");
-      DEFAULT_MESSAGES.put("event.boom", "<green><bold>【経済イベント】需要急増！</bold> 資源の買い手が殺到し、資源相場ショップの取引価格が一時的に10%上昇します。</green>");
-      DEFAULT_MESSAGES.put("event.tax", "<red><bold>【経済イベント】手数料高騰！</bold> 世界株式市場の売買手数料が一時的に2倍になります。</red>");
-      DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 国庫からオンラインの全プレイヤーに{amount}を支給しました。</gold>");
-      DEFAULT_MESSAGES.put("event.bonus-empty", "<gray><b>【経済イベント】ボーナス支給デー</b> …のはずが、国庫が空のため今回の支給は見送られました。</gray>");
-      DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>【経済イベント】供給過多！</bold> 市場に資源があふれ、資源相場ショップの取引価格が一時的に10%下落します。</dark_red>");
-      DEFAULT_MESSAGES.put("confirm.dissolve-prompt", "<red><bold>会社を本当に解散しますか？</bold></red>");
-      DEFAULT_MESSAGES.put("confirm.withdraw-prompt", "<red><bold>預金全額を引き出しますか？</bold></red> <yellow>30秒以内にもう一度クリックで確定します。</yellow>");
-      DEFAULT_MESSAGES.put("confirm.expired", "<red>確認の有効期限が切れました。もう一度実行してください。</red>");
-      DEFAULT_MESSAGES.put("fixed-deposit.matured", "<green><bold>定期預金が満期を迎えました！ 報酬 {amount} を受領しました。</bold></green>");
-      DEFAULT_MESSAGES.put("fixed-deposit.matured-2", "<aqua><bold>2枠目の定期預金が満期を迎えました！ 報酬 {amount} を受領しました。</bold></aqua>");
-      DEFAULT_MESSAGES.put("fixed-deposit.matured-3", "<light_purple><bold>3枠目の定期預金が満期を迎えました！ 報酬 {amount} を受領しました。</bold></light_purple>");
-      DEFAULT_MESSAGES.put("collateral.seized", "<dark_red><bold>【担保没収】</bold> 担保付き融資の返済期限を過ぎたため、担保( {item} )は質屋に没収されました。</dark_red>");
-      DEFAULT_MESSAGES.put("loan.gov-overdue-penalty", "<dark_red><bold>【延滞】</bold> 国営公庫ローンの返済期限を過ぎたため、延滞金 {amount} が加算されました。</dark_red>");
-      DEFAULT_MESSAGES.put("loan.gov-overdue-ceiling", "<dark_red><bold>【延滞】</bold> 国営公庫ローンが延滞上限（{amount}）に達しています。至急返済してください。</dark_red>");
-      DEFAULT_MESSAGES.put("auction.no-bid-returned", "<gray>【オークション終了】 {item} の出品は入札者がおらず、手元に戻ります。（受取箱を確認してください）</gray>");
-      DEFAULT_MESSAGES.put("auction.items-received", "<gold><bold>【オークションハウス】</bold> 落札品・返却品 {count}件 をインベントリに受け取りました。</gold>");
-      DEFAULT_MESSAGES.put("item.reissue-cooldown", "<red>再発行のクールダウン中です。あと {seconds}秒 お待ちください。</red>");
-      DEFAULT_MESSAGES.put("item.reissued", "<green><bold>経済手帳を再発行しました。</bold></green>");
-      DEFAULT_MESSAGES.put("help.header", "<gold><bold>=== MinecraftBank コマンド一覧 ===</bold></gold>");
-      DEFAULT_MESSAGES.put("help.menu", "<yellow>/meco</yellow> <gray>- 経済総合メニューを開く（\ud83d\udcd6経済手帳の右クリックでも開けます）</gray>");
-      DEFAULT_MESSAGES.put(
-         "help.shortcuts",
-         "<yellow>/meco <bank|market|auction|resource|worldstock|merchant|vip|todo|quest|lottery|storage|loan|govloan|insurance|collateral|credit|deposit|personal|installment|mypage|leaderboard|achievement|repay></yellow> <gray>- 各画面に直接アクセス</gray>"
-      );
-      DEFAULT_MESSAGES.put("help.webpage", "<yellow>/meco webpage</yellow> <gray>- 自分専用のWeb個人ページのリンクを表示</gray>");
-      DEFAULT_MESSAGES.put("help.collect", "<yellow>/meco collect</yellow> <gray>- オークション落札品などの受取箱をその場で再受取</gray>");
-      DEFAULT_MESSAGES.put("help.item", "<yellow>/meco item</yellow> <gray>- 経済手帳をなくした場合に再発行する</gray>");
-      DEFAULT_MESSAGES.put("help.log", "<yellow>/meco log</yellow> <gray>- 直近の取引履歴を表示</gray>");
-      DEFAULT_MESSAGES.put("help.news", "<yellow>/meco news</yellow> <gray>- 経済ニュース放送(自分宛)のON/OFF切替</gray>");
-      DEFAULT_MESSAGES.put("help.treasury", "<yellow>/meco treasury</yellow> <gray>- 国庫残高を確認</gray>");
-      DEFAULT_MESSAGES.put("help.tutorial", "<yellow>/meco tutorial</yellow> <gray>- 初心者ガイドを開き直す</gray>");
-      DEFAULT_MESSAGES.put("help.donate-treasury", "<yellow>/meco donate treasury <金額></yellow> <gray>- 国庫へ寄付(信用スコアが少し上がります)</gray>");
-      DEFAULT_MESSAGES.put("help.donate-player", "<yellow>/meco donate <プレイヤー> <金額></yellow> <gray>- 他プレイヤーへ寄付</gray>");
-      DEFAULT_MESSAGES.put("help.admin-header", "<red><bold>--- 管理者コマンド ---</bold></red>");
-      DEFAULT_MESSAGES.put("help.admin-give", "<red>/meco admin give <プレイヤー> <金額></red> <gray>- 所持金を付与</gray>");
-      DEFAULT_MESSAGES.put("help.admin-take", "<red>/meco admin take <プレイヤー> <金額></red> <gray>- 所持金を没収</gray>");
-      DEFAULT_MESSAGES.put("help.admin-setcredit", "<red>/meco admin setcredit <プレイヤー> <スコア></red> <gray>- 信用スコアを設定</gray>");
-      DEFAULT_MESSAGES.put("help.admin-reset", "<red>/meco admin reset <プレイヤー></red> <gray>- 経済データを全リセット</gray>");
-      DEFAULT_MESSAGES.put("help.admin-discord", "<red>/meco admin discord test</red> <gray>- Discord Bot連携の疎通テスト送信</gray>");
-      DEFAULT_MESSAGES.put("help.admin-selfcheck", "<red>/meco admin selfcheck [fix]</red> <gray>- データ不整合を検出(fixで自動修復)</gray>");
-      DEFAULT_MESSAGES.put("help.admin-reload", "<red>/meco admin reload</red> <gray>- config.ymlを再読込</gray>");
-      DEFAULT_MESSAGES.put("help.admin-save", "<red>/meco admin save</red> <gray>- 経済データを即時保存</gray>");
-      DEFAULT_MESSAGES.put("help.admin-backup", "<red>/meco admin backup</red> <gray>- data.dbを今すぐバックアップ</gray>");
-      DEFAULT_MESSAGES.put("help.admin-config", "<red>/meco admin config</red> <gray>- config設定をGUIで編集</gray>");
-      DEFAULT_MESSAGES.put("admin.no-permission", "<red>管理者権限がありません。</red>");
-      DEFAULT_MESSAGES.put("admin.usage", "<yellow>使用法: /meco admin <give|take|setcredit|reset|reload|save|backup|config|gui> ...</yellow>");
-      DEFAULT_MESSAGES.put("admin.reloaded", "<green><bold>config.yml / messages.yml を再読込しました。</bold></green>");
-      DEFAULT_MESSAGES.put("admin.reloaded-alt", "<green><bold>config.yml / messages.ymlを再読込しました。</bold></green>");
-      DEFAULT_MESSAGES.put("admin.saved", "<green><bold>経済データを保存しました。</bold></green>");
-      DEFAULT_MESSAGES.put("admin.backed-up", "<green><bold>data.dbのバックアップを作成しました。</bold></green>");
-      DEFAULT_MESSAGES.put("config.edit-prompt", "<yellow>{key} の新しい値をチャットに入力してください。(キャンセル で中止)</yellow>");
-      DEFAULT_MESSAGES.put("config.invalid-value", "<red>「{value}」はこの設定の型として解釈できませんでした。数値設定には数字のみ入力してください。</red>");
-      DEFAULT_MESSAGES.put("config.updated", "<green><bold>{key} を {value} に変更しました。</bold></green>");
-      DEFAULT_MESSAGES.put("webpage.disabled", "<red>Webダッシュボードが無効になっています。config.ymlのwebdashboard.enabledをtrueにしてください。</red>");
-      DEFAULT_MESSAGES.put("webpage.link", "<green>あなたの個人ページ:</green> <click:open_url:'{url}'><underlined><aqua>{url}</aqua></underlined></click>");
-      DEFAULT_MESSAGES.put("webpage.password-prompt", "<yellow>オフライン操作用のパスワードをチャットに入力してください(4文字以上)。「キャンセル」で中止。</yellow>");
-      DEFAULT_MESSAGES.put("webpage.password-too-short", "<red>パスワードは4文字以上にしてください。</red>");
-      DEFAULT_MESSAGES.put("webpage.password-set", "<green><bold>オフライン操作用パスワードを設定しました。これでログインしていない時もWebページから操作できます。</bold></green>");
-      DEFAULT_MESSAGES.put("webpage.password-cleared", "<green>オフライン操作用パスワードを解除しました。以後はログイン中のみWebページから操作できます。</green>");
-      DEFAULT_MESSAGES.put("webpage.password-status-set", "<gray>(オフライン操作用パスワード設定済み。変更/解除は /meco webpage password )</gray>");
-      DEFAULT_MESSAGES.put("webpage.password-status-unset", "<gray>(ログイン中のみWebから操作できます。オフラインでも操作したい場合は /meco webpage password でパスワードを設定してください)</gray>");
-      DEFAULT_MESSAGES.put("admin.need-playername", "<yellow>プレイヤー名を指定してください。</yellow>");
-      DEFAULT_MESSAGES.put("admin.usage-give", "<yellow>使用法: /meco admin give <プレイヤー> <金額></yellow>");
-      DEFAULT_MESSAGES.put("admin.give-success", "<green>{player} に {amount} を付与しました。</green>");
-      DEFAULT_MESSAGES.put("common.invalid-amount-number", "<red>金額は数値で指定してください。</red>");
-      DEFAULT_MESSAGES.put("admin.usage-take", "<yellow>使用法: /meco admin take <プレイヤー> <金額></yellow>");
-      DEFAULT_MESSAGES.put("admin.take-success", "<green>{player} から {amount} を没収しました。</green>");
-      DEFAULT_MESSAGES.put("admin.usage-setcredit", "<yellow>使用法: /meco admin setcredit <プレイヤー> <スコア></yellow>");
-      DEFAULT_MESSAGES.put("admin.setcredit-success", "<green>{player} の信用スコアを {score} に設定しました。</green>");
-      DEFAULT_MESSAGES.put("admin.invalid-score-number", "<red>スコアは数値で指定してください。</red>");
-      DEFAULT_MESSAGES.put("admin.usage-setgovdebt", "<yellow>使用法: /meco admin setgovdebt <プレイヤー> <金額>（0で完済扱い）</yellow>");
-      DEFAULT_MESSAGES.put("admin.setgovdebt-success", "<green>{player} の国営ローン残債を {amount} に設定しました。</green>");
-      DEFAULT_MESSAGES.put("admin.reset-success", "<green><bold>{player} の経済データをリセットしました。</bold></green>");
-      DEFAULT_MESSAGES.put("admin.reset-note", "<gray>(会社・連合データは影響が大きいため別途 /meco admin reset は個人データのみ対象です)</gray>");
-      DEFAULT_MESSAGES.put("admin.usage-event", "<yellow>/meco admin event <random|demand|fee|bonus|supply></yellow>");
-      DEFAULT_MESSAGES.put("admin.discord-not-configured", "<red>Botトークンまたはチャンネルidがconfig.ymlに設定されていません。</red>");
-      DEFAULT_MESSAGES.put("admin.discord-config-hint", "<gray>system.discord-bot-token / system.discord-channel-id を確認してください。</gray>");
-      DEFAULT_MESSAGES.put("admin.discord-test-sending", "<gray>Discordへテスト送信中...サーバーコンソールに結果ログが出ます。</gray>");
-      DEFAULT_MESSAGES.put("admin.usage-discord-test", "<yellow>使用法: /meco admin discord test</yellow>");
-      DEFAULT_MESSAGES.put("admin.selfcheck-ok", "<green><bold>【自己診断】</bold> データ不整合は見つかりませんでした。</green>");
-      DEFAULT_MESSAGES.put("admin.selfcheck-issues", "<yellow><bold>【自己診断】{count}件の不整合を検出しました{note}</bold></yellow>");
-      DEFAULT_MESSAGES.put("admin.selfcheck-more", "<gray>...他 {count}件（コンソールログを確認してください）</gray>");
-      DEFAULT_MESSAGES.put("admin.selfcheck-issue-line", "<gray>- {issue}</gray>");
-      DEFAULT_MESSAGES.put(
-         "admin.treasure-active",
-         "<gold><bold>【埋蔵金】</bold> 出現中: {world} ({x}, {y}, {z}) / 報酬 {amount}</gold>"
-      );
-      DEFAULT_MESSAGES.put("guarantor.target-busy", "<red>{player} は他のプレイヤーからの保証人依頼に対応中です。少し待ってから再度お試しください。</red>");
-      DEFAULT_MESSAGES.put("quest.already-active", "<red>すでに別の依頼を受注中です。先にその依頼を達成するか、取り消してください。</red>");
-      DEFAULT_MESSAGES.put("input.expired", "<gray>入力待ちが時間切れ(5分)になったため、今のメッセージは通常のチャットとして送信しました。</gray>");
-      DEFAULT_MESSAGES.put("worldstock.quote-refresh-failed", "<red>最新の株価を取得できなかったため、取引を中止しました。少し待ってから再度お試しください。</red>");
-      DEFAULT_MESSAGES.put("common.invalid-name", "<red>名前は24文字以内で、< > \\ は使えません。</red>");
-      DEFAULT_MESSAGES.put("resourceshop.qty-out-of-range", "<red>数量は1〜{max}個で指定してください。</red>");
-      DEFAULT_MESSAGES.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
-      DEFAULT_MESSAGES.put(
-         "admin.merchant-cleanup",
-         "<green>巡回商人の余分なNPCを{count}体削除しました。（未読み込みのチャンクにいる個体は見つかり次第自動で削除されます）</green>"
-      );
-      DEFAULT_MESSAGES.put(
-         "treasure.location-found",
-         "<gold><bold>【埋蔵金探索】</bold> {world} ({x}, {y}, {z}) 付近に埋蔵金の入ったチェストがあります！（推定報酬 {amount}）</gold>"
-      );
-      DEFAULT_MESSAGES.put("treasure.location-not-found", "<gray>【埋蔵金探索】現在は出現していないようです。次回出現まで約{minutes}分。</gray>");
-      DEFAULT_MESSAGES.put(
-         "admin.usage-full", "<yellow>使用法: /meco admin <give|take|setcredit|setgovdebt|reset|reload|save|event|discord|selfcheck|gui> ...</yellow>"
-      );
-      DEFAULT_MESSAGES.put("log.empty", "<gray>取引履歴はまだありません。</gray>");
-      DEFAULT_MESSAGES.put("log.header", "<gold><bold>=== 直近の取引履歴 ===</bold></gold>");
-      DEFAULT_MESSAGES.put("log.entry", "<gray>{entry}</gray>");
-      DEFAULT_MESSAGES.put("news.enabled", "<green>経済ニュース放送を【ON】にしました。</green>");
-      DEFAULT_MESSAGES.put("news.disabled", "<yellow>経済ニュース放送を【OFF】にしました。</yellow>");
-      DEFAULT_MESSAGES.put("treasury.balance", "<gold>【国庫】 <white>{amount}</white></gold>");
-      DEFAULT_MESSAGES.put("treasury.admin-required", "<red>管理者権限が必要です。</red>");
-      DEFAULT_MESSAGES.put("treasury.insufficient", "<red>国庫残高が不足しています。</red>");
-      DEFAULT_MESSAGES.put("common.invalid-amount", "<red>金額が不正です。</red>");
-      DEFAULT_MESSAGES.put(
-         "treasury.usage",
-         "<yellow>/meco treasury</yellow> / <yellow>/meco treasury bonus <金額></yellow> / <yellow>/meco treasury set <金額></yellow> / <yellow>/meco treasury donate <金額></yellow>"
-      );
-      DEFAULT_MESSAGES.put("treasury.set", "<gold>国庫残高を <white>{amount}</white> に設定しました。</gold>");
-      DEFAULT_MESSAGES.put("treasury.citizen-dividend", "<gold><bold>【市民配当】</bold> 国庫から <white>{amount}</white> が配当されました。</gold>");
-      DEFAULT_MESSAGES.put("treasury.welfare", "<green><bold>【生活支援】</bold> 国庫から生活支援金 <white>{amount}</white> が給付されました。</green>");
-      DEFAULT_MESSAGES.put("donate.usage-treasury", "<yellow>/meco donate treasury <金額></yellow> <gray>- 国庫へ寄付(信用スコアが少し上がります)</gray>");
-      DEFAULT_MESSAGES.put("donate.usage-player", "<yellow>/meco donate <プレイヤー> <金額></yellow> <gray>- 他プレイヤーへ寄付</gray>");
-      DEFAULT_MESSAGES.put("donate.usage-treasury-amount", "<yellow>/meco donate treasury <金額></yellow>");
-      DEFAULT_MESSAGES.put("common.amount-must-be-positive", "<red>0より大きい金額を入力してください。</red>");
-      DEFAULT_MESSAGES.put("common.insufficient-funds-simple", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("donate.treasury-thanks", "<green><bold>国庫へ {amount} を寄付しました。ありがとうございます！</bold></green>");
-      DEFAULT_MESSAGES.put("common.target-offline", "<red>対象プレイヤーがオンラインではありません。</red>");
-      DEFAULT_MESSAGES.put("donate.cannot-self", "<red>自分自身には寄付できません。</red>");
-      DEFAULT_MESSAGES.put("donate.usage-player-amount", "<yellow>/meco donate <プレイヤー> <金額></yellow>");
-      DEFAULT_MESSAGES.put("donate.player-success", "<green><bold>{player} に {amount} を寄付しました。</bold></green>");
-      DEFAULT_MESSAGES.put("donate.player-received", "<gold><bold>【寄付】</bold> {player} から {amount} の寄付を受け取りました。</gold>");
-      DEFAULT_MESSAGES.put("guarantor.usage-request", "<yellow>/meco guarantor request <プレイヤー></yellow> <gray>- 保証人を依頼する</gray>");
-      DEFAULT_MESSAGES.put("guarantor.usage-accept", "<yellow>/meco guarantor accept</yellow> <gray>- 依頼を承諾する</gray>");
-      DEFAULT_MESSAGES.put("guarantor.usage-decline", "<yellow>/meco guarantor decline</yellow> <gray>- 依頼を拒否する</gray>");
-      DEFAULT_MESSAGES.put("guarantor.no-proposal-expired", "<red>有効な保証人依頼がありません。（期限切れの可能性があります）</red>");
-      DEFAULT_MESSAGES.put("guarantor.borrower-no-debt", "<red>依頼者にはもう対象の借金がありません。</red>");
-      DEFAULT_MESSAGES.put("guarantor.became", "<green><bold>{player} の保証人になりました。</bold></green>");
-      DEFAULT_MESSAGES.put("guarantor.became-notice", "<green>{player} があなたの保証人になりました。</green>");
-      DEFAULT_MESSAGES.put("guarantor.declined-self", "<yellow>保証人依頼を拒否しました。</yellow>");
-      DEFAULT_MESSAGES.put("guarantor.declined-notice", "<red>{player} は保証人依頼を拒否しました。</red>");
-      DEFAULT_MESSAGES.put("guarantor.no-proposal", "<red>有効な保証人依頼がありません。</red>");
-      DEFAULT_MESSAGES.put("guarantor.no-debt", "<red>あなたには現在、対象となる借金がありません。</red>");
-      DEFAULT_MESSAGES.put("guarantor.already-set", "<red>すでに保証人が設定されています。</red>");
-      DEFAULT_MESSAGES.put("guarantor.usage-request-arg", "<yellow>/meco guarantor request <プレイヤー></yellow>");
-      DEFAULT_MESSAGES.put("guarantor.cannot-self", "<red>自分自身を保証人にはできません。</red>");
-      DEFAULT_MESSAGES.put("guarantor.requested", "<green><bold>{player} に保証人を依頼しました。（5分以内に返答が必要）</bold></green>");
-      DEFAULT_MESSAGES.put("guarantor.request-received", "<gold><bold>【保証人依頼】</bold> {player} があなたに融資の保証人を依頼しています。</gold>");
-      DEFAULT_MESSAGES.put("guarantor.request-instructions", "<yellow>承諾: /meco guarantor accept ／ 拒否: /meco guarantor decline</yellow>");
-      DEFAULT_MESSAGES.put("guarantor.request-warning", "<gray>※保証人になると、依頼者が返済不能になった際に信用スコアへ影響します。</gray>");
-      DEFAULT_MESSAGES.put("guarantor.usage", "<yellow>使用法: /meco guarantor <request|accept|decline></yellow>");
-      DEFAULT_MESSAGES.put("trade.usage", "<yellow>使用法: /meco trade <プレイヤー|accept|decline></yellow>");
-      DEFAULT_MESSAGES.put("trade.request-sent", "<green><bold>{player} にアイテム交換を申し込みました。（60秒以内に返答が必要）</bold></green>");
-      DEFAULT_MESSAGES.put("trade.request-received", "<gold><bold>【交換依頼】</bold> {player} があなたにアイテム交換を申し込んでいます。</gold>");
-      DEFAULT_MESSAGES.put("trade.request-instructions", "<click:run_command:'/meco trade accept'><green><bold>[承諾する]</bold></green></click> <click:run_command:'/meco trade decline'><red><bold>[拒否する]</bold></red></click> <gray>(クリック、または /meco trade accept / decline)</gray>");
-      DEFAULT_MESSAGES.put("trade.respond-first", "<red>あなた宛ての交換依頼に先に返答してください。（/meco trade accept ／ decline）</red>");
-      DEFAULT_MESSAGES.put("trade.target-busy", "<red>{player} は他のプレイヤーからの交換依頼に対応中です。少し待ってから再度お試しください。</red>");
-      DEFAULT_MESSAGES.put("trade.no-request", "<red>有効な交換依頼がありません。</red>");
-      DEFAULT_MESSAGES.put("trade.no-request-expired", "<red>有効な交換依頼がありません。（期限切れの可能性があります）</red>");
-      DEFAULT_MESSAGES.put("trade.declined-self", "<yellow>交換依頼を拒否しました。</yellow>");
-      DEFAULT_MESSAGES.put("trade.declined-notice", "<red>{player} は交換依頼を拒否しました。</red>");
-      DEFAULT_MESSAGES.put("trade.cannot-self", "<red>自分自身とは交換できません。</red>");
-      DEFAULT_MESSAGES.put("trade.already-in-progress", "<red>既に交換が進行中か、保留中の依頼があります。</red>");
-      DEFAULT_MESSAGES.put("trade.money-prompt", "<gold><bold>チャットに提示する金額を入力してください。（0でキャンセル可）</bold></gold>");
-      DEFAULT_MESSAGES.put("trade.money-set", "<green>提示金額を {amount} に設定しました。</green>");
-      DEFAULT_MESSAGES.put("trade.money-insufficient", "<red>所持金が足りないため、その金額は提示できません。</red>");
-      DEFAULT_MESSAGES.put("trade.cancelled", "<red><bold>取引はキャンセルされました。提示していたアイテムは返却されました。</bold></red>");
-      DEFAULT_MESSAGES.put("trade.completed", "<green><bold>【成立】アイテム交換が完了しました！</bold></green>");
-      DEFAULT_MESSAGES.put("help.trade", "<yellow>/meco trade <プレイヤー></yellow> <gray>- 安全にアイテム・お金を交換する</gray>");
-      DEFAULT_MESSAGES.put("quest.max-reached", "<red>掲示できる依頼数の上限({count}件)に達しています。</red>");
-      DEFAULT_MESSAGES.put("quest.post-prompt", "<gold><bold>チャットに依頼の報酬額を入力してください。（あなたの今の場所が目的地になります）</bold></gold>");
-      DEFAULT_MESSAGES.put("quest.withdrawn", "<yellow>依頼を取り下げ、報酬 {amount} を返金しました。</yellow>");
-      DEFAULT_MESSAGES.put("quest.cannot-withdraw", "<gray>受注中またはクールダウン中の依頼は取り下げられません。</gray>");
-      DEFAULT_MESSAGES.put("quest.accepted", "<green><bold>依頼を受注しました！目的地({world} {x}, {y}, {z})まで移動してください。</bold></green>");
-      DEFAULT_MESSAGES.put("quest.accepted-notice", "<aqua>{player} があなたの依頼を受注しました。</aqua>");
-      DEFAULT_MESSAGES.put("quest.abandoned", "<yellow>依頼を放棄しました。</yellow>");
-      DEFAULT_MESSAGES.put("quest.not-acceptable", "<gray>この依頼は現在受注できません。</gray>");
-      DEFAULT_MESSAGES.put("quest.team-post-prompt-reward", "<gold><bold>チャットにチーム依頼の「一人あたり」の報酬額を入力してください。（あなたの今の場所が目的地になります）</bold></gold>");
-      DEFAULT_MESSAGES.put("quest.team-post-prompt-size", "<gold><bold>次に、必要な人数（2〜{max}人）をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("quest.team-size-too-small", "<red>チーム依頼の人数は2人以上を指定してください。1人の場合は通常の依頼掲示をご利用ください。</red>");
-      DEFAULT_MESSAGES.put("quest.team-size-too-large", "<red>チーム依頼の人数は最大{max}人までです。</red>");
-      DEFAULT_MESSAGES.put("quest.team-joined", "<green><bold>チーム依頼に参加しました！目的地({world} {x}, {y}, {z})まで移動してください。（{joined}/{required}人）</bold></green>");
-      DEFAULT_MESSAGES.put("quest.team-join-notice", "<aqua>{player} があなたのチーム依頼に参加しました。（{joined}/{required}人）</aqua>");
-      DEFAULT_MESSAGES.put("quest.team-staffed", "<green><bold>チームの人数が揃いました！全員で目的地まで移動してください。</bold></green>");
-      DEFAULT_MESSAGES.put("quest.team-left-recruiting", "<yellow>チーム依頼の参加を取り消しました。</yellow>");
-      DEFAULT_MESSAGES.put("quest.team-abandoned", "<red>チームメンバーが離脱したため、依頼は募集中に戻りました。</red>");
-      DEFAULT_MESSAGES.put("quest.team-withdraw-blocked", "<gray>参加者がいるチーム依頼は取り下げられません。全員が離脱するのを待ってください。</gray>");
-      DEFAULT_MESSAGES.put("quest.team-arrived-waiting", "<yellow>目的地に到達しました。他のメンバーの到着を待っています。（{arrived}/{required}人）</yellow>");
-      DEFAULT_MESSAGES.put("quest.team-completed", "<green><bold>【チーム依頼達成】 探索依頼を達成し、報酬 {amount} を受け取りました！</bold></green>");
-      DEFAULT_MESSAGES.put("admin.search-player-prompt", "<gold><bold>チャットに検索したいプレイヤー名を入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("admin.give-prompt", "<gold><bold>付与する金額をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("admin.take-prompt", "<gold><bold>没収する金額をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("admin.setcredit-prompt", "<gold><bold>設定する信用スコア(0〜800)をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("admin.reset-confirm", "<red><bold>本当にリセットする場合はもう一度クリックしてください。（15秒以内）</bold></red>");
-      DEFAULT_MESSAGES.put("event.random-triggered", "<green>ランダム経済イベントを発生させました。</green>");
-      DEFAULT_MESSAGES.put("event.boom-triggered", "<green>需要急増を発生させました。</green>");
-      DEFAULT_MESSAGES.put("event.tax-triggered", "<green>手数料高騰を発生させました。</green>");
-      DEFAULT_MESSAGES.put("event.bonus-triggered", "<green>ボーナス支給デーを発生させました。</green>");
-      DEFAULT_MESSAGES.put("event.recession-triggered", "<green>供給過多を発生させました。</green>");
-      DEFAULT_MESSAGES.put("collateral.select-item", "<red>担保アイテムを選択してください。</red>");
-      DEFAULT_MESSAGES.put("collateral.borrowed", "<green><bold>{item} を担保に {amount} を借り入れました。返済期限は {minutes}分後です。</bold></green>");
-      DEFAULT_MESSAGES.put("collateral.repaid", "<green><bold>担保融資を完済し、アイテムを取り戻しました！</bold></green>");
-      DEFAULT_MESSAGES.put("collateral.repay-insufficient", "<red>返済資金が足りません。（必要額: {amount}）</red>");
-      DEFAULT_MESSAGES.put("treasury.balance-gui", "<gold><bold>\ud83c\udfdb 国庫残高: {amount}</bold></gold>");
-      DEFAULT_MESSAGES.put("treasury.balance-note", "<gray>法人税・オークション手数料などが積み立てられています。</gray>");
-      DEFAULT_MESSAGES.put("donate.treasury-prompt", "<gold><bold>チャットに国庫へ寄付する金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
-      DEFAULT_MESSAGES.put("tutorial.completed", "<green>チュートリアルを完了しました！</green>");
-      DEFAULT_MESSAGES.put("auction.list-price-prompt", "<gold>開始価格をチャット入力してください。「キャンセル」で返却します。</gold>");
-      DEFAULT_MESSAGES.put("collateral.item-not-valid", "<red>そのアイテムは担保として評価できません。</red>");
-      DEFAULT_MESSAGES.put("auction.listing-limit", "<red>同時出品数の上限（{count}件）に達しています。</red>");
-      DEFAULT_MESSAGES.put("auction.listing-ended", "<red>この出品はすでに終了しています。</red>");
-      DEFAULT_MESSAGES.put("auction.cannot-bid-own", "<red>自分の出品には入札できません。</red>");
-      DEFAULT_MESSAGES.put("auction.items-inventory-full", "<yellow>インベントリが満杯のため {count} 個を受け取れませんでした。空きを作ってから /meco collect でもう一度お試しください。</yellow>");
-      DEFAULT_MESSAGES.put("auction.cancel-has-bid", "<red>すでに入札が入っているため、この出品は取り下げられません。</red>");
-      DEFAULT_MESSAGES.put("auction.cancel-success", "<green><bold>{item} の出品を取り下げました。（受取箱を確認してください）</bold></green>");
-      DEFAULT_MESSAGES.put("auction.search-prompt", "<gold>検索したいアイテム名（の一部）をチャットに入力してください。「クリア」で検索を解除、「キャンセル」で閉じます。</gold>");
-      DEFAULT_MESSAGES.put("auction.search-set", "<green>検索語を「{query}」に設定しました。</green>");
-      DEFAULT_MESSAGES.put("auction.search-cleared", "<gray>検索条件をクリアしました。</gray>");
-      DEFAULT_MESSAGES.put("auction.bid-prompt", "<gold><bold>チャットに入札額を入力してください。（最低 {amount} / キャンセルする場合は「キャンセル」と入力）</bold></gold>");
-      DEFAULT_MESSAGES.put("insurance.already-active", "<red>すでに保険に加入中です。</red>");
-      DEFAULT_MESSAGES.put("insurance.joined", "<green><bold>生命保険に加入しました！有効期間: {minutes}分</bold></green>");
-      DEFAULT_MESSAGES.put("insurance.premium-insufficient", "<red>保険料（{amount}）が足りません。</red>");
-      DEFAULT_MESSAGES.put("personal.deposit-step", "<green>{amount} 預金。</green>");
-      DEFAULT_MESSAGES.put("personal.deposit-full", "<green>全額預金。</green>");
-      DEFAULT_MESSAGES.put("personal.withdraw-step", "<red>{amount} 引出。</red>");
-      DEFAULT_MESSAGES.put("personal.withdraw-full", "<red>全額引出。</red>");
-      DEFAULT_MESSAGES.put("personal.deposit-prompt", "<gold><bold>チャットに預金したい金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
-      DEFAULT_MESSAGES.put("personal.withdraw-prompt", "<gold><bold>チャットに引き出したい金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
-      DEFAULT_MESSAGES.put("loan.cannot-borrow-self-bank", "<red>自分自身の銀行から借りることはできません。</red>");
-      DEFAULT_MESSAGES.put("loan.already-has-debt", "<red>既に他のプレイヤーからの借金があります。</red>");
-      DEFAULT_MESSAGES.put("loan.plan-not-exist", "<red>このプランはすでに存在しません。</red>");
-      DEFAULT_MESSAGES.put("loan.bank-capital-insufficient", "<red>この銀行の資本金プールが不足しています。</red>");
-      DEFAULT_MESSAGES.put("loan.player-approved-notice", "<green><bold>【融資成立】 {player} があなたのプランから {amount} を借りました！</bold></green>");
-      DEFAULT_MESSAGES.put("loan.player-repaid-full-plain", "<green>プレイヤー間の借金を完済しました！</green>");
-      DEFAULT_MESSAGES.put("loan.repay-partial", "<yellow>{amount} を返済しました。</yellow>");
-      DEFAULT_MESSAGES.put("loan.repay-full-insufficient", "<red>全額返済する資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("loan.gov-repaid-full-plain", "<green>国営公庫のローンを完済しました！</green>");
-      DEFAULT_MESSAGES.put("loan.gov-repaid-full-bold", "<green><bold>国営公庫のローンを全額完済しました！</bold></green>");
-      DEFAULT_MESSAGES.put("bank.already-established", "<red>すでに銀行を設立しています。</red>");
-      DEFAULT_MESSAGES.put("bank.established", "<green><bold>銀行を設立しました！頭取パネルが開放されました。</bold></green>");
-      DEFAULT_MESSAGES.put("bank.establish-cost-insufficient", "<red>設立費用（{amount}）が足りません。</red>");
-      DEFAULT_MESSAGES.put("bank.capital-added", "<green>資本金プールに +{amount} 追加。</green>");
-      DEFAULT_MESSAGES.put("bank.capital-withdrawn", "<red>資本金プールから -{amount} 引き出し。</red>");
-      DEFAULT_MESSAGES.put("bank.capital-insufficient-pool", "<red>資本金プールにそれだけの資金がありません。</red>");
-      DEFAULT_MESSAGES.put("bank.plan-withdrawn", "<yellow>プラン({slot}枠目)を取り下げました。</yellow>");
-      DEFAULT_MESSAGES.put("bank.no-published-plan", "<red>公開中のプランはありません。</red>");
-      DEFAULT_MESSAGES.put("bank.plan-amount-prompt", "<gold><bold>チャットに融資額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
-      DEFAULT_MESSAGES.put("bank.plan-interest-prompt", "<gold><bold>チャットに利息(%)を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
-      DEFAULT_MESSAGES.put("bank.plan-published", "<green><bold>融資プラン({slot}枠目)を市場に公開しました！</bold></green>");
-      DEFAULT_MESSAGES.put("loan.gov-cap-exceeded", "<red>借入上限（{amount}）を超えるため、これ以上借りられません。信用スコアを上げるか返済してください。</red>");
-      DEFAULT_MESSAGES.put("deposit.already-exists", "<red>すでに定期預金が存在します。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot1-created", "<green>{amount} を定期預金に預けました（満期: {seconds}秒後 / 利率: +{rate}%）</green>");
-      DEFAULT_MESSAGES.put("deposit.funds-insufficient", "<red>手持ち資金が {amount} 足りません。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot1-none", "<red>定期預金がありません。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot1-not-matured", "<red>まだ満期を迎えていません。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot2-exists", "<red>すでに2枠目に定期預金が存在します。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot2-created", "<aqua>{amount} を2枠目の定期預金に預けました。</aqua>");
-      DEFAULT_MESSAGES.put("deposit.slot2-none", "<red>2枠目に定期預金がありません。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot2-not-matured", "<red>2枠目はまだ満期を迎えていません。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot3-exists", "<red>すでに3枠目に定期預金が存在します。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot3-created", "<light_purple>{amount} を3枠目の定期預金に預けました。</light_purple>");
-      DEFAULT_MESSAGES.put("deposit.slot3-none", "<red>3枠目に定期預金がありません。</red>");
-      DEFAULT_MESSAGES.put("deposit.slot3-not-matured", "<red>3枠目はまだ満期を迎えていません。</red>");
-      DEFAULT_MESSAGES.put("quest.completed", "<green><bold>【依頼達成】 探索依頼を達成し、報酬 {amount} を受け取りました！</bold></green>");
-      DEFAULT_MESSAGES.put("quest.completed-notice", "<aqua>{player} があなたの依頼を達成しました。</aqua>");
-      DEFAULT_MESSAGES.put("quest.relisted", "<aqua>あなたの依頼が再出品されました。（報酬 {amount} を再徴収）</aqua>");
-      DEFAULT_MESSAGES.put("quest.removed-insufficient-funds", "<red>資金不足のため、依頼ボードから依頼を取り下げました。</red>");
-      DEFAULT_MESSAGES.put("auction.listing-cancelled-returned", "<gray>【オークションハウス】 出品手続き中だったアイテムを返却しました。</gray>");
-      DEFAULT_MESSAGES.put("loan.login-seized-full", "<green><bold>[完済] ログイン時に借金がすべて徴収されました。</bold></green>");
-      DEFAULT_MESSAGES.put("loan.login-seized-partial", "<red><bold>[執行]</bold> 借金 <yellow>{amount}</yellow> 強制徴収。</red>");
-      DEFAULT_MESSAGES.put("loan.guarantor-seized-notice", "<dark_red><bold>【保証債務】</bold> {player} の借金返済不能につき、保証人として {amount} が徴収され、信用スコアが低下しました。</dark_red>");
-      DEFAULT_MESSAGES.put("loan.guarantor-repaid-full", "<green><bold>[完済] 保証人により借金が完済されました。</bold></green>");
-      DEFAULT_MESSAGES.put("insurance.claim-cooldown", "<gray>[保険] クールダウン中のため、今回の死亡では保険金は支払われませんでした。</gray>");
-      DEFAULT_MESSAGES.put("input.cancelled-auction-item-returned", "<gray>出品をキャンセルし、アイテムを返却しました。</gray>");
-      DEFAULT_MESSAGES.put("input.cancelled", "<gray>入力をキャンセルしました。</gray>");
-      DEFAULT_MESSAGES.put("admin.player-not-found", "<red>プレイヤー「{name}」が見つかりませんでした。</red>");
-      DEFAULT_MESSAGES.put("quest.reward-insufficient", "<red>所持金が足りません。</red>");
-      DEFAULT_MESSAGES.put("quest.posted", "<green><bold>依頼を掲示しました！報酬 {amount} をエスクローしました。</bold></green>");
-      DEFAULT_MESSAGES.put("worldstock.search-prompt", "<gold><bold>チャットにティッカーシンボルを入力してください。（例: AAPL, TSLA, 7203.T）</bold></gold>");
-      DEFAULT_MESSAGES.put("worldstock.invalid-symbol", "<red>ティッカーシンボルの形式が正しくありません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.searching", "<gray>{symbol} の株価を取得中...</gray>");
-      DEFAULT_MESSAGES.put("worldstock.not-found", "<red>{symbol} が見つかりませんでした。ティッカーシンボルを確認するか、しばらく経ってから再度お試しください。</red>");
-      DEFAULT_MESSAGES.put("worldstock.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.not-owned", "<red>この銘柄を保有していません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.bought", "<green><bold>{symbol} を {qty}株 購入しました。（{amount} / 単価 {native} / 手数料 {fee}）</bold></green>");
-      DEFAULT_MESSAGES.put("worldstock.sold", "<green><bold>{symbol} を {qty}株 売却しました。（{amount} / 単価 {native} / 損益: {pnl} / 手数料 {fee}）</bold></green>");
-      DEFAULT_MESSAGES.put("worldstock.sell-not-enough-shares", "<red>売却したい株数が保有数を超えています。（保有: {owned}株 / 指定: {requested}株）部分約定はしません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.bulk-qty-too-large", "<red>一度に取引できる株数の上限（{max}株）を超えています。</red>");
-      DEFAULT_MESSAGES.put("worldstock.bulk-buy-prompt", "<gold><bold>{symbol} を購入する株数をチャットに入力してください。（例: 25）</bold></gold>");
-      DEFAULT_MESSAGES.put("worldstock.bulk-sell-prompt", "<gold><bold>{symbol} を売却する株数をチャットに入力してください。（例: 25）</bold></gold>");
-      DEFAULT_MESSAGES.put("worldstock.cooldown", "<red>この銘柄は取引後 {seconds}秒経過するまで再度取引できません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.daily-count-limit", "<red>本日の世界株取引回数の上限（{count}回）に達しました。また明日お試しください。</red>");
-      DEFAULT_MESSAGES.put("worldstock.daily-amount-limit", "<red>本日の世界株取引金額の上限（{amount}）に達するため、この取引はできません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.daily-profit-limit", "<red>本日の世界株実現利益の上限（{amount}）に達したため、これ以上の利益確定売りはできません。</red>");
-      DEFAULT_MESSAGES.put("worldstock.alert-prompt", "<gold><bold>{symbol} の値動きアラート閾値(%)をチャットに入力してください。（例: 5 で ±5% 変動時に通知）</bold></gold>");
-      DEFAULT_MESSAGES.put("worldstock.alert-set", "<green><bold>{symbol} に値動きアラートを設定しました。（現在値から ±{percent}% 変動で通知）</bold></green>");
-      DEFAULT_MESSAGES.put("worldstock.alert-cancelled", "<gray>{symbol} の値動きアラートを解除しました。</gray>");
-      DEFAULT_MESSAGES.put("worldstock.alert-triggered", "<gold><bold>\ud83d\udd14 {symbol} が基準値から{percent}%以上変動しました！（現在値: {price}）</bold></gold>");
-      DEFAULT_MESSAGES.put("worldstock.dividend-paid", "<green>世界株の配当金として {amount} を受け取りました。</green>");
-      DEFAULT_MESSAGES.put("resourceshop.not-enough-items", "<red>{material}が足りません。（所持: {have}個 / 必要: {need}個）</red>");
-      DEFAULT_MESSAGES.put("resourceshop.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("resourceshop.sold", "<green><bold>{material}を{qty}個売却しました。（{amount}）</bold></green>");
-      DEFAULT_MESSAGES.put("resourceshop.bought", "<green><bold>{material}を{qty}個購入しました。（{amount}）</bold></green>");
-      DEFAULT_MESSAGES.put("resourceshop.sell-qty-prompt", "<gold><bold>{material}を売る個数をチャットに入力してください。（例: 40）</bold></gold>");
-      DEFAULT_MESSAGES.put("resourceshop.buy-qty-prompt", "<gold><bold>{material}を買う個数をチャットに入力してください。（例: 40）</bold></gold>");
-      DEFAULT_MESSAGES.put("lottery.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("lottery.ticket-bought", "<green><bold>宝くじチケットを{count}枚購入しました。（{amount}）</bold></green>");
-      DEFAULT_MESSAGES.put("lottery.buy-qty-prompt", "<gold><bold>購入するチケットの枚数をチャットに入力してください。（例: 3）</bold></gold>");
-      DEFAULT_MESSAGES.put("merchant.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("merchant.bought", "<green><bold>{item} を購入しました。（{amount}）</bold></green>");
-      DEFAULT_MESSAGES.put("merchant.location-hint", "<gold><bold>巡回商人は現在 {world} ({x}, {y}, {z}) 付近にいます。</bold></gold>");
-      DEFAULT_MESSAGES.put("tax.sales-deducted", "<gray>（取引税 {rate}: {amount} が国庫に納められました）</gray>");
-      DEFAULT_MESSAGES.put("tax.wealth-paid", "<gold>【資産税】</gold> <white>資産 {wealth} のうち {threshold} を超える分に課税され、{amount} を納めました。</white>");
-      DEFAULT_MESSAGES.put("tax.wealth-broadcast", "<gold><bold>【資産税】</bold></gold> <white>資産税を徴収しました。総額 {total}（{count}人）は国庫に入りました。</white>");
-      DEFAULT_MESSAGES.put("tax.info-header", "<gold><bold>===== 税金 =====</bold></gold>");
-      DEFAULT_MESSAGES.put("tax.info-disabled", "<gray>このサーバーでは税金は無効になっています。</gray>");
-      DEFAULT_MESSAGES.put("tax.info-sales", "<gray>取引税:</gray> <white>{rate}</white> <dark_gray>(資源ショップの売却・オークションの売上)</dark_gray>");
-      DEFAULT_MESSAGES.put("tax.info-wealth", "<gray>資産税:</gray> <white>{threshold} を超える資産の {rate}</white> <dark_gray>({hours}時間ごと / 次回まで あと {time})</dark_gray>");
-      DEFAULT_MESSAGES.put("tax.info-estimate", "<gray>あなたの資産:</gray> <white>{wealth}</white> <gray>→ 次回の資産税(見込み):</gray> <yellow>{amount}</yellow>");
-      DEFAULT_MESSAGES.put("tax.info-paid", "<gray>あなたの納税額(累計):</gray> <yellow>{mine}</yellow> <gray>/ サーバーの税収(累計):</gray> <gold>{total}</gold>");
-      DEFAULT_MESSAGES.put("chart.usage", "<yellow>使用法: /meco chart <資源名(例: diamond) | 銘柄コード(例: AAPL)></yellow>");
-      DEFAULT_MESSAGES.put("chart.header", "<aqua><bold>===== {name} の相場チャート ({span}) =====</bold></aqua>");
-      DEFAULT_MESSAGES.put("chart.no-data", "<gray>まだ十分な価格データがありません。しばらくしてからもう一度見てください。</gray>");
-      DEFAULT_MESSAGES.put("chart.fetching", "<gray>{symbol} の株価履歴を取得しています…</gray>");
-      DEFAULT_MESSAGES.put("chart.fetch-failed", "<red>{symbol} の株価履歴を取得できませんでした。銘柄コードを確認してください。</red>");
-      DEFAULT_MESSAGES.put("ledger.usage", "<yellow>使用法: /meco admin ledger <プレイヤー> [ページ] | stats [時間]</yellow>");
-      DEFAULT_MESSAGES.put("ledger.disabled", "<gray>お金の台帳は無効になっています。(config: ledger.enabled)</gray>");
-      DEFAULT_MESSAGES.put("ledger.header", "<gold><bold>===== {player} の所持金台帳 (ページ {page}) =====</bold></gold>");
-      DEFAULT_MESSAGES.put("ledger.line", "<gray>[{time}]</gray> {delta} <dark_gray>{source}</dark_gray>");
-      DEFAULT_MESSAGES.put("ledger.empty", "<gray>記録がありません。</gray>");
-      DEFAULT_MESSAGES.put("ledger.footer", "<gray>次のページ: /meco admin ledger {player} {next}</gray>");
-      DEFAULT_MESSAGES.put("ledger.stats-header", "<gold><bold>===== 直近{hours}時間のお金の動き (台帳) =====</bold></gold>");
-      DEFAULT_MESSAGES.put("ledger.stats-totals", "<gray>入金:</gray> <green>{in}</green> <gray>/ 出金:</gray> <red>{out}</red> <gray>/ 差し引き:</gray> <yellow>{net}</yellow> <gray>({count}件)</gray>");
-      DEFAULT_MESSAGES.put("ledger.stats-source", "<white>{source}</white> <gray>:</gray> {net} <dark_gray>({count}件)</dark_gray>");
-      DEFAULT_MESSAGES.put("ledger.error", "<red>台帳の読み込みに失敗しました: {error}</red>");
-      DEFAULT_MESSAGES.put("feature.disabled", "<red>この機能はサーバー設定で無効になっています。</red>");
-      DEFAULT_MESSAGES.put("feature.no-permission", "<red>この機能を使う権限がありません。</red>");
-      DEFAULT_MESSAGES.put("lang.usage", "<yellow>使用法: /meco admin lang export <言語コード(例: en, en_us, ko_kr)></yellow>");
-      DEFAULT_MESSAGES.put("lang.invalid-locale", "<red>言語コードが正しくありません。（例: en, en_us, ko_kr）</red>");
-      DEFAULT_MESSAGES.put("lang.exported", "<green>{file} に翻訳用のメッセージを {count} 件書き出しました。翻訳後 /meco admin reload で反映されます。</green>");
-      DEFAULT_MESSAGES.put("lang.export-failed", "<red>書き出しに失敗しました: {error}</red>");
-      DEFAULT_MESSAGES.put(
-         "webpage.link-plus",
-         "<gray>家計簿ページ(期限・振り込み・納税・台帳):</gray> <click:open_url:'{url}'><aqua><u>{url}</u></aqua></click>\n<gray>経済マーケット(税収・お金の流れ・全資源チャート):</gray> <click:open_url:'{base}/economy.html'><aqua><u>{base}/economy.html</u></aqua></click>"
-      );
-      DEFAULT_MESSAGES.put("common.shortfall", "<gray>→ あと <red>{amount}</red> 足りません。</gray>");
-      DEFAULT_MESSAGES.put("common.presets-label", "<gray>クイック入力(クリック→Enter):</gray>");
-      DEFAULT_MESSAGES.put(
-         "resourceshop.daily-sell-limit",
-         "<red>1日の売却上限（{limit}）を超えるため売却できません。本日あと {remaining} まで売却できます。（リセットまで {time}）</red>"
-      );
-      DEFAULT_MESSAGES.put("treasure.finder-cooldown", "<red>埋蔵金の連続発見は制限されています。次に発見できるまで あと {time}。</red>");
-      DEFAULT_MESSAGES.put("treasure.location-cooldown", "<yellow>埋蔵金の連続発見制限中のため、位置調査はできません。（あと {time}）</yellow>");
-      DEFAULT_MESSAGES.put("admin.confirm-required", "<yellow>高額な操作のため確認画面を開きました。内容を確認して実行してください。</yellow>");
-      DEFAULT_MESSAGES.put("admin.confirm-expired", "<red>確認の有効期限(60秒)が切れたか、操作が見つかりません。もう一度やり直してください。</red>");
-      DEFAULT_MESSAGES.put("admin.confirm-cancelled", "<gray>管理者操作をキャンセルしました。</gray>");
-      DEFAULT_MESSAGES.put("admin.audit-header", "<gold><bold>===== 管理者操作 監査ログ ({page}/{pages}) =====</bold></gold>");
-      DEFAULT_MESSAGES.put("admin.audit-empty", "<gray>監査ログはまだありません。</gray>");
-      DEFAULT_MESSAGES.put("admin.audit-line", "<gray>{line}</gray>");
-      DEFAULT_MESSAGES.put("admin.audit-footer", "<gray>次のページ: /meco admin audit {next}</gray>");
-      DEFAULT_MESSAGES.put("transfer.header", "<aqua><bold>===== 振り込み履歴 ({page}/{pages}) =====</bold></aqua>");
-      DEFAULT_MESSAGES.put("transfer.empty", "<gray>振り込み履歴はまだありません。</gray>");
-      DEFAULT_MESSAGES.put("transfer.line", "<white>{line}</white>");
-      DEFAULT_MESSAGES.put("transfer.footer", "<gray>次のページ: /meco transfers {next}</gray>");
-      DEFAULT_MESSAGES.put("standing.usage", "<yellow>使用法: /meco standing add <プレイヤー> <金額> <間隔(時間)> | list | cancel <番号></yellow>");
-      DEFAULT_MESSAGES.put("standing.player-not-found", "<red>そのプレイヤーは見つかりません（一度でもサーバーに参加したことが必要です）。</red>");
-      DEFAULT_MESSAGES.put("standing.cannot-self", "<red>自分自身には定期送金できません。</red>");
-      DEFAULT_MESSAGES.put("standing.invalid-interval", "<red>間隔は {min}〜8760 の整数(時間)で指定してください。</red>");
-      DEFAULT_MESSAGES.put("standing.limit-reached", "<red>定期送金は最大 {max} 件までです。</red>");
-      DEFAULT_MESSAGES.put("standing.added", "<green>定期送金を登録しました: {player} へ {amount} を {hours} 時間ごと（初回: {next}）</green>");
-      DEFAULT_MESSAGES.put("standing.list-header", "<aqua><bold>===== あなたの定期送金 =====</bold></aqua>");
-      DEFAULT_MESSAGES.put("standing.list-empty", "<gray>登録されている定期送金はありません。</gray>");
-      DEFAULT_MESSAGES.put("standing.list-line", "<white>#{index}</white> <yellow>{player}</yellow> へ <gold>{amount}</gold> / {hours}時間ごと <gray>(次回: {next})</gray>");
-      DEFAULT_MESSAGES.put("standing.cancelled", "<green>定期送金 #{index}（{player} へ {amount}）を解除しました。</green>");
-      DEFAULT_MESSAGES.put("standing.invalid-index", "<red>番号が正しくありません。/meco standing list で確認してください。</red>");
-      DEFAULT_MESSAGES.put("standing.sent", "<green>[定期送金] {player} へ {amount} を送金しました。</green>");
-      DEFAULT_MESSAGES.put("standing.received", "<green>[定期送金] {player} から {amount} を受け取りました。</green>");
-      DEFAULT_MESSAGES.put("standing.failed", "<red>[定期送金] 残高不足のため {player} への {amount} の送金に失敗しました。（{fails}/3回）</red>");
-      DEFAULT_MESSAGES.put("standing.auto-cancelled", "<red>[定期送金] 3回連続で失敗したため {player} への定期送金を解除しました。</red>");
-      DEFAULT_MESSAGES.put("mypage.due-header", "<light_purple><bold>===== 期限一覧 =====</bold></light_purple>");
-      DEFAULT_MESSAGES.put("mypage.due-empty", "<gray>現在、期限のある契約はありません。</gray>");
-      DEFAULT_MESSAGES.put("treasure.found", "<gold><bold>【埋蔵金発見】 埋蔵金チェストを発見し、{amount} を手に入れました！</bold></gold>");
-      DEFAULT_MESSAGES.put(
-         "merchant.installment-purchased", "<green><bold>{item} を分割払いで購入しました！初回 {first}を支払いました。（残り{count}回中 {remaining}回、各{each}）</bold></green>"
-      );
-      DEFAULT_MESSAGES.put("installment.paid", "<green>分割払い: {item} の {amount} を引き落としました。（残り{remaining}回）</green>");
-      DEFAULT_MESSAGES.put("installment.completed", "<green><bold>分割払い: {item} の支払いが完了しました！</bold></green>");
-      DEFAULT_MESSAGES.put("installment.missed", "<red>分割払い: {item} の {amount} が引き落とせませんでした。信用スコアが減少します。</red>");
-      DEFAULT_MESSAGES.put("auction.bid-too-low", "<red>入札額が低すぎます。（最低 {amount}）</red>");
-      DEFAULT_MESSAGES.put("auction.buyout-purchased", "<green><bold>即決価格で購入しました！</bold></green>");
-      DEFAULT_MESSAGES.put("auction.bid-placed", "<green><bold>{item} に {amount} で入札しました。</bold></green>");
-      DEFAULT_MESSAGES.put("personal.deposit-custom", "<green><bold>{amount} を預金しました。</bold></green>");
-      DEFAULT_MESSAGES.put("personal.withdraw-insufficient", "<red>預金残高が足りません。（残高: {amount}）</red>");
-      DEFAULT_MESSAGES.put("personal.withdraw-custom", "<green><bold>{amount} を引き出しました。</bold></green>");
-      DEFAULT_MESSAGES.put("bank.plan-amount-set", "<green>融資額を {amount} に設定しました。</green>");
-      DEFAULT_MESSAGES.put("bank.plan-interest-set", "<green>利息を {amount}% に設定しました。</green>");
-      DEFAULT_MESSAGES.put("auction.draft-not-found", "<red>出品するアイテムが見つかりませんでした。もう一度お試しください。</red>");
-      DEFAULT_MESSAGES.put("auction.buyout-prompt", "<gold><bold>即決価格(Buy Now)を入力してください。設定しない場合は 0 と入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("auction.listing-info-not-found", "<red>出品情報が見つかりませんでした。もう一度お試しください。</red>");
-      DEFAULT_MESSAGES.put("auction.buyout-too-low", "<red>即決価格は開始価格（{amount}）より高く設定してください。出品をキャンセルします。</red>");
-      DEFAULT_MESSAGES.put("auction.listed", "<green><bold>{item} をオークションに出品しました！（開始価格: {amount}{buyoutMsg} / 期間: {minutes}分）</bold></green>");
-      DEFAULT_MESSAGES.put("storage.funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put(
-         "storage.rented", "<green><bold>レンタル倉庫を契約しました！（家賃 {amount} / {hours}時間ごと）</bold></green> <red>家賃の支払いに1回でも失敗すると、契約は失効し倉庫の中身は全て没収されますのでご注意ください。</red>"
-      );
-      DEFAULT_MESSAGES.put("storage.rent-paid", "<green>レンタル倉庫の家賃 {amount} を支払いました。</green>");
-      DEFAULT_MESSAGES.put("storage.forfeited", "<red><bold>【レンタル倉庫】家賃の支払いに失敗したため契約が失効し、倉庫の中身は全て没収されました。</bold></red>");
-      DEFAULT_MESSAGES.put("storage.not-renting", "<red>レンタル倉庫を契約していません。</red>");
-      DEFAULT_MESSAGES.put("group.created", "<green><bold>グループ貯金箱「{name}」を作成しました！（ID: {id}）</bold></green>");
-      DEFAULT_MESSAGES.put("group.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}）</red>");
-      DEFAULT_MESSAGES.put("group.create-name-prompt", "<gold><bold>作成するグループ貯金箱の名前をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("group.not-found", "<red>指定したグループ貯金箱が見つかりません。</red>");
-      DEFAULT_MESSAGES.put("group.not-owner", "<red>この操作はオーナーのみ実行できます。</red>");
-      DEFAULT_MESSAGES.put("group.already-member", "<red>そのプレイヤーは既にメンバーです。</red>");
-      DEFAULT_MESSAGES.put("group.full", "<red>メンバー数が上限に達しています。</red>");
-      DEFAULT_MESSAGES.put("group.invited", "<green><bold>{player} をグループ貯金箱に招待しました。</bold></green>");
-      DEFAULT_MESSAGES.put("group.invite-received", "<gold><bold>【グループ貯金箱】</bold> {player} があなたを「{group}」に招待しました。</gold>");
-      DEFAULT_MESSAGES.put("group.kicked", "<yellow>{player} をグループ貯金箱から追放しました。</yellow>");
-      DEFAULT_MESSAGES.put("group.kicked-notice", "<yellow>【グループ貯金箱】</yellow> 「{group}」のメンバー構成が変更されました。");
-      DEFAULT_MESSAGES.put("group.owner-cannot-leave", "<red>オーナーは脱退できません。解散する場合は /meco group disband <名前> を使用してください。</red>");
-      DEFAULT_MESSAGES.put("group.left", "<yellow>「{group}」から脱退しました。</yellow>");
-      DEFAULT_MESSAGES.put("group.disbanded", "<gold><bold>グループ貯金箱が解散されました。残高から {amount} が振り込まれました。</bold></gold>");
-      DEFAULT_MESSAGES.put("group.disband-confirm", "<red><bold>本当にグループ貯金箱を解散しますか？</bold></red> <yellow>残高はメンバー全員に均等割りされます。30秒以内にもう一度クリックで確定します。</yellow>");
-      DEFAULT_MESSAGES.put("group.deposit-prompt", "<gold><bold>入金する金額をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("group.deposited", "<green><bold>グループ貯金箱へ {amount} を入金しました。</bold></green>");
-      DEFAULT_MESSAGES.put("group.withdraw-prompt", "<gold><bold>引き出す金額をチャットに入力してください。</bold></gold>");
-      DEFAULT_MESSAGES.put("group.withdraw-insufficient", "<red>グループ貯金箱の残高が足りません。（残高: {amount}）</red>");
-      DEFAULT_MESSAGES.put("group.withdrawn", "<green><bold>グループ貯金箱から {amount} を引き出しました。</bold></green>");
-      DEFAULT_MESSAGES.put("help.group", "<yellow>/meco group <create|invite|kick|leave|disband></yellow> <gray>- 複数人で共有するグループ貯金箱を管理する</gray>");
-      DEFAULT_MESSAGES.put("fund.created", "<green><bold>共同投資ファンド「{name}」を作成しました！（ID: {id}）</bold></green>");
-      DEFAULT_MESSAGES.put("fund.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}）</red>");
-      DEFAULT_MESSAGES.put("fund.not-found", "<red>指定した共同投資ファンドが見つかりません。</red>");
-      DEFAULT_MESSAGES.put("fund.not-manager", "<red>この操作はファンドのマネージャーのみ実行できます。</red>");
-      DEFAULT_MESSAGES.put("fund.already-contributor", "<red>そのプレイヤーは既に出資者です。</red>");
-      DEFAULT_MESSAGES.put("fund.full", "<red>出資者数が上限に達しています。</red>");
-      DEFAULT_MESSAGES.put("fund.invited", "<green><bold>{player} を共同投資ファンドに招待しました。</bold></green>");
-      DEFAULT_MESSAGES.put(
-         "fund.invite-received", "<gold><bold>【共同投資ファンド】</bold> {player} があなたを「{fund}」に招待しました。/meco fund contribute {fund} <金額> で出資できます。</gold>"
-      );
-      DEFAULT_MESSAGES.put("fund.not-invited", "<red>そのファンドの出資者(またはマネージャー)ではありません。先に招待してもらう必要があります。</red>");
-      DEFAULT_MESSAGES.put("fund.contributed", "<green><bold>共同投資ファンド「{fund}」へ {amount} 出資しました。</bold></green>");
-      DEFAULT_MESSAGES.put("fund.contribute-funds-insufficient", "<red>手持ち資金が足りません。（所持金: {amount}）</red>");
-      DEFAULT_MESSAGES.put("fund.redeemed", "<green><bold>共同投資ファンドから解約し、持分 {amount} を受け取りました。</bold></green>");
-      DEFAULT_MESSAGES.put("fund.redeem-confirm", "<red><bold>本当に持分を全額解約しますか？</bold></red> <yellow>もう一度クリックすると確定します(30秒以内)。</yellow>");
-      DEFAULT_MESSAGES.put("fund.redeem-insufficient-cash", "<red>ファンドの現金残高が不足しているため解約できません。マネージャーに保有銘柄の売却を依頼してください。</red>");
-      DEFAULT_MESSAGES.put("fund.disband-has-holdings", "<red>保有銘柄が残っているため解散できません。先に運用画面ですべて売却してください。</red>");
-      DEFAULT_MESSAGES.put("fund.disbanded", "<gold><bold>共同投資ファンドが解散されました。持分に応じて {amount} が振り込まれました。</bold></gold>");
-      DEFAULT_MESSAGES.put("fund.trade-funds-insufficient", "<red>ファンドの現金残高が足りません。</red>");
-      DEFAULT_MESSAGES.put("help.fund", "<yellow>/meco fund <create|invite|contribute|redeem|disband></yellow> <gray>- 複数人で出資し合う共同投資ファンドを管理する</gray>");
-      DEFAULT_MESSAGES.put("vip.not-eligible", "<red>VIP限定です。信用スコアを上げてシルバー会員以上になると利用できます。</red>");
-      DEFAULT_MESSAGES.put("vip.shop-bought", "<green><bold>VIP限定ショップで {item} を購入しました。（{amount}）</bold></green>");
-      DEFAULT_MESSAGES.put("vip.shop-funds-insufficient", "<red>手持ち資金が足りません。</red>");
-      DEFAULT_MESSAGES.put("vip.stipend-claimed", "<green><bold>日次VIP手当（{tier}）として {amount} を受け取りました。</bold></green>");
-      DEFAULT_MESSAGES.put("vip.stipend-cooldown", "<red>日次VIP手当は受取済みです。次回受取まであと {time}。</red>");
-      DEFAULT_MESSAGES.put("vip.stipend-treasury-empty", "<red>国庫残高が不足しているため、現在は日次VIP手当を支給できません。しばらく経ってからお試しください。</red>");
-      DEFAULT_MESSAGES.put("vip.stipend-disabled", "<red>日次VIP手当は現在無効化されています。</red>");
+      ResourceCatalog.register(COUNTRY_CURRENCY_MAP, RESOURCE_BASE_PRICES, RESOURCE_CATEGORIES, MERCHANT_ITEM_POOL, VIP_SHOP_POOL);
+      DefaultMessages.register(DEFAULT_MESSAGES);
    }
 
    public static class BankPlaceholderExpansion extends PlaceholderExpansion {
@@ -17103,1040 +16181,5 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    @FunctionalInterface
    private interface DealFactory<T> {
       T create(UUID var1, Material var2, double var3, double var5, int var7);
-   }
-
-   private static class GroupAccount {
-      UUID id;
-      String name;
-      UUID owner;
-      HashSet<UUID> members = new HashSet<>();
-      double balance = 0.0;
-   }
-
-   private static class InstallmentPlan {
-      UUID id;
-      UUID owner;
-      String description;
-      double installmentAmount;
-      int installmentsRemaining;
-      long nextDueTime;
-   }
-
-   private static class InvestmentFund {
-      UUID id;
-      String name;
-      UUID manager;
-      HashMap<UUID, Double> contributions = new HashMap<>();
-      double cashBalance = 0.0;
-   }
-
-   private static class MerchantDeal {
-      UUID id;
-      Material material;
-      double normalPrice;
-      double discountPercent;
-      int stockTotal;
-      int stockRemaining;
-   }
-
-   private static final class PluginDataStore {
-      private Connection conn;
-      private final java.util.logging.Logger log;
-      private final Map<String, Map<String, String>> mirror = new HashMap<>();
-      private final Map<String, Map<String, String>> persisted = new HashMap<>();
-      private final Set<String> touched = new HashSet<>();
-      private boolean inTransaction = false;
-      private final java.util.concurrent.ConcurrentLinkedQueue<String[]> retryOps = new java.util.concurrent.ConcurrentLinkedQueue<>();
-      private final java.util.concurrent.ConcurrentLinkedQueue<Object[]> ledgerQueue = new java.util.concurrent.ConcurrentLinkedQueue<>();
-      private final java.util.concurrent.ExecutorService writer = java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
-         Thread t = new Thread(r, "MinecraftBank-DB");
-         t.setDaemon(true);
-         return t;
-      });
-
-      private final String url;
-      private final String user;
-      private final String password;
-      private final boolean mysql;
-      private final String dataTable;
-      private final String ledgerTable;
-      private final boolean hadDataAtStartup;
-      private volatile String syncOrigin = null;
-      private volatile long lastPullAt = 0L;
-      private final Set<String> pushedSincePull = new HashSet<>();
-
-      PluginDataStore(File dbFile, java.util.logging.Logger log) throws SQLException {
-         this("jdbc:sqlite:" + dbFile.getAbsolutePath(), null, null, false, "", log, null);
-      }
-
-      static MinecraftBank.PluginDataStore mysql(
-         String host, int port, String database, String user, String password, String prefix, boolean ssl, java.util.logging.Logger log, File importFrom
-      ) throws SQLException {
-         String url = "jdbc:mysql://"
-            + host
-            + ":"
-            + port
-            + "/"
-            + database
-            + "?useSSL="
-            + ssl
-            + "&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&connectTimeout=10000&socketTimeout=60000";
-         return new MinecraftBank.PluginDataStore(url, user, password, true, prefix, log, importFrom);
-      }
-
-      private PluginDataStore(String url, String user, String password, boolean mysql, String prefix, java.util.logging.Logger log, File importFrom) throws SQLException {
-         this.log = log;
-         this.url = url;
-         this.user = user;
-         this.password = password;
-         this.mysql = mysql;
-         String safePrefix = prefix == null ? "" : prefix.replaceAll("[^A-Za-z0-9_]", "");
-         this.dataTable = safePrefix + "plugin_data";
-         this.ledgerTable = safePrefix + "ledger";
-
-         try {
-            Class.forName(mysql ? "com.mysql.cj.jdbc.Driver" : "org.sqlite.JDBC");
-         } catch (ClassNotFoundException var13) {
-         }
-
-         this.conn = this.openConnection();
-
-         try (Statement st = this.conn.createStatement()) {
-            if (mysql) {
-               st.execute(
-                  "CREATE TABLE IF NOT EXISTS "
-                     + this.dataTable
-                     + " (section VARCHAR(191) NOT NULL, path VARCHAR(255) NOT NULL, value LONGTEXT, PRIMARY KEY (section, path)) DEFAULT CHARSET=utf8mb4"
-               );
-               st.execute(
-                  "CREATE TABLE IF NOT EXISTS "
-                     + this.ledgerTable
-                     + " (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, ts BIGINT NOT NULL, player VARCHAR(36) NOT NULL, delta DOUBLE NOT NULL, source VARCHAR(191), INDEX idx_ledger_player (player, id), INDEX idx_ledger_ts (ts)) DEFAULT CHARSET=utf8mb4"
-               );
-            } else {
-               st.execute("CREATE TABLE IF NOT EXISTS plugin_data (section TEXT NOT NULL, path TEXT NOT NULL, value TEXT, PRIMARY KEY (section, path))");
-               st.execute("CREATE INDEX IF NOT EXISTS idx_plugin_data_section ON plugin_data(section)");
-               st.execute("CREATE TABLE IF NOT EXISTS ledger (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, player TEXT NOT NULL, delta REAL NOT NULL, source TEXT)");
-               st.execute("CREATE INDEX IF NOT EXISTS idx_ledger_player ON ledger(player, id)");
-               st.execute("CREATE INDEX IF NOT EXISTS idx_ledger_ts ON ledger(ts)");
-            }
-
-            if (mysql && importFrom != null && importFrom.exists() && this.isTableEmpty(st)) {
-               this.importFromSqlite(importFrom);
-            }
-
-            try (ResultSet rs = st.executeQuery("SELECT section, path, value FROM " + this.dataTable + (mysql ? "" : " ORDER BY rowid"))) {
-               while (rs.next()) {
-                  String value = rs.getString(3);
-                  if (value != null) {
-                     this.mirror.computeIfAbsent(rs.getString(1), k -> new LinkedHashMap<>()).put(rs.getString(2), value);
-                     this.persisted.computeIfAbsent(rs.getString(1), k -> new LinkedHashMap<>()).put(rs.getString(2), value);
-                  }
-               }
-            }
-         }
-
-         this.hadDataAtStartup = !this.mirror.isEmpty();
-      }
-
-      private Connection openConnection() throws SQLException {
-         return this.user == null ? DriverManager.getConnection(this.url) : DriverManager.getConnection(this.url, this.user, this.password);
-      }
-
-      private void ensureConnection() throws SQLException {
-         boolean valid;
-         try {
-            valid = this.conn != null && this.conn.isValid(3);
-         } catch (SQLException var3) {
-            valid = false;
-         }
-
-         if (!valid) {
-            try {
-               if (this.conn != null) {
-                  this.conn.close();
-               }
-            } catch (SQLException var2) {
-            }
-
-            this.conn = this.openConnection();
-            this.log.info("[データベース] 接続を再確立しました。");
-         }
-      }
-
-      private boolean isTableEmpty(Statement st) throws SQLException {
-         try (ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + this.dataTable)) {
-            return rs.next() && rs.getLong(1) == 0L;
-         }
-      }
-
-      private void importFromSqlite(File sqliteFile) throws SQLException {
-         int rows = 0;
-         int ledgerRows = 0;
-
-         try (Connection src = DriverManager.getConnection("jdbc:sqlite:" + sqliteFile.getAbsolutePath())) {
-            this.conn.setAutoCommit(false);
-
-            try (
-               Statement read = src.createStatement();
-               ResultSet rs = read.executeQuery("SELECT section, path, value FROM plugin_data");
-               PreparedStatement ins = this.conn.prepareStatement("REPLACE INTO " + this.dataTable + "(section, path, value) VALUES (?, ?, ?)");
-            ) {
-               while (rs.next()) {
-                  ins.setString(1, rs.getString(1));
-                  ins.setString(2, rs.getString(2));
-                  ins.setString(3, rs.getString(3));
-                  ins.addBatch();
-                  if (++rows % 500 == 0) {
-                     ins.executeBatch();
-                  }
-               }
-
-               ins.executeBatch();
-            }
-
-            try (
-               Statement read = src.createStatement();
-               ResultSet rs = read.executeQuery("SELECT ts, player, delta, source FROM ledger");
-               PreparedStatement ins = this.conn.prepareStatement("INSERT INTO " + this.ledgerTable + "(ts, player, delta, source) VALUES (?, ?, ?, ?)");
-            ) {
-               while (rs.next()) {
-                  ins.setLong(1, rs.getLong(1));
-                  ins.setString(2, rs.getString(2));
-                  ins.setDouble(3, rs.getDouble(3));
-                  ins.setString(4, rs.getString(4));
-                  ins.addBatch();
-                  if (++ledgerRows % 500 == 0) {
-                     ins.executeBatch();
-                  }
-               }
-
-               ins.executeBatch();
-            } catch (SQLException var14) {
-            }
-
-            this.conn.commit();
-            this.log.info("[MySQL移行] data.db(SQLite) から " + rows + " 件のデータと " + ledgerRows + " 件の台帳をMySQLへ移しました。");
-         } catch (SQLException e) {
-            this.conn.rollback();
-            throw e;
-         } finally {
-            this.conn.setAutoCommit(true);
-         }
-      }
-
-      boolean isMySql() {
-         return this.mysql;
-      }
-
-      private String counterTable() {
-         return this.dataTable.substring(0, this.dataTable.length() - "plugin_data".length()) + "counters";
-      }
-
-      void enableSync(String origin) throws SQLException {
-         if (!this.mysql) {
-            throw new SQLException("サーバー間同期はMySQLでのみ使えます");
-         } else {
-            DatabaseMetaData meta = this.conn.getMetaData();
-            boolean hasUpdated;
-            try (ResultSet rs = meta.getColumns(this.conn.getCatalog(), null, this.dataTable, "updated_at")) {
-               hasUpdated = rs.next();
-            }
-
-            try (Statement st = this.conn.createStatement()) {
-               if (!hasUpdated) {
-                  st.execute("ALTER TABLE " + this.dataTable + " ADD COLUMN updated_at BIGINT NOT NULL DEFAULT 0, ADD COLUMN origin VARCHAR(64) NOT NULL DEFAULT ''");
-                  st.execute("CREATE INDEX idx_" + this.dataTable + "_updated ON " + this.dataTable + "(updated_at)");
-               }
-
-               st.execute("CREATE TABLE IF NOT EXISTS " + this.counterTable() + " (name VARCHAR(64) NOT NULL PRIMARY KEY, value DOUBLE NOT NULL) DEFAULT CHARSET=utf8mb4");
-
-               try (ResultSet rs = st.executeQuery("SELECT ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)")) {
-                  this.lastPullAt = rs.next() ? rs.getLong(1) : 0L;
-               }
-            }
-
-            this.syncOrigin = origin;
-         }
-      }
-
-      boolean isSyncEnabled() {
-         return this.syncOrigin != null;
-      }
-
-      CompletableFuture<List<String[]>> pullRemoteAsync() {
-         synchronized (this) {
-            this.pushedSincePull.clear();
-         }
-
-         return CompletableFuture.supplyAsync(() -> {
-            List<String[]> rows = new ArrayList<>();
-
-            try {
-               this.ensureConnection();
-
-               try (PreparedStatement ps = this.conn
-                     .prepareStatement("SELECT section, path, value, updated_at FROM " + this.dataTable + " WHERE updated_at > ? AND origin <> ?")) {
-                  ps.setLong(1, this.lastPullAt - 5000L);
-                  ps.setString(2, this.syncOrigin);
-
-                  try (ResultSet rs = ps.executeQuery()) {
-                     long max = this.lastPullAt;
-
-                     while (rs.next()) {
-                        rows.add(new String[]{rs.getString(1), rs.getString(2), rs.getString(3)});
-                        max = Math.max(max, rs.getLong(4));
-                     }
-
-                     this.lastPullAt = max;
-                  }
-               }
-
-               return rows;
-            } catch (SQLException e) {
-               throw new RuntimeException(e);
-            }
-         }, this.writer);
-      }
-
-      synchronized Set<String> applyRemote(List<String[]> rows, Set<String> skipKeys) {
-         Set<String> changed = new HashSet<>();
-
-         for (String[] row : rows) {
-            String key = row[0] + "\u0000" + row[1];
-            if (!this.pushedSincePull.contains(key) && !skipKeys.contains(key)) {
-               Map<String, String> m = this.mirror.get(row[0]);
-               String cur = m != null ? m.get(row[1]) : null;
-               if (!Objects.equals(cur, row[2])) {
-                  if (row[2] == null) {
-                     m.remove(row[1]);
-                     Map<String, String> p = this.persisted.get(row[0]);
-                     if (p != null) {
-                        p.remove(row[1]);
-                     }
-                  } else {
-                     this.mirror.computeIfAbsent(row[0], k -> new LinkedHashMap<>()).put(row[1], row[2]);
-                     this.persisted.computeIfAbsent(row[0], k -> new LinkedHashMap<>()).put(row[1], row[2]);
-                  }
-
-                  changed.add(row[0]);
-               }
-            }
-         }
-
-         return changed;
-      }
-
-      CompletableFuture<double[]> syncCountersAsync(String[] names, double[] localValues, double[] deltas, boolean seed) {
-         return CompletableFuture.supplyAsync(() -> {
-            double[] totals = new double[names.length];
-
-            try {
-               this.ensureConnection();
-
-               for (int i = 0; i < names.length; i++) {
-                  if (seed) {
-                     try (PreparedStatement ins = this.conn.prepareStatement("INSERT IGNORE INTO " + this.counterTable() + "(name, value) VALUES (?, ?)")) {
-                        ins.setString(1, names[i]);
-                        ins.setDouble(2, localValues[i]);
-                        ins.executeUpdate();
-                     }
-                  } else if (deltas[i] != 0.0) {
-                     try (PreparedStatement up = this.conn
-                           .prepareStatement("INSERT INTO " + this.counterTable() + "(name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = value + ?")) {
-                        up.setString(1, names[i]);
-                        up.setDouble(2, localValues[i]);
-                        up.setDouble(3, deltas[i]);
-                        up.executeUpdate();
-                     }
-                  }
-
-                  try (PreparedStatement sel = this.conn.prepareStatement("SELECT value FROM " + this.counterTable() + " WHERE name = ?")) {
-                     sel.setString(1, names[i]);
-
-                     try (ResultSet rs = sel.executeQuery()) {
-                        totals[i] = rs.next() ? rs.getDouble(1) : localValues[i];
-                     }
-                  }
-               }
-
-               return totals;
-            } catch (SQLException e) {
-               throw new RuntimeException(e);
-            }
-         }, this.writer);
-      }
-
-      boolean hadDataAtStartup() {
-         return this.hadDataAtStartup;
-      }
-
-      void writeSqliteSnapshot(File dest) throws SQLException {
-         List<String[]> rows = new ArrayList<>();
-         synchronized (this) {
-            for (Entry<String, Map<String, String>> sec : this.persisted.entrySet()) {
-               for (Entry<String, String> e : sec.getValue().entrySet()) {
-                  rows.add(new String[]{sec.getKey(), e.getKey(), e.getValue()});
-               }
-            }
-         }
-
-         try (Connection out = DriverManager.getConnection("jdbc:sqlite:" + dest.getAbsolutePath())) {
-            try (Statement st = out.createStatement()) {
-               st.execute("CREATE TABLE IF NOT EXISTS plugin_data (section TEXT NOT NULL, path TEXT NOT NULL, value TEXT, PRIMARY KEY (section, path))");
-            }
-
-            out.setAutoCommit(false);
-
-            try (PreparedStatement ps = out.prepareStatement("INSERT OR REPLACE INTO plugin_data(section, path, value) VALUES (?, ?, ?)")) {
-               for (String[] row : rows) {
-                  ps.setString(1, row[0]);
-                  ps.setString(2, row[1]);
-                  ps.setString(3, row[2]);
-                  ps.addBatch();
-               }
-
-               ps.executeBatch();
-            }
-
-            out.commit();
-         }
-      }
-
-      void close() {
-         synchronized (this) {
-            this.flushTouched();
-         }
-
-         this.writer.submit(this::drainLedger);
-         this.writer.shutdown();
-
-         try {
-            if (!this.writer.awaitTermination(60L, TimeUnit.SECONDS)) {
-               this.log.severe("[SQLite] 書き込みが60秒以内に完了しませんでした。");
-            }
-         } catch (InterruptedException var3) {
-            Thread.currentThread().interrupt();
-         }
-
-         try {
-            this.conn.close();
-         } catch (SQLException var2) {
-         }
-      }
-
-      synchronized void beginTransaction() {
-         this.inTransaction = true;
-      }
-
-      synchronized void rollbackTransaction() {
-         this.inTransaction = false;
-
-         for (String section : this.touched) {
-            Map<String, String> old = this.persisted.get(section);
-            if (old == null) {
-               this.mirror.remove(section);
-            } else {
-               this.mirror.put(section, new LinkedHashMap<>(old));
-            }
-         }
-
-         this.touched.clear();
-      }
-
-      synchronized void endTransaction() {
-         this.inTransaction = false;
-         this.flushTouched();
-      }
-
-      private void touch(String section) {
-         this.touched.add(section);
-         if (!this.inTransaction) {
-            this.flushTouched();
-         }
-      }
-
-      private void flushTouched() {
-         if (!this.touched.isEmpty()) {
-            List<String[]> ops = new ArrayList<>();
-
-            for (String section : this.touched) {
-               Map<String, String> cur = this.mirror.getOrDefault(section, Collections.emptyMap());
-               Map<String, String> old = this.persisted.getOrDefault(section, Collections.emptyMap());
-
-               for (Entry<String, String> e : cur.entrySet()) {
-                  if (!e.getValue().equals(old.get(e.getKey()))) {
-                     ops.add(new String[]{section, e.getKey(), e.getValue()});
-                     this.pushedSincePull.add(section + "\u0000" + e.getKey());
-                  }
-               }
-
-               for (String key : old.keySet()) {
-                  if (!cur.containsKey(key)) {
-                     ops.add(new String[]{section, key, null});
-                     this.pushedSincePull.add(section + "\u0000" + key);
-                  }
-               }
-
-               if (cur.isEmpty()) {
-                  this.persisted.remove(section);
-                  this.mirror.remove(section);
-               } else {
-                  this.persisted.put(section, new LinkedHashMap<>(cur));
-               }
-            }
-
-            this.touched.clear();
-            if (!ops.isEmpty()) {
-               this.writer.submit(() -> this.applyOps(ops));
-            }
-         }
-      }
-
-      private void applyOps(List<String[]> newOps) {
-         List<String[]> ops = new ArrayList<>();
-
-         String[] retry;
-         while ((retry = this.retryOps.poll()) != null) {
-            ops.add(retry);
-         }
-
-         ops.addAll(newOps);
-
-         try {
-            this.ensureConnection();
-            this.conn.setAutoCommit(false);
-
-            try (
-               PreparedStatement up = this.conn
-                  .prepareStatement((this.mysql ? "REPLACE INTO " : "INSERT OR REPLACE INTO ") + this.dataTable + "(section, path, value) VALUES (?, ?, ?)");
-               PreparedStatement del = this.conn.prepareStatement("DELETE FROM " + this.dataTable + " WHERE section=? AND path=?");
-            ) {
-               String origin = this.syncOrigin;
-               if (origin != null) {
-                  try (PreparedStatement sy = this.conn
-                        .prepareStatement(
-                           "INSERT INTO "
-                              + this.dataTable
-                              + "(section, path, value, updated_at, origin) VALUES (?, ?, ?, ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000), ?) ON DUPLICATE KEY UPDATE value = VALUES(value), updated_at = VALUES(updated_at), origin = VALUES(origin)"
-                        )) {
-                     for (String[] op : ops) {
-                        sy.setString(1, op[0]);
-                        sy.setString(2, op[1]);
-                        sy.setString(3, op[2]);
-                        sy.setString(4, origin);
-                        sy.executeUpdate();
-                     }
-                  }
-
-                  ops.clear();
-               }
-
-               for (String[] op : ops) {
-                  if (op[2] == null) {
-                     del.setString(1, op[0]);
-                     del.setString(2, op[1]);
-                     del.executeUpdate();
-                  } else {
-                     up.setString(1, op[0]);
-                     up.setString(2, op[1]);
-                     up.setString(3, op[2]);
-                     up.executeUpdate();
-                  }
-               }
-            }
-
-            this.conn.commit();
-         } catch (SQLException e) {
-            try {
-               this.conn.rollback();
-            } catch (SQLException var13) {
-            }
-
-            this.retryOps.addAll(ops);
-            this.log.severe("[SQLite] 保存に失敗しました。次回の保存時に再試行します: " + e.getMessage());
-         } finally {
-            try {
-               this.conn.setAutoCommit(true);
-            } catch (SQLException var12) {
-            }
-         }
-      }
-
-      void ledgerAppend(long ts, String player, double delta, String source) {
-         this.ledgerQueue.add(new Object[]{ts, player, delta, source});
-      }
-
-      void flushLedgerAsync() {
-         if (!this.ledgerQueue.isEmpty() && !this.writer.isShutdown()) {
-            this.writer.submit(this::drainLedger);
-         }
-      }
-
-      private void drainLedger() {
-         if (!this.ledgerQueue.isEmpty()) {
-            try {
-               this.ensureConnection();
-               this.conn.setAutoCommit(false);
-
-               try (PreparedStatement ps = this.conn.prepareStatement("INSERT INTO " + this.ledgerTable + "(ts, player, delta, source) VALUES (?, ?, ?, ?)")) {
-                  Object[] row;
-                  while ((row = this.ledgerQueue.poll()) != null) {
-                     ps.setLong(1, (Long)row[0]);
-                     ps.setString(2, (String)row[1]);
-                     ps.setDouble(3, (Double)row[2]);
-                     String src = (String)row[3];
-                     ps.setString(4, src != null && src.length() > 190 ? src.substring(0, 190) : src);
-                     ps.executeUpdate();
-                  }
-               }
-
-               this.conn.commit();
-            } catch (SQLException e) {
-               try {
-                  this.conn.rollback();
-               } catch (SQLException var11) {
-               }
-
-               this.log.warning("[台帳] 書き込みに失敗しました: " + e.getMessage());
-            } finally {
-               try {
-                  this.conn.setAutoCommit(true);
-               } catch (SQLException var10) {
-               }
-            }
-         }
-      }
-
-      void pruneLedgerAsync(long cutoff) {
-         if (!this.writer.isShutdown()) {
-            this.writer.submit(() -> {
-               try {
-                  this.ensureConnection();
-               } catch (SQLException e) {
-                  this.log.warning("[台帳] データベースに接続できません: " + e.getMessage());
-                  return;
-               }
-
-               try (PreparedStatement ps = this.conn.prepareStatement("DELETE FROM " + this.ledgerTable + " WHERE ts < ?")) {
-                  ps.setLong(1, cutoff);
-                  int n = ps.executeUpdate();
-                  if (n > 0) {
-                     this.log.info("[台帳] 保存期間を過ぎた " + n + " 件を削除しました。");
-                  }
-               } catch (SQLException e) {
-                  this.log.warning("[台帳] 古い記録の削除に失敗しました: " + e.getMessage());
-               }
-            });
-         }
-      }
-
-      CompletableFuture<List<Object[]>> queryAsync(String sql, Object... params) {
-         return CompletableFuture.supplyAsync(() -> {
-            this.drainLedger();
-            List<Object[]> rows = new ArrayList<>();
-
-            try {
-               this.ensureConnection();
-            } catch (SQLException e) {
-               throw new RuntimeException(e);
-            }
-
-            try (PreparedStatement ps = this.conn.prepareStatement(sql.replace("{ledger}", this.ledgerTable))) {
-               for (int i = 0; i < params.length; i++) {
-                  ps.setObject(i + 1, params[i]);
-               }
-
-               try (ResultSet rs = ps.executeQuery()) {
-                  int cols = rs.getMetaData().getColumnCount();
-
-                  while (rs.next()) {
-                     Object[] row = new Object[cols];
-
-                     for (int c = 0; c < cols; c++) {
-                        row[c] = rs.getObject(c + 1);
-                     }
-
-                     rows.add(row);
-                  }
-               }
-
-               return rows;
-            } catch (SQLException e) {
-               throw new RuntimeException(e);
-            }
-         }, this.writer);
-      }
-
-      void runOnWriter(Runnable task) {
-         if (this.writer.isShutdown()) {
-            task.run();
-         } else {
-            this.writer.submit(task);
-         }
-      }
-
-      synchronized void setString(String section, String path, String value) {
-         if (value == null) {
-            this.remove(section, path);
-         } else {
-            this.mirror.computeIfAbsent(section, k -> new LinkedHashMap<>()).put(path, value);
-            this.touch(section);
-         }
-      }
-
-      synchronized String getString(String section, String path, String def) {
-         Map<String, String> m = this.mirror.get(section);
-         String v = m != null ? m.get(path) : null;
-         return v != null ? v : def;
-      }
-
-      void setDouble(String section, String path, double value) {
-         this.setString(section, path, Double.toString(value));
-      }
-
-      double getDouble(String section, String path, double def) {
-         String v = this.getString(section, path, null);
-         if (v == null) {
-            return def;
-         }
-
-         try {
-            return Double.parseDouble(v);
-         } catch (NumberFormatException e) {
-            return def;
-         }
-      }
-
-      void setLong(String section, String path, long value) {
-         this.setString(section, path, Long.toString(value));
-      }
-
-      long getLong(String section, String path, long def) {
-         String v = this.getString(section, path, null);
-         if (v == null) {
-            return def;
-         }
-
-         try {
-            return Long.parseLong(v);
-         } catch (NumberFormatException e) {
-            return def;
-         }
-      }
-
-      void setInt(String section, String path, int value) {
-         this.setString(section, path, Integer.toString(value));
-      }
-
-      int getInt(String section, String path, int def) {
-         String v = this.getString(section, path, null);
-         if (v == null) {
-            return def;
-         }
-
-         try {
-            return Integer.parseInt(v);
-         } catch (NumberFormatException e) {
-            return def;
-         }
-      }
-
-      void setBoolean(String section, String path, boolean value) {
-         this.setString(section, path, Boolean.toString(value));
-      }
-
-      boolean getBoolean(String section, String path, boolean def) {
-         String v = this.getString(section, path, null);
-         return v == null ? def : Boolean.parseBoolean(v);
-      }
-
-      void setStringList(String section, String path, List<String> values) {
-         if (values != null && !values.isEmpty()) {
-            this.setString(section, path, String.join("\n", values));
-         } else {
-            this.remove(section, path);
-         }
-      }
-
-      List<String> getStringList(String section, String path) {
-         String v = this.getString(section, path, null);
-         return v != null && !v.isEmpty() ? new ArrayList<>(Arrays.asList(v.split("\n", -1))) : new ArrayList<>();
-      }
-
-      void setItemStack(String section, String path, ItemStack item) {
-         if (item == null) {
-            this.remove(section, path);
-         } else {
-            try {
-               ByteArrayOutputStream baos = new ByteArrayOutputStream();
-               BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos);
-
-               try {
-                  oos.writeObject(item);
-               } catch (Throwable var9) {
-                  try {
-                     oos.close();
-                  } catch (Throwable var8) {
-                     var9.addSuppressed(var8);
-                  }
-
-                  throw var9;
-               }
-
-               oos.close();
-               this.setString(section, path, Base64.getEncoder().encodeToString(baos.toByteArray()));
-            } catch (IOException e) {
-               throw new RuntimeException("ItemStackのシリアライズに失敗しました: " + section + "/" + path, e);
-            }
-         }
-      }
-
-      ItemStack getItemStack(String section, String path) {
-         String v = this.getString(section, path, null);
-         if (v == null) {
-            return null;
-         }
-
-         try {
-            byte[] bytes = Base64.getDecoder().decode(v);
-            BukkitObjectInputStream ois = new BukkitObjectInputStream(new ByteArrayInputStream(bytes));
-
-            ItemStack var7;
-            try {
-               Object obj = ois.readObject();
-               var7 = obj instanceof ItemStack ? (ItemStack)obj : null;
-            } catch (Throwable var9) {
-               try {
-                  ois.close();
-               } catch (Throwable var8) {
-                  var9.addSuppressed(var8);
-               }
-
-               throw var9;
-            }
-
-            ois.close();
-            return var7;
-         } catch (Exception e) {
-            throw new RuntimeException("ItemStackのデシリアライズに失敗しました: " + section + "/" + path, e);
-         }
-      }
-
-      void setItemStackList(String section, String path, List<ItemStack> items) {
-         if (items != null && !items.isEmpty()) {
-            try {
-               ByteArrayOutputStream baos = new ByteArrayOutputStream();
-               BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos);
-
-               try {
-                  oos.writeObject(new ArrayList<>(items));
-               } catch (Throwable var9) {
-                  try {
-                     oos.close();
-                  } catch (Throwable var8) {
-                     var9.addSuppressed(var8);
-                  }
-
-                  throw var9;
-               }
-
-               oos.close();
-               this.setString(section, path, Base64.getEncoder().encodeToString(baos.toByteArray()));
-            } catch (IOException e) {
-               throw new RuntimeException("ItemStackリストのシリアライズに失敗しました: " + section + "/" + path, e);
-            }
-         } else {
-            this.remove(section, path);
-         }
-      }
-
-      List<ItemStack> getItemStackList(String section, String path) {
-         String v = this.getString(section, path, null);
-         if (v == null) {
-            return new ArrayList<>();
-         }
-
-         try {
-            byte[] bytes = Base64.getDecoder().decode(v);
-            BukkitObjectInputStream ois = new BukkitObjectInputStream(new ByteArrayInputStream(bytes));
-
-            ArrayList var11;
-            label37: {
-               try {
-                  Object obj = ois.readObject();
-                  if (obj instanceof List) {
-                     var11 = new ArrayList((List)obj);
-                     break label37;
-                  }
-
-                  var11 = new ArrayList();
-               } catch (Throwable var9) {
-                  try {
-                     ois.close();
-                  } catch (Throwable var8) {
-                     var9.addSuppressed(var8);
-                  }
-
-                  throw var9;
-               }
-
-               ois.close();
-               return var11;
-            }
-
-            ois.close();
-            return var11;
-         } catch (Exception e) {
-            throw new RuntimeException("ItemStackリストのデシリアライズに失敗しました: " + section + "/" + path, e);
-         }
-      }
-
-      Set<String> getKeys(String section) {
-         return this.getKeys(section, null);
-      }
-
-      synchronized Set<String> getKeys(String section, String pathPrefix) {
-         LinkedHashSet<String> result = new LinkedHashSet<>();
-         Map<String, String> m = this.mirror.get(section);
-         if (m == null) {
-            return result;
-         } else {
-            boolean root = pathPrefix == null || pathPrefix.isEmpty();
-            for (String path : m.keySet()) {
-               if (root) {
-                  int dot = path.indexOf(46);
-                  result.add(dot >= 0 ? path.substring(0, dot) : path);
-               } else {
-                  String needle = pathPrefix + ".";
-                  if (path.startsWith(needle)) {
-                     String rest = path.substring(needle.length());
-                     int dot = rest.indexOf(46);
-                     result.add(dot >= 0 ? rest.substring(0, dot) : rest);
-                  }
-               }
-            }
-
-            return result;
-         }
-      }
-
-      synchronized void remove(String section, String path) {
-         Map<String, String> m = this.mirror.get(section);
-         if (m != null && m.remove(path) != null) {
-            this.touch(section);
-         }
-      }
-
-      synchronized void removeSection(String section) {
-         this.mirror.remove(section);
-         this.touch(section);
-      }
-
-      synchronized void removeByPathPrefix(String section, String pathPrefix) {
-         Map<String, String> m = this.mirror.get(section);
-         if (m != null && m.keySet().removeIf(k -> k.equals(pathPrefix) || k.startsWith(pathPrefix + "."))) {
-            this.touch(section);
-         }
-      }
-   }
-
-   private static class Quest {
-      UUID id;
-      UUID posterId;
-      String worldName;
-      double x;
-      double y;
-      double z;
-      double reward;
-      MinecraftBank.QuestState state = MinecraftBank.QuestState.AVAILABLE;
-      UUID acceptedBy;
-      long cooldownUntil;
-      int requiredTeamSize = 1;
-      HashSet<UUID> teamMembers = new HashSet<>();
-      HashSet<UUID> teamArrived = new HashSet<>();
-   }
-
-   private enum QuestState {
-      AVAILABLE,
-      IN_PROGRESS,
-      COOLDOWN;
-   }
-
-   private static class StandingTransfer {
-      UUID from;
-      UUID to;
-      double amount;
-      int intervalHours;
-      long nextAt;
-      int fails;
-
-      String serialize() {
-         return this.from + "|" + this.to + "|" + this.amount + "|" + this.intervalHours + "|" + this.nextAt + "|" + this.fails;
-      }
-
-      static MinecraftBank.StandingTransfer parse(String raw) {
-         String[] a = raw.split("\\|");
-         if (a.length < 6) {
-            return null;
-         } else {
-            try {
-               MinecraftBank.StandingTransfer st = new MinecraftBank.StandingTransfer();
-               st.from = UUID.fromString(a[0]);
-               st.to = UUID.fromString(a[1]);
-               st.amount = Double.parseDouble(a[2]);
-               st.intervalHours = Math.max(1, Integer.parseInt(a[3]));
-               st.nextAt = Long.parseLong(a[4]);
-               st.fails = Integer.parseInt(a[5]);
-               return Double.isFinite(st.amount) && st.amount > 0.0 ? st : null;
-            } catch (IllegalArgumentException ex) {
-               return null;
-            }
-         }
-      }
-   }
-
-   private static class TradeSession {
-      UUID id;
-      UUID playerA;
-      UUID playerB;
-      Inventory inventory;
-      boolean confirmedA = false;
-      boolean confirmedB = false;
-      double moneyOfferedA = 0.0;
-      double moneyOfferedB = 0.0;
-      boolean finished = false;
-   }
-
-   private static class VipDeal {
-      UUID id;
-      Material material;
-      double normalPrice;
-      double discountPercent;
-      int stockTotal;
-      int stockRemaining;
-   }
-
-   private static class WorldStockAlert {
-      UUID id;
-      String symbol;
-      double baselinePrice;
-      double thresholdPercent;
-   }
-
-   private static class WorldStockQuote {
-      final String symbol;
-      final String exchangeName;
-      final double price;
-      final String currency;
-      final long fetchedAt;
-
-      WorldStockQuote(String symbol, String exchangeName, double price, String currency, long fetchedAt) {
-         this.symbol = symbol;
-         this.exchangeName = exchangeName;
-         this.price = price;
-         this.currency = currency;
-         this.fetchedAt = fetchedAt;
-      }
    }
 }
