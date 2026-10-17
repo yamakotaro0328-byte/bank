@@ -1844,8 +1844,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void openTutorialGUI(Player p) {
       Inventory gui = Bukkit.createInventory(null, 27, this.tTutorial);
       gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>経済のはじめかた</bold></gold>", "<gray>まずは個人口座へ預金してみましょう。</gray>"));
-      gui.setItem(10, this.createItem(Material.CHEST, "<green>1. 個人口座</green>", "<gray>お金を安全に預け入れ・引き出せます。</gray>"));
-      gui.setItem(14, this.createItem(Material.ITEM_FRAME, "<yellow>2. オークション</yellow>", "<gray>インベントリから好きなアイテムを出品できます。</gray>"));
+      gui.setItem(11, this.createItem(Material.CHEST, "<green>1. 個人口座</green>", "<gray>お金を安全に預け入れ・引き出せます。</gray>"));
+      gui.setItem(15, this.createItem(Material.ITEM_FRAME, "<yellow>2. オークション</yellow>", "<gray>インベントリから好きなアイテムを出品できます。</gray>"));
       gui.setItem(22, this.createItem(Material.LIME_DYE, "<green><bold>チュートリアル完了</bold></green>", "<gray>次回から自動表示しません。</gray>"));
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>閉じる</gray>"));
       this.fillGlass(gui);
@@ -7592,11 +7592,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          )
       );
       gui.setItem(
-         12,
+         11,
          this.createItem(Material.EMERALD, "<green><bold>融資市場（借りる）</bold></green>", "<gray>銀行家が出している融資を選んで借ります</gray>", "<yellow>クリックで開く</yellow>")
       );
       gui.setItem(
-         14,
+         12,
          this.createItem(
             Material.GOLD_INGOT,
             "<yellow><bold>借金返済窓口（返す）</bold></yellow>",
@@ -7605,14 +7605,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          )
       );
       if (this.bankers.contains(p.getUniqueId())) {
-         gui.setItem(16, this.createItem(Material.NETHER_STAR, "<red><bold>頭取コントロールパネル</bold></red>"));
+         gui.setItem(13, this.createItem(Material.NETHER_STAR, "<red><bold>頭取コントロールパネル</bold></red>"));
       } else {
-         gui.setItem(16, this.createItem(Material.ENDER_EYE, "<dark_purple><bold>銀行設立オフィス</bold></dark_purple>"));
+         gui.setItem(13, this.createItem(Material.ENDER_EYE, "<dark_purple><bold>銀行設立オフィス</bold></dark_purple>"));
       }
 
       double hubGovDebt = this.govDebt.getOrDefault(hubU, 0.0);
       gui.setItem(
-         19,
+         14,
          this.createItem(
             Material.DIAMOND,
             "<aqua><bold>国営公庫 (サーバーローン)</bold></aqua>",
@@ -7627,7 +7627,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          + (this.fixedDeposit2.getOrDefault(hubU, 0.0) > 0.0 ? 1 : 0)
          + (this.fixedDeposit3.getOrDefault(hubU, 0.0) > 0.0 ? 1 : 0);
       gui.setItem(
-         21,
+         15,
          this.createItem(
             Material.GOLD_BLOCK,
             "<gold><bold>高金利・定期預金</bold></gold>",
@@ -7636,17 +7636,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<yellow>クリックで開く</yellow>"
          )
       );
-      gui.setItem(23, this.createItem(Material.EMERALD_BLOCK, "<green><bold>個人信用情報センター</bold></green>"));
+      gui.setItem(29, this.createItem(Material.EMERALD_BLOCK, "<green><bold>個人信用情報センター</bold></green>"));
       gui.setItem(31, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>\ud83c\udfc6 資産ランキング</bold></yellow>", "<gray>サーバー内の資産家トップ10を表示</gray>"));
-      gui.setItem(27, this.createItem(Material.ANVIL, "<dark_purple><bold>\ud83c\udffa 質屋・担保付き融資</bold></dark_purple>", "<gray>レアアイテムを担保にお金を借りられます</gray>"));
-      gui.setItem(29, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>\ud83d\udee1 生命保険窓口</bold></blue>", "<gray>死亡時のロスに備えて加入できます</gray>"));
+      gui.setItem(16, this.createItem(Material.ANVIL, "<dark_purple><bold>\ud83c\udffa 質屋・担保付き融資</bold></dark_purple>", "<gray>レアアイテムを担保にお金を借りられます</gray>"));
+      gui.setItem(25, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>\ud83d\udee1 生命保険窓口</bold></blue>", "<gray>死亡時のロスに備えて加入できます</gray>"));
       gui.setItem(33, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>\ud83c\udf96 実績・称号コレクション</bold></gold>", "<gray>解放した実績を確認できます</gray>"));
-      gui.setItem(28, this.createItem(Material.ITEM_FRAME, "<green><bold>\ud83d\udd28 オークションハウス</bold></green>", "<gray>アイテムを出品・入札できます</gray>"));
-      gui.setItem(25, this.createItem(Material.COMPASS, "<blue><bold>\ud83d\udcc8 世界株式市場</bold></blue>", "<gray>現実の株を検索して売買</gray>"));
-      gui.setItem(17, this.createItem(Material.HOPPER, "<green><bold>\ud83c\udf3e 資源相場ショップ</bold></green>", "<gray>鉱石・農作物・ドロップ品を売買</gray>"));
-      gui.setItem(15, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>\ud83e\uddf3 巡回商人</bold></gold>", "<gray>現在地を確認する(購入は現地のNPCから)</gray>"));
-      gui.setItem(32, this.createItem(Material.FIREWORK_STAR, "<gold><bold>\ud83c\udf9f 宝くじ</bold></gold>", "<gray>チケットを購入して定期抽選に参加</gray>"));
-      gui.setItem(26, this.createItem(Material.BARREL, "<gold><bold>\ud83c\udfec レンタル倉庫</bold></gold>", "<gray>家賃を払って専用の収納倉庫を借りられます</gray>"));
+      gui.setItem(22, this.createItem(Material.ITEM_FRAME, "<green><bold>\ud83d\udd28 オークションハウス</bold></green>", "<gray>アイテムを出品・入札できます</gray>"));
+      gui.setItem(19, this.createItem(Material.COMPASS, "<blue><bold>\ud83d\udcc8 世界株式市場</bold></blue>", "<gray>現実の株を検索して売買</gray>"));
+      gui.setItem(20, this.createItem(Material.HOPPER, "<green><bold>\ud83c\udf3e 資源相場ショップ</bold></green>", "<gray>鉱石・農作物・ドロップ品を売買</gray>"));
+      gui.setItem(21, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>\ud83e\uddf3 巡回商人</bold></gold>", "<gray>現在地を確認する(購入は現地のNPCから)</gray>"));
+      gui.setItem(23, this.createItem(Material.FIREWORK_STAR, "<gold><bold>\ud83c\udf9f 宝くじ</bold></gold>", "<gray>チケットを購入して定期抽選に参加</gray>"));
+      gui.setItem(24, this.createItem(Material.BARREL, "<gold><bold>\ud83c\udfec レンタル倉庫</bold></gold>", "<gray>家賃を払って専用の収納倉庫を借りられます</gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -8166,18 +8166,18 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<gray>預金残高: </gray><aqua>" + this.fmtCur(bank) + "</aqua>"
          )
       );
-      gui.setItem(11, this.createItem(Material.LIME_DYE, "<green>+" + this.fmtCur(this.cfgDepositStep) + " 預金</green>"));
-      gui.setItem(12, this.createItem(Material.LIME_GLAZED_TERRACOTTA, "<green><bold>全額預金</bold></green>"));
+      gui.setItem(10, this.createItem(Material.LIME_DYE, "<green>+" + this.fmtCur(this.cfgDepositStep) + " 預金</green>"));
+      gui.setItem(11, this.createItem(Material.LIME_GLAZED_TERRACOTTA, "<green><bold>全額預金</bold></green>"));
       gui.setItem(14, this.createItem(Material.RED_DYE, "<red>-" + this.fmtCur(this.cfgDepositStep) + " 引出</red>"));
       gui.setItem(15, this.createItem(Material.RED_GLAZED_TERRACOTTA, "<red><bold>全額引出</bold></red>"));
-      gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>金額を指定して預金</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
-      gui.setItem(21, this.createItem(Material.PAPER, "<gold><bold>金額を指定して引出</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
-      gui.setItem(6, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>\ud83d\udcdc 取引履歴を見る</bold></aqua>", "<gray>直近の入出金・融資・投資履歴を表示</gray>"));
+      gui.setItem(12, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>金額を指定して預金</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
+      gui.setItem(16, this.createItem(Material.PAPER, "<gold><bold>金額を指定して引出</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
+      gui.setItem(21, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>\ud83d\udcdc 取引履歴を見る</bold></aqua>", "<gray>直近の入出金・融資・投資履歴を表示</gray>"));
       boolean newsOff = this.newsBroadcastOff.contains(u);
       if (newsOff) {
-         gui.setItem(7, this.createItem(Material.NOTE_BLOCK, "<gray><bold>\ud83d\udd15 経済ニュース放送: OFF</bold></gray>", "<gray>クリックでONに切り替え</gray>"));
+         gui.setItem(23, this.createItem(Material.NOTE_BLOCK, "<gray><bold>\ud83d\udd15 経済ニュース放送: OFF</bold></gray>", "<gray>クリックでONに切り替え</gray>"));
       } else {
-         gui.setItem(7, this.createItem(Material.BELL, "<green><bold>\ud83d\udd14 経済ニュース放送: ON</bold></green>", "<gray>クリックでOFFに切り替え</gray>"));
+         gui.setItem(23, this.createItem(Material.BELL, "<green><bold>\ud83d\udd14 経済ニュース放送: ON</bold></green>", "<gray>クリックでOFFに切り替え</gray>"));
       }
 
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
@@ -8311,24 +8311,24 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       UUID u = p.getUniqueId();
       double capital = this.bankCapital.getOrDefault(u, 0.0);
       gui.setItem(4, this.createItem(Material.BEACON, "<red>【銀行ステータス】</red>", "<gray>資本金プール:</gray> <gold>" + this.fmtCur(capital) + "</gold>"));
-      gui.setItem(10, this.createItem(Material.DIAMOND, "<aqua>資本金へ +" + this.fmtCur(10000.0) + "</aqua>"));
-      gui.setItem(11, this.createItem(Material.COAL, "<gray>資本金から -" + this.fmtCur(10000.0) + "</gray>"));
+      gui.setItem(21, this.createItem(Material.DIAMOND, "<aqua>資本金へ +" + this.fmtCur(10000.0) + "</aqua>"));
+      gui.setItem(23, this.createItem(Material.COAL, "<gray>資本金から -" + this.fmtCur(10000.0) + "</gray>"));
       if (this.publishedLoans.containsKey(u)) {
-         gui.setItem(15, this.createItem(Material.BARRIER, "<red>プラン(1枠目)を取り下げる</red>"));
+         gui.setItem(11, this.createItem(Material.BARRIER, "<red>プラン(1枠目)を取り下げる</red>"));
       } else {
-         gui.setItem(15, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>融資プラン(1枠目)を設計</bold></gold>"));
+         gui.setItem(11, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>融資プラン(1枠目)を設計</bold></gold>"));
       }
 
       if (this.publishedLoans2.containsKey(u)) {
-         gui.setItem(16, this.createItem(Material.BARRIER, "<red>プラン(2枠目)を取り下げる</red>"));
+         gui.setItem(13, this.createItem(Material.BARRIER, "<red>プラン(2枠目)を取り下げる</red>"));
       } else {
-         gui.setItem(16, this.createItem(Material.BOOK, "<aqua><bold>融資プラン(2枠目)を設計</bold></aqua>"));
+         gui.setItem(13, this.createItem(Material.BOOK, "<aqua><bold>融資プラン(2枠目)を設計</bold></aqua>"));
       }
 
       if (this.publishedLoans3.containsKey(u)) {
-         gui.setItem(17, this.createItem(Material.BARRIER, "<red>プラン(3枠目)を取り下げる</red>"));
+         gui.setItem(15, this.createItem(Material.BARRIER, "<red>プラン(3枠目)を取り下げる</red>"));
       } else {
-         gui.setItem(17, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>融資プラン(3枠目)を設計</bold></light_purple>"));
+         gui.setItem(15, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>融資プラン(3枠目)を設計</bold></light_purple>"));
       }
 
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
@@ -8357,8 +8357,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(14, this.createItem(Material.SUGAR, "<yellow>利息 +5%</yellow>"));
       gui.setItem(15, this.createItem(Material.GLOWSTONE_DUST, "<yellow>利息 +10%</yellow>"));
       gui.setItem(16, this.createItem(Material.REDSTONE, "<red>利息リセット</red>"));
-      gui.setItem(18, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>融資額を直接入力</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
-      gui.setItem(19, this.createItem(Material.PAPER, "<gold><bold>利息(%)を直接入力</bold></gold>", "<gray>クリック後、チャットに数値を入力</gray>"));
+      gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>融資額を直接入力</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
+      gui.setItem(24, this.createItem(Material.PAPER, "<gold><bold>利息(%)を直接入力</bold></gold>", "<gray>クリック後、チャットに数値を入力</gray>"));
       gui.setItem(22, this.createItem(Material.NETHER_STAR, "<gold><bold>市場に公開する</bold></gold>"));
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
@@ -8478,29 +8478,29 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       long diff = this.fixedDepositUnlockTime.getOrDefault(u, 0L) - System.currentTimeMillis();
       String timeStr = this.fixedDepositStatusText(amount, diff);
       gui.setItem(
-         4,
+         2,
          this.createItem(
             Material.CLOCK, "<gold>【定期預金 1枠目】</gold>", "<gray>現在の預金額:</gray> <yellow>" + this.fmtCur(amount) + "</yellow>", "<gray>状態:</gray> " + timeStr
          )
       );
       gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<yellow>手持ちから " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
-      gui.setItem(15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>満期引き出し (+" + (int)(this.cfgFixedDepositRate * 100.0) + "%)</bold></gold>"));
+      gui.setItem(20, this.createItem(Material.GOLD_BLOCK, "<gold><bold>満期引き出し (+" + (int)(this.cfgFixedDepositRate * 100.0) + "%)</bold></gold>"));
       double amount2 = this.fixedDeposit2.getOrDefault(u, 0.0);
       long diff2 = this.fixedDepositUnlockTime2.getOrDefault(u, 0L) - System.currentTimeMillis();
       String timeStr2 = this.fixedDepositStatusText(amount2, diff2);
       gui.setItem(
-         3,
+         4,
          this.createItem(
             Material.CLOCK, "<aqua>【定期預金 2枠目】</aqua>", "<gray>現在の預金額:</gray> <yellow>" + this.fmtCur(amount2) + "</yellow>", "<gray>状態:</gray> " + timeStr2
          )
       );
-      gui.setItem(12, this.createItem(Material.IRON_INGOT, "<yellow>2枠目へ " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
-      gui.setItem(16, this.createItem(Material.IRON_BLOCK, "<aqua><bold>2枠目 満期引き出し</bold></aqua>"));
+      gui.setItem(13, this.createItem(Material.IRON_INGOT, "<yellow>2枠目へ " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
+      gui.setItem(22, this.createItem(Material.IRON_BLOCK, "<aqua><bold>2枠目 満期引き出し</bold></aqua>"));
       double amount3 = this.fixedDeposit3.getOrDefault(u, 0.0);
       long diff3 = this.fixedDepositUnlockTime3.getOrDefault(u, 0L) - System.currentTimeMillis();
       String timeStr3 = this.fixedDepositStatusText(amount3, diff3);
       gui.setItem(
-         5,
+         6,
          this.createItem(
             Material.CLOCK,
             "<light_purple>【定期預金 3枠目】</light_purple>",
@@ -8508,8 +8508,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<gray>状態:</gray> " + timeStr3
          )
       );
-      gui.setItem(13, this.createItem(Material.EMERALD, "<yellow>3枠目へ " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
-      gui.setItem(17, this.createItem(Material.EMERALD_BLOCK, "<light_purple><bold>3枠目 満期引き出し</bold></light_purple>"));
+      gui.setItem(15, this.createItem(Material.EMERALD, "<yellow>3枠目へ " + this.fmtCur(this.cfgFixedDepositAmount) + " 預ける</yellow>"));
+      gui.setItem(24, this.createItem(Material.EMERALD_BLOCK, "<light_purple><bold>3枠目 満期引き出し</bold></light_purple>"));
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
@@ -10143,7 +10143,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(11, this.createItem(Material.PLAYER_HEAD, "<red><bold>\ud83d\udc64 プレイヤー管理</bold></red>", "<gray>資産の付与/没収・信用スコア変更・データリセット</gray>"));
       gui.setItem(15, this.createItem(Material.COMMAND_BLOCK, "<red><bold>⚙ サーバー管理</bold></red>", "<gray>経済イベント発生・自己診断・reload/save</gray>"));
       gui.setItem(13, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>\ud83d\udccb 監査ログ</bold></gold>", "<gray>管理者操作の記録を表示します</gray>", "<gray>/meco admin audit [ページ]</gray>"));
-      gui.setItem(22, this.createItem(Material.BARRIER, "<gray>閉じる</gray>"));
+      gui.setItem(26, this.createItem(Material.BARRIER, "<gray>閉じる</gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -10257,9 +10257,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(
          16, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>\ud83d\udd0d 自己診断を実行</bold></light_purple>", "<gray>データ不整合を検出してチャットに表示</gray>")
       );
-      gui.setItem(19, this.createItem(Material.HOPPER, "<white><bold>\ud83d\udd04 config/messagesを再読込</bold></white>"));
-      gui.setItem(20, this.createItem(Material.CHEST, "<white><bold>\ud83d\udcbe 経済データを保存</bold></white>"));
-      gui.setItem(21, this.createItem(Material.BOOK, "<white><bold>⚙ config設定を編集</bold></white>", "<gray>config.ymlの全設定をGUIから直接変更できます</gray>"));
+      gui.setItem(21, this.createItem(Material.HOPPER, "<white><bold>\ud83d\udd04 config/messagesを再読込</bold></white>"));
+      gui.setItem(22, this.createItem(Material.CHEST, "<white><bold>\ud83d\udcbe 経済データを保存</bold></white>"));
+      gui.setItem(23, this.createItem(Material.BOOK, "<white><bold>⚙ config設定を編集</bold></white>", "<gray>config.ymlの全設定をGUIから直接変更できます</gray>"));
       gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
@@ -12065,13 +12065,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            }
                         } else if (mat == Material.BARRIER) {
                            int rawSlot = e.getRawSlot();
-                           if (rawSlot == 15 && this.publishedLoans.containsKey(u)) {
+                           if (rawSlot == 11 && this.publishedLoans.containsKey(u)) {
                               this.publishedLoans.remove(u);
                               this.msgKey(p, "bank.plan-withdrawn", "slot", "1");
-                           } else if (rawSlot == 16 && this.publishedLoans2.containsKey(u)) {
+                           } else if (rawSlot == 13 && this.publishedLoans2.containsKey(u)) {
                               this.publishedLoans2.remove(u);
                               this.msgKey(p, "bank.plan-withdrawn", "slot", "2");
-                           } else if (rawSlot == 17 && this.publishedLoans3.containsKey(u)) {
+                           } else if (rawSlot == 15 && this.publishedLoans3.containsKey(u)) {
                               this.publishedLoans3.remove(u);
                               this.msgKey(p, "bank.plan-withdrawn", "slot", "3");
                            } else {
@@ -12131,14 +12131,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.tempInterestRate.put(u, 10.0);
                            }
                         } else {
-                           if (mat == Material.WRITABLE_BOOK && e.getRawSlot() == 18) {
+                           if (mat == Material.WRITABLE_BOOK && e.getRawSlot() == 20) {
                               this.awaitChatInput(u, "plan_amount");
                               this.msgKey(p, "bank.plan-amount-prompt");
                               p.closeInventory();
                               return;
                            }
 
-                           if (mat == Material.PAPER && e.getRawSlot() == 19) {
+                           if (mat == Material.PAPER && e.getRawSlot() == 24) {
                               this.awaitChatInput(u, "plan_interest");
                               this.msgKey(p, "bank.plan-interest-prompt");
                               p.closeInventory();
