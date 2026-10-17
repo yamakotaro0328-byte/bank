@@ -20,6 +20,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -42,6 +43,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -472,6 +474,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private String cfgMysqlPassword = "";
    private String cfgMysqlTablePrefix = "mbank_";
    private boolean cfgMysqlSsl = false;
+   private boolean cfgSyncEnabled = false;
+   private String cfgSyncServerId = "server1";
+   private boolean cfgSyncLeader = true;
+   private int cfgSyncIntervalSeconds = 5;
+   private boolean syncInFlight = false;
+   private double[] syncedCounters = null;
    private volatile String ledgerStatsJson = "null";
    private static final List<String> FEATURE_NAMES = List.of("auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate");
    private final HashMap<String, Boolean> featureEnabled = new HashMap<>();
@@ -834,7 +842,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   dbFile
                );
                this.getLogger().info("[データベース] MySQL (" + this.cfgMysqlHost + ":" + this.cfgMysqlPort + "/" + this.cfgMysqlDatabase + ") に接続しました。");
-               this.getLogger().warning("[データベース] 同じ table-prefix を複数のサーバーで同時に使わないでください（データが上書きし合います）。");
+               if (this.cfgSyncEnabled) {
+                  this.db.enableSync(this.cfgSyncServerId);
+                  this.getLogger().info("[サーバー間同期] 有効: server-id=" + this.cfgSyncServerId + (this.cfgSyncLeader ? " (リーダー: 定期処理を担当)" : " (定期処理はリーダーに任せます)"));
+               } else {
+                  this.getLogger().warning("[データベース] 同じ table-prefix を複数のサーバーで同時に使う場合は storage.sync.enabled を true にしてください。");
+               }
             } else {
                this.db = new MinecraftBank.PluginDataStore(dbFile, this.getLogger());
             }
@@ -854,8 +867,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             }
          }
 
-         this.checkTreasureSpawn();
-         List<String> startupIssues = this.runSelfCheck(true);
+         boolean startupLeader = this.db == null || !this.db.isSyncEnabled() || this.cfgSyncLeader;
+         if (startupLeader) {
+            this.checkTreasureSpawn();
+         }
+
+         List<String> startupIssues = this.runSelfCheck(startupLeader);
          this.lastSelfCheckIssues = startupIssues;
          this.lastSelfCheckAt = System.currentTimeMillis();
          if (!startupIssues.isEmpty()) {
@@ -882,10 +899,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          long backupTicks = Math.max(1, this.cfgBackupIntervalMinutes) * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, this::backupDatabase, backupTicks, backupTicks);
          long selfCheckTicks = Math.max(1, this.cfgSelfCheckReportIntervalMinutes) * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::runPeriodicSelfCheckReport, selfCheckTicks, selfCheckTicks);
-         Bukkit.getScheduler().runTaskTimer(this, this::checkGovLoanDeadlines, 1200L, 1200L);
-         Bukkit.getScheduler().runTaskTimer(this, this::checkCollateralDeadlines, 1200L, 1200L);
-         Bukkit.getScheduler().runTaskTimer(this, this::processStandingTransfers, 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::runPeriodicSelfCheckReport), selfCheckTicks, selfCheckTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkGovLoanDeadlines), 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkCollateralDeadlines), 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::processStandingTransfers), 1200L, 1200L);
+         if (this.db != null && this.db.isSyncEnabled()) {
+            this.initCounterSync();
+            long syncTicks = this.cfgSyncIntervalSeconds * 20L;
+            Bukkit.getScheduler().runTaskTimer(this, this::runSyncTick, syncTicks, syncTicks);
+         }
          Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (this.db != null) {
                this.db.flushLedgerAsync();
@@ -896,34 +918,34 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.db.pruneLedgerAsync(System.currentTimeMillis() - this.cfgLedgerRetentionDays * 86400000L);
             }
          }, 600L, 1728000L);
-         Bukkit.getScheduler().runTaskTimer(this, this::processWealthTax, 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::processWealthTax), 1200L, 1200L);
          long chartTicks = this.cfgChartRecordMinutes * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::recordResourcePrices, 200L, chartTicks);
-         Bukkit.getScheduler().runTaskTimer(this, this::refreshQuestBoard, 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::recordResourcePrices), 200L, chartTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::refreshQuestBoard), 1200L, 1200L);
          long questSystemTicks = Math.max(1, this.cfgQuestSystemCheckIntervalMinutes) * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::generateSystemQuestsIfNeeded, questSystemTicks, questSystemTicks);
-         Bukkit.getScheduler().runTaskTimer(this, this::checkAuctionEnd, 1200L, 1200L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::generateSystemQuestsIfNeeded), questSystemTicks, questSystemTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkAuctionEnd), 1200L, 1200L);
          long eventTicks = Math.max(1, this.cfgRandomEventIntervalMinutes) * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::tryRandomEconomyEvent, eventTicks, eventTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::tryRandomEconomyEvent), eventTicks, eventTicks);
          Bukkit.getScheduler().runTaskTimer(this, this::updateAllScoreboards, 20L, 40L);
          Bukkit.getScheduler().runTaskTimer(this, this::checkWorldStockAlerts, 2400L, 2400L);
          long dividendTicks = Math.max(1, this.cfgWorldStockDividendIntervalHours) * 60L * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::payWorldStockDividends, dividendTicks, dividendTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::payWorldStockDividends), dividendTicks, dividendTicks);
          this.refreshFxRates();
          long fxTicks = Math.max(1, this.cfgFxRefreshMinutes) * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, this::refreshFxRates, fxTicks, fxTicks);
          long resourceDriftTicks = Math.max(1, this.cfgResourcePriceDriftIntervalMinutes) * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::driftResourcePrices, resourceDriftTicks, resourceDriftTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::driftResourcePrices), resourceDriftTicks, resourceDriftTicks);
          long reportTicks = Math.max(1L, this.cfgReportIntervalDays) * 24L * 60L * 60L * 20L;
-         Bukkit.getScheduler().runTaskTimer(this, this::sendPeriodicEconomyReport, reportTicks, reportTicks);
-         Bukkit.getScheduler().runTaskTimer(this, this::collectDueInstallments, 36000L, 36000L);
-         Bukkit.getScheduler().runTaskTimer(this, this::checkStorageRent, 36000L, 36000L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::sendPeriodicEconomyReport), reportTicks, reportTicks);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::collectDueInstallments), 36000L, 36000L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkStorageRent), 36000L, 36000L);
          this.ensureMerchantDealsCurrent();
-         Bukkit.getScheduler().runTaskTimer(this, this::ensureMerchantDealsCurrent, 12000L, 12000L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::ensureMerchantDealsCurrent), 12000L, 12000L);
          this.ensureVipShopCurrent();
-         Bukkit.getScheduler().runTaskTimer(this, this::ensureVipShopCurrent, 12000L, 12000L);
-         Bukkit.getScheduler().runTaskTimer(this, this::checkTreasureSpawn, 12000L, 12000L);
-         Bukkit.getScheduler().runTaskTimer(this, this::runLotteryDrawIfDue, 12000L, 12000L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::ensureVipShopCurrent), 12000L, 12000L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkTreasureSpawn), 12000L, 12000L);
+         Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::runLotteryDrawIfDue), 12000L, 12000L);
          long citizenDividendTicks = Math.max(1, this.cfgCitizenDividendIntervalMinutes) * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, this::payCitizenDividend, citizenDividendTicks, citizenDividendTicks);
          long welfareTicks = Math.max(1, this.cfgWelfareIntervalMinutes) * 60L * 20L;
@@ -1026,6 +1048,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("storage.mysql.password", this.cfgMysqlPassword);
       c.addDefault("storage.mysql.table-prefix", this.cfgMysqlTablePrefix);
       c.addDefault("storage.mysql.use-ssl", this.cfgMysqlSsl);
+      c.addDefault("storage.sync.enabled", this.cfgSyncEnabled);
+      c.addDefault("storage.sync.server-id", this.cfgSyncServerId);
+      c.addDefault("storage.sync.leader", this.cfgSyncLeader);
+      c.addDefault("storage.sync.interval-seconds", this.cfgSyncIntervalSeconds);
 
       for (String feature : FEATURE_NAMES) {
          c.addDefault("features." + feature, true);
@@ -1265,6 +1291,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgMysqlPassword = c.getString("storage.mysql.password", this.cfgMysqlPassword);
       this.cfgMysqlTablePrefix = c.getString("storage.mysql.table-prefix", this.cfgMysqlTablePrefix);
       this.cfgMysqlSsl = c.getBoolean("storage.mysql.use-ssl", this.cfgMysqlSsl);
+      this.cfgSyncEnabled = c.getBoolean("storage.sync.enabled", this.cfgSyncEnabled);
+      this.cfgSyncServerId = c.getString("storage.sync.server-id", this.cfgSyncServerId).trim();
+      this.cfgSyncLeader = c.getBoolean("storage.sync.leader", this.cfgSyncLeader);
+      this.cfgSyncIntervalSeconds = Math.max(2, c.getInt("storage.sync.interval-seconds", this.cfgSyncIntervalSeconds));
 
       for (String feature : FEATURE_NAMES) {
          this.featureEnabled.put(feature, c.getBoolean("features." + feature, true));
@@ -12725,6 +12755,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    public void onPlayerJoin(PlayerJoinEvent e) {
       Player p = e.getPlayer();
       UUID u = p.getUniqueId();
+      if (this.db != null && this.db.isSyncEnabled()) {
+         this.runSyncTick();
+      }
+
       double pocket = econ.getBalance(p);
       Bukkit.getScheduler().runTaskLater(this, () -> this.updateScoreboard(p), 20L);
       if (!this.tutorialSeen.contains(u)) {
@@ -15024,6 +15058,167 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
+   private Runnable leaderOnly(Runnable task) {
+      return () -> {
+         if (this.db == null || !this.db.isSyncEnabled() || this.cfgSyncLeader) {
+            task.run();
+         }
+      };
+   }
+
+   private static final String[] SYNC_COUNTER_NAMES = new String[]{"treasury", "tax_revenue", "weekly_trade_volume", "lottery_pool"};
+   private static final Set<String> SYNC_SKIP_KEYS = Set.of("treasury\u0000_", "tax_state\u0000revenue", "weekly_trade_volume\u0000_", "lottery\u0000pool");
+
+   private double[] counterValues() {
+      return new double[]{this.treasury, this.taxRevenueTotal, this.weeklyTradeVolume, this.lotteryPool};
+   }
+
+   private void setCounterValues(double[] v) {
+      this.treasury = v[0];
+      this.taxRevenueTotal = v[1];
+      this.weeklyTradeVolume = v[2];
+      this.lotteryPool = v[3];
+   }
+
+   private void initCounterSync() {
+      double[] local = this.counterValues();
+
+      try {
+         double[] totals = this.db.syncCountersAsync(SYNC_COUNTER_NAMES, local, new double[local.length], true).get(15L, TimeUnit.SECONDS);
+         this.setCounterValues(totals);
+         this.syncedCounters = totals;
+      } catch (Exception ex) {
+         this.getLogger().severe("[サーバー間同期] 共有カウンターの初期化に失敗しました: " + ex.getMessage());
+      }
+   }
+
+   private void runSyncTick() {
+      if (this.db != null && this.db.isSyncEnabled() && !this.syncInFlight) {
+         this.syncInFlight = true;
+         this.saveData();
+         double[] snapshot = this.counterValues();
+         double[] base = this.syncedCounters != null ? this.syncedCounters : snapshot;
+         double[] deltas = new double[snapshot.length];
+
+         for (int i = 0; i < snapshot.length; i++) {
+            deltas[i] = snapshot[i] - base[i];
+         }
+
+         this.db.pullRemoteAsync().thenCombine(this.db.syncCountersAsync(SYNC_COUNTER_NAMES, snapshot, deltas, false), (rows, totals) -> new Object[]{rows, totals}).whenComplete((res, err) -> Bukkit.getScheduler().runTask(this, () -> {
+            try {
+               if (err != null) {
+                  this.getLogger().warning("[サーバー間同期] 同期に失敗しました(次回再試行): " + err.getMessage());
+               } else {
+                  List<String[]> rows = (List<String[]>)res[0];
+                  double[] totals = (double[])res[1];
+                  double[] now = this.counterValues();
+                  double[] merged = new double[now.length];
+
+                  for (int i = 0; i < now.length; i++) {
+                     merged[i] = totals[i] + (now[i] - snapshot[i]);
+                  }
+
+                  this.syncedCounters = totals;
+                  this.saveData();
+                  Set<String> changed = this.db.applyRemote(rows, SYNC_SKIP_KEYS);
+                  if (!changed.isEmpty()) {
+                     this.clearPersistedState();
+                     this.loadData();
+                  }
+
+                  this.setCounterValues(merged);
+               }
+            } finally {
+               this.syncInFlight = false;
+            }
+         }));
+      }
+   }
+
+   private void clearPersistedState() {
+      this.activeDebts.clear();
+      this.adminAuditLog.clear();
+      this.auctionBid.clear();
+      this.auctionBidder.clear();
+      this.auctionBuyoutPrice.clear();
+      this.auctionEndTime.clear();
+      this.auctionItem.clear();
+      this.auctionListingDraft.clear();
+      this.auctionOfflineNotices.clear();
+      this.auctionPendingItems.clear();
+      this.auctionSeller.clear();
+      this.auctionTotalSoldAmount.clear();
+      this.bankCapital.clear();
+      this.bankers.clear();
+      this.collateralDueTime.clear();
+      this.collateralItem.clear();
+      this.collateralLender.clear();
+      this.collateralLoanAmount.clear();
+      this.creditScore.clear();
+      this.dashboardTokens.clear();
+      this.donationScoreResetAt.clear();
+      this.donationScoreToday.clear();
+      this.fixedDeposit.clear();
+      this.fixedDeposit2.clear();
+      this.fixedDeposit3.clear();
+      this.fixedDepositUnlockTime.clear();
+      this.fixedDepositUnlockTime2.clear();
+      this.fixedDepositUnlockTime3.clear();
+      this.govDebt.clear();
+      this.govDebtDueTime.clear();
+      this.groupAccounts.clear();
+      this.guarantorProposalTime.clear();
+      this.guarantorProposals.clear();
+      this.hubItemIssued.clear();
+      this.installmentPlans.clear();
+      this.insuranceExpiry.clear();
+      this.insuranceLastClaim.clear();
+      this.investmentFunds.clear();
+      this.loanGuarantor.clear();
+      this.loanOfflineNotices.clear();
+      this.lotteryTickets.clear();
+      this.merchantDeals.clear();
+      this.newsBroadcastOff.clear();
+      this.pendingStorageContents.clear();
+      this.personalBank.clear();
+      this.playerActiveQuest.clear();
+      this.playerGroupAccounts.clear();
+      this.playerInvestmentFunds.clear();
+      this.playerWorldStockAvgCost.clear();
+      this.playerWorldStocks.clear();
+      this.publishedLoans.clear();
+      this.publishedLoans2.clear();
+      this.publishedLoans3.clear();
+      this.quests.clear();
+      this.repayScoreResetAt.clear();
+      this.repayScoreToday.clear();
+      this.resourcePersonalBuyMultiplier.clear();
+      this.resourcePriceHistory.clear();
+      this.resourcePrices.clear();
+      this.resourceSoldResetAt.clear();
+      this.resourceSoldToday.clear();
+      this.standingTransfers.clear();
+      this.storageRentDueTime.clear();
+      this.taxPaidTotal.clear();
+      this.transactionLogs.clear();
+      this.transferHistory.clear();
+      this.treasureLastFoundAt.clear();
+      this.tutorialSeen.clear();
+      this.unlockedAchievements.clear();
+      this.vipShopDeals.clear();
+      this.vipStipendClaimedAt.clear();
+      this.webAdminPasswordHash.clear();
+      this.webPasswordHash.clear();
+      this.welfareCountResetAt.clear();
+      this.welfareCountToday.clear();
+      this.worldStockAlerts.clear();
+      this.worldStockAmountToday.clear();
+      this.worldStockDailyResetAt.clear();
+      this.worldStockLastTradeTime.clear();
+      this.worldStockProfitToday.clear();
+      this.worldStockTradesToday.clear();
+   }
+
    private void sendShortfall(Player p, double need, double have) {
       if (p != null && need > have) {
          this.msgKey(p, "common.shortfall", "amount", this.fmtCur(need - have));
@@ -16966,6 +17161,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       private final String dataTable;
       private final String ledgerTable;
       private final boolean hadDataAtStartup;
+      private volatile String syncOrigin = null;
+      private volatile long lastPullAt = 0L;
+      private final Set<String> pushedSincePull = new HashSet<>();
 
       PluginDataStore(File dbFile, java.util.logging.Logger log) throws SQLException {
          this("jdbc:sqlite:" + dbFile.getAbsolutePath(), null, null, false, "", log, null);
@@ -17131,6 +17329,144 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          return this.mysql;
       }
 
+      private String counterTable() {
+         return this.dataTable.substring(0, this.dataTable.length() - "plugin_data".length()) + "counters";
+      }
+
+      void enableSync(String origin) throws SQLException {
+         if (!this.mysql) {
+            throw new SQLException("サーバー間同期はMySQLでのみ使えます");
+         } else {
+            DatabaseMetaData meta = this.conn.getMetaData();
+            boolean hasUpdated;
+            try (ResultSet rs = meta.getColumns(this.conn.getCatalog(), null, this.dataTable, "updated_at")) {
+               hasUpdated = rs.next();
+            }
+
+            try (Statement st = this.conn.createStatement()) {
+               if (!hasUpdated) {
+                  st.execute("ALTER TABLE " + this.dataTable + " ADD COLUMN updated_at BIGINT NOT NULL DEFAULT 0, ADD COLUMN origin VARCHAR(64) NOT NULL DEFAULT ''");
+                  st.execute("CREATE INDEX idx_" + this.dataTable + "_updated ON " + this.dataTable + "(updated_at)");
+               }
+
+               st.execute("CREATE TABLE IF NOT EXISTS " + this.counterTable() + " (name VARCHAR(64) NOT NULL PRIMARY KEY, value DOUBLE NOT NULL) DEFAULT CHARSET=utf8mb4");
+
+               try (ResultSet rs = st.executeQuery("SELECT ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)")) {
+                  this.lastPullAt = rs.next() ? rs.getLong(1) : 0L;
+               }
+            }
+
+            this.syncOrigin = origin;
+         }
+      }
+
+      boolean isSyncEnabled() {
+         return this.syncOrigin != null;
+      }
+
+      CompletableFuture<List<String[]>> pullRemoteAsync() {
+         synchronized (this) {
+            this.pushedSincePull.clear();
+         }
+
+         return CompletableFuture.supplyAsync(() -> {
+            List<String[]> rows = new ArrayList<>();
+
+            try {
+               this.ensureConnection();
+
+               try (PreparedStatement ps = this.conn
+                     .prepareStatement("SELECT section, path, value, updated_at FROM " + this.dataTable + " WHERE updated_at > ? AND origin <> ?")) {
+                  ps.setLong(1, this.lastPullAt - 5000L);
+                  ps.setString(2, this.syncOrigin);
+
+                  try (ResultSet rs = ps.executeQuery()) {
+                     long max = this.lastPullAt;
+
+                     while (rs.next()) {
+                        rows.add(new String[]{rs.getString(1), rs.getString(2), rs.getString(3)});
+                        max = Math.max(max, rs.getLong(4));
+                     }
+
+                     this.lastPullAt = max;
+                  }
+               }
+
+               return rows;
+            } catch (SQLException e) {
+               throw new RuntimeException(e);
+            }
+         }, this.writer);
+      }
+
+      synchronized Set<String> applyRemote(List<String[]> rows, Set<String> skipKeys) {
+         Set<String> changed = new HashSet<>();
+
+         for (String[] row : rows) {
+            String key = row[0] + "\u0000" + row[1];
+            if (!this.pushedSincePull.contains(key) && !skipKeys.contains(key)) {
+               Map<String, String> m = this.mirror.get(row[0]);
+               String cur = m != null ? m.get(row[1]) : null;
+               if (!Objects.equals(cur, row[2])) {
+                  if (row[2] == null) {
+                     m.remove(row[1]);
+                     Map<String, String> p = this.persisted.get(row[0]);
+                     if (p != null) {
+                        p.remove(row[1]);
+                     }
+                  } else {
+                     this.mirror.computeIfAbsent(row[0], k -> new LinkedHashMap<>()).put(row[1], row[2]);
+                     this.persisted.computeIfAbsent(row[0], k -> new LinkedHashMap<>()).put(row[1], row[2]);
+                  }
+
+                  changed.add(row[0]);
+               }
+            }
+         }
+
+         return changed;
+      }
+
+      CompletableFuture<double[]> syncCountersAsync(String[] names, double[] localValues, double[] deltas, boolean seed) {
+         return CompletableFuture.supplyAsync(() -> {
+            double[] totals = new double[names.length];
+
+            try {
+               this.ensureConnection();
+
+               for (int i = 0; i < names.length; i++) {
+                  if (seed) {
+                     try (PreparedStatement ins = this.conn.prepareStatement("INSERT IGNORE INTO " + this.counterTable() + "(name, value) VALUES (?, ?)")) {
+                        ins.setString(1, names[i]);
+                        ins.setDouble(2, localValues[i]);
+                        ins.executeUpdate();
+                     }
+                  } else if (deltas[i] != 0.0) {
+                     try (PreparedStatement up = this.conn
+                           .prepareStatement("INSERT INTO " + this.counterTable() + "(name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = value + ?")) {
+                        up.setString(1, names[i]);
+                        up.setDouble(2, localValues[i]);
+                        up.setDouble(3, deltas[i]);
+                        up.executeUpdate();
+                     }
+                  }
+
+                  try (PreparedStatement sel = this.conn.prepareStatement("SELECT value FROM " + this.counterTable() + " WHERE name = ?")) {
+                     sel.setString(1, names[i]);
+
+                     try (ResultSet rs = sel.executeQuery()) {
+                        totals[i] = rs.next() ? rs.getDouble(1) : localValues[i];
+                     }
+                  }
+               }
+
+               return totals;
+            } catch (SQLException e) {
+               throw new RuntimeException(e);
+            }
+         }, this.writer);
+      }
+
       boolean hadDataAtStartup() {
          return this.hadDataAtStartup;
       }
@@ -17231,12 +17567,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                for (Entry<String, String> e : cur.entrySet()) {
                   if (!e.getValue().equals(old.get(e.getKey()))) {
                      ops.add(new String[]{section, e.getKey(), e.getValue()});
+                     this.pushedSincePull.add(section + "\u0000" + e.getKey());
                   }
                }
 
                for (String key : old.keySet()) {
                   if (!cur.containsKey(key)) {
                      ops.add(new String[]{section, key, null});
+                     this.pushedSincePull.add(section + "\u0000" + key);
                   }
                }
 
@@ -17274,6 +17612,26 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   .prepareStatement((this.mysql ? "REPLACE INTO " : "INSERT OR REPLACE INTO ") + this.dataTable + "(section, path, value) VALUES (?, ?, ?)");
                PreparedStatement del = this.conn.prepareStatement("DELETE FROM " + this.dataTable + " WHERE section=? AND path=?");
             ) {
+               String origin = this.syncOrigin;
+               if (origin != null) {
+                  try (PreparedStatement sy = this.conn
+                        .prepareStatement(
+                           "INSERT INTO "
+                              + this.dataTable
+                              + "(section, path, value, updated_at, origin) VALUES (?, ?, ?, ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000), ?) ON DUPLICATE KEY UPDATE value = VALUES(value), updated_at = VALUES(updated_at), origin = VALUES(origin)"
+                        )) {
+                     for (String[] op : ops) {
+                        sy.setString(1, op[0]);
+                        sy.setString(2, op[1]);
+                        sy.setString(3, op[2]);
+                        sy.setString(4, origin);
+                        sy.executeUpdate();
+                     }
+                  }
+
+                  ops.clear();
+               }
+
                for (String[] op : ops) {
                   if (op[2] == null) {
                      del.setString(1, op[0]);
