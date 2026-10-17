@@ -5986,47 +5986,48 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<aqua><bold>\ud83c\udfe6 銀行</bold></aqua>", "<gray>個人口座・融資・国営公庫・定期預金・質屋・保険</gray>"));
       gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>\ud83d\uded2 マーケット</bold></green>", "<gray>世界株式市場・資源相場ショップ・巡回商人・オークション</gray>"));
       gui.setItem(15, this.createItem(Material.TARGET, "<yellow><bold>\ud83c\udfaf やること</bold></yellow>", "<gray>依頼ボード・宝くじ・レンタル倉庫</gray>"));
-      gui.setItem(20, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>\ud83d\udcb3 マイページ</bold></light_purple>", "<gray>信用情報・実績・ランキング・取引履歴</gray>"));
-      gui.setItem(22, this.createItem(Material.CRAFTING_TABLE, "<gray><bold>\ud83d\uddc2 クラシックメニュー</bold></gray>", "<dark_gray>旧バージョンの一覧表示形式</dark_gray>"));
+      gui.setItem(21, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>\ud83d\udcb3 マイページ</bold></light_purple>", "<gray>信用情報・実績・ランキング・取引履歴</gray>"));
+      gui.setItem(23, this.createItem(Material.CRAFTING_TABLE, "<gray><bold>\ud83d\uddc2 クラシックメニュー</bold></gray>", "<dark_gray>旧バージョンの一覧表示形式</dark_gray>"));
       if (p.hasPermission("bank.admin")) {
          gui.setItem(31, this.createItem(Material.COMMAND_BLOCK, "<red><bold>\ud83d\udee0 管理者パネル</bold></red>", "<gray>プレイヤー・サーバーの管理操作</gray>"));
       }
 
+      gui.setItem(35, this.createItem(Material.BARRIER, "<red>✖ 閉じる</red>", "<dark_gray>メニューを閉じます</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
 
    private void openMarketHubGUI(Player p) {
       Inventory gui = Bukkit.createInventory(null, 36, this.tMarketHub);
-      gui.setItem(12, this.createItem(Material.NETHER_STAR, "<blue><bold>\ud83d\udcc8 世界株式市場</bold></blue>", "<gray>現実の株を検索して売買</gray>"));
-      gui.setItem(14, this.createItem(Material.HOPPER, "<green><bold>\ud83c\udf3e 資源相場ショップ</bold></green>", "<gray>鉱石・農作物・ドロップ品を売買</gray>"));
-      gui.setItem(20, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>\ud83e\uddf3 巡回商人</bold></gold>", "<gray>現在地を確認する(購入は現地のNPCから)</gray>"));
-      gui.setItem(22, this.createItem(Material.ITEM_FRAME, "<green><bold>\ud83d\udd28 オークション</bold></green>", "<gray>アイテムの出品・入札</gray>"));
+      gui.setItem(11, this.createItem(Material.NETHER_STAR, "<blue><bold>\ud83d\udcc8 世界株式市場</bold></blue>", "<gray>現実の株を検索して売買</gray>"));
+      gui.setItem(13, this.createItem(Material.HOPPER, "<green><bold>\ud83c\udf3e 資源相場ショップ</bold></green>", "<gray>鉱石・農作物・ドロップ品を売買</gray>"));
+      gui.setItem(21, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>\ud83e\uddf3 巡回商人</bold></gold>", "<gray>現在地を確認する(購入は現地のNPCから)</gray>"));
+      gui.setItem(23, this.createItem(Material.ITEM_FRAME, "<green><bold>\ud83d\udd28 オークション</bold></green>", "<gray>アイテムの出品・入札</gray>"));
       gui.setItem(
-         16,
+         15,
          this.createItem(
             Material.DIAMOND, "<light_purple><bold>\ud83d\udc8e VIPラウンジ</bold></light_purple>", "<gray>信用スコアに応じた会員特典(手数料割引・限定ショップ・日次手当・取引枠拡大)</gray>"
          )
       );
-      gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
 
    private void openTodoHubGUI(Player p) {
       Inventory gui = Bukkit.createInventory(null, 36, this.tTodoHub);
-      gui.setItem(12, this.createItem(Material.OAK_SIGN, "<dark_aqua><bold>\ud83d\udccb 依頼ボード</bold></dark_aqua>", "<gray>探索依頼の投稿・受注</gray>"));
-      gui.setItem(14, this.createItem(Material.FIREWORK_STAR, "<gold><bold>\ud83c\udf9f 宝くじ</bold></gold>", "<gray>チケットを購入して定期抽選に参加</gray>"));
-      gui.setItem(16, this.createItem(Material.BARREL, "<gold><bold>\ud83c\udfec レンタル倉庫</bold></gold>", "<gray>家賃を払って専用の収納倉庫を借りられます</gray>"));
+      gui.setItem(11, this.createItem(Material.OAK_SIGN, "<dark_aqua><bold>\ud83d\udccb 依頼ボード</bold></dark_aqua>", "<gray>探索依頼の投稿・受注</gray>"));
+      gui.setItem(13, this.createItem(Material.FIREWORK_STAR, "<gold><bold>\ud83c\udf9f 宝くじ</bold></gold>", "<gray>チケットを購入して定期抽選に参加</gray>"));
+      gui.setItem(15, this.createItem(Material.BARREL, "<gold><bold>\ud83c\udfec レンタル倉庫</bold></gold>", "<gray>家賃を払って専用の収納倉庫を借りられます</gray>"));
       gui.setItem(
-         22, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>\ud83e\udd1d アイテム交換</bold></light_purple>", "<gray>他プレイヤーと安全にアイテム・お金を交換</gray>")
+         21, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>\ud83e\udd1d アイテム交換</bold></light_purple>", "<gray>他プレイヤーと安全にアイテム・お金を交換</gray>")
       );
-      gui.setItem(20, this.createItem(Material.ENDER_CHEST, "<gold><bold>\ud83d\udc5b グループ貯金箱</bold></gold>", "<gray>友人・小さなグループで共有する共同口座</gray>"));
+      gui.setItem(19, this.createItem(Material.ENDER_CHEST, "<gold><bold>\ud83d\udc5b グループ貯金箱</bold></gold>", "<gray>友人・小さなグループで共有する共同口座</gray>"));
       gui.setItem(
-         24, this.createItem(Material.DIAMOND, "<dark_green><bold>\ud83d\udcca 共同投資ファンド</bold></dark_green>", "<gray>複数人で出資し、マネージャーが世界株式市場でまとめて運用</gray>")
+         23, this.createItem(Material.DIAMOND, "<dark_green><bold>\ud83d\udcca 共同投資ファンド</bold></dark_green>", "<gray>複数人で出資し、マネージャーが世界株式市場でまとめて運用</gray>")
       );
       gui.setItem(
-         29,
+         25,
          this.createItem(
             Material.COMPASS,
             "<gold><bold>\ud83e\udded 埋蔵金の場所を調べる</bold></gold>",
@@ -6034,7 +6035,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<yellow>クリックで支払って場所を確認</yellow>"
          )
       );
-      gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -6200,7 +6201,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<dark_gray>作成費用: " + this.fmtCur(this.cfgGroupAccountCreateCost) + "</dark_gray>"
          )
       );
-      gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -6251,7 +6252,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                );
             }
 
-            gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+            gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
             this.fillGlass(gui);
             p.openInventory(gui);
          }
@@ -6586,7 +6587,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>所属している共同投資ファンドがありません</bold></red>", "<gray>/meco fund create <名前> で新しく作成できます</gray>"));
       }
 
-      gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -6648,7 +6649,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "<red>もう一度クリックすると確定します(30秒以内)</red>"
             )
          );
-         gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+         gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
          this.fillGlass(gui);
          p.openInventory(gui);
       } else {
@@ -7454,7 +7455,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       );
       gui.setItem(23, this.createItem(Material.ANVIL, "<dark_purple><bold>\ud83c\udffa 質屋・担保付き融資</bold></dark_purple>", "<gray>レアアイテムを担保にお金を借りられます</gray>"));
       gui.setItem(25, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>\ud83d\udee1 生命保険窓口</bold></blue>", "<gray>死亡時のロスに備えて加入できます</gray>"));
-      gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -7471,9 +7472,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<yellow>クリックで詳細を見る</yellow>"
          )
       );
-      gui.setItem(12, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>\ud83c\udf96 実績・称号コレクション</bold></gold>"));
-      gui.setItem(14, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>\ud83c\udfc6 資産ランキング</bold></yellow>"));
-      gui.setItem(16, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>\ud83d\udcdc 取引履歴を見る</bold></aqua>"));
+      gui.setItem(11, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>\ud83c\udf96 実績・称号コレクション</bold></gold>"));
+      gui.setItem(12, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>\ud83c\udfc6 資産ランキング</bold></yellow>"));
+      gui.setItem(13, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>\ud83d\udcdc 取引履歴を見る</bold></aqua>"));
       boolean newsOff = this.newsBroadcastOff.contains(u);
       if (newsOff) {
          gui.setItem(19, this.createItem(Material.NOTE_BLOCK, "<gray><bold>\ud83d\udd15 経済ニュース放送: OFF</bold></gray>", "<gray>クリックでONに切り替え</gray>"));
@@ -7481,34 +7482,34 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          gui.setItem(19, this.createItem(Material.BELL, "<green><bold>\ud83d\udd14 経済ニュース放送: ON</bold></green>", "<gray>クリックでOFFに切り替え</gray>"));
       }
 
-      gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\ud83c\udfdb 国庫残高を見る</bold></gold>", "<gray>サーバー全体の税収プールを確認します</gray>"));
+      gui.setItem(20, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\ud83c\udfdb 国庫残高を見る</bold></gold>", "<gray>サーバー全体の税収プールを確認します</gray>"));
       gui.setItem(23, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>\ud83d\udcd8 初心者ガイドを開く</bold></light_purple>"));
       long remain = this.hubItemReissueCooldown.getOrDefault(u, 0L) - System.currentTimeMillis();
       if (remain > 0L) {
          gui.setItem(
-            25,
+            24,
             this.createItem(
                Material.BARRIER, "<dark_red><bold>\ud83d\udcd6 経済手帳の再発行</bold></dark_red>", "<gray>クールダウン中: 残り" + (remain / 1000L + 1L) + "秒</gray>"
             )
          );
       } else {
-         gui.setItem(25, this.createItem(Material.BOOK, "<white><bold>\ud83d\udcd6 経済手帳の再発行</bold></white>", "<gray>なくした場合、手持ちに再発行します</gray>"));
+         gui.setItem(24, this.createItem(Material.BOOK, "<white><bold>\ud83d\udcd6 経済手帳の再発行</bold></white>", "<gray>なくした場合、手持ちに再発行します</gray>"));
       }
 
-      gui.setItem(27, this.createItem(Material.SUNFLOWER, "<gold><bold>\ud83c\udf81 国庫へ寄付する</bold></gold>", "<gray>国庫へ任意の金額を寄付できます</gray>"));
+      gui.setItem(21, this.createItem(Material.SUNFLOWER, "<gold><bold>\ud83c\udf81 国庫へ寄付する</bold></gold>", "<gray>国庫へ任意の金額を寄付できます</gray>"));
       List<InstallmentPlan> myPlans = this.installmentPlans.get(u);
       int planCount = myPlans == null ? 0 : myPlans.size();
       gui.setItem(
-         29,
+         16,
          this.createItem(
             Material.CLOCK, "<light_purple><bold>\ud83d\udcc5 分割払いの状況</bold></light_purple>", "<gray>現在の分割払いプラン数:</gray> <yellow>" + planCount + "件</yellow>"
          )
       );
-      gui.setItem(31, this.createItem(Material.ENDER_CHEST, "<aqua><bold>\ud83d\udce6 受取箱を確認</bold></aqua>", "<gray>オークション落札品などを再受取します</gray>"));
+      gui.setItem(22, this.createItem(Material.ENDER_CHEST, "<aqua><bold>\ud83d\udce6 受取箱を確認</bold></aqua>", "<gray>オークション落札品などを再受取します</gray>"));
       boolean pwSet = this.webPasswordHash.containsKey(u);
-      gui.setItem(33, this.createItem(Material.MAP, "<light_purple><bold>\ud83c\udf10 Web個人ページのリンク</bold></light_purple>", "<gray>クリックでリンクをチャットに表示</gray>"));
+      gui.setItem(25, this.createItem(Material.MAP, "<light_purple><bold>\ud83c\udf10 Web個人ページのリンク</bold></light_purple>", "<gray>クリックでリンクをチャットに表示</gray>"));
       gui.setItem(
-         32,
+         31,
          this.createItem(
             Material.TRIPWIRE_HOOK,
             "<light_purple><bold>\ud83d\udd11 オフライン操作用パスワード</bold></light_purple>",
@@ -7524,9 +7525,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       dueLore.add("<gray>クリックで一覧をチャットに表示</gray>");
-      gui.setItem(20, this.createItem(Material.RECOVERY_COMPASS, "<light_purple><bold>\ud83d\udcc5 期限一覧</bold></light_purple>", dueLore.toArray(new String[0])));
+      gui.setItem(15, this.createItem(Material.RECOVERY_COMPASS, "<light_purple><bold>\ud83d\udcc5 期限一覧</bold></light_purple>", dueLore.toArray(new String[0])));
       gui.setItem(
-         24,
+         14,
          this.createItem(
             Material.WRITABLE_BOOK,
             "<aqua><bold>\ud83d\udcb8 振り込み履歴</bold></aqua>",
@@ -8915,7 +8916,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(14, this.createItem(Material.BRICKS, "<red><bold>\ud83e\uddf1 建材</bold></red>", "<gray>石・砂・ガラス・黒曜石・青氷など</gray>"));
       gui.setItem(15, this.createItem(Material.BREAD, "<gold><bold>\ud83c\udf5e 食料</bold></gold>", "<gray>肉・魚・パン・金のリンゴなど</gray>"));
       gui.setItem(16, this.createItem(Material.EXPERIENCE_BOTTLE, "<aqua><bold>\u2728 便利品</bold></aqua>", "<gray>経験値瓶・TNT・エンダーアイ・試練の鍵など</gray>"));
-      gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -9084,7 +9085,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(Material.DIAMOND, "<green><bold>\ud83c\udf9f 10枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + this.fmtCur((price * 10.0)) + "</gold>")
       );
       gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<aqua><bold>\ud83d\udcd6 数量を指定して購入</bold></aqua>", "<gray>クリックしてチャットに枚数を入力</gray>"));
-      gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -9138,7 +9139,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          );
       }
 
-      gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -9817,7 +9818,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       gui.setItem(4, this.createItem(Material.DIAMOND, "<light_purple><bold>\ud83d\udc8e VIP会員ステータス</bold></light_purple>", lore.toArray(new String[0])));
       if (tier == 0) {
-         gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+         gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
          this.fillGlass(gui);
          p.openInventory(gui);
       } else {
@@ -9891,7 +9892,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             slot++;
          }
 
-         gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+         gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
          this.fillGlass(gui);
          p.openInventory(gui);
       }
@@ -10223,7 +10224,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             "<red><bold>もう一度クリックで確定（15秒以内）</bold></red>"
          )
       );
-      gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -10259,7 +10260,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       gui.setItem(19, this.createItem(Material.HOPPER, "<white><bold>\ud83d\udd04 config/messagesを再読込</bold></white>"));
       gui.setItem(20, this.createItem(Material.CHEST, "<white><bold>\ud83d\udcbe 経済データを保存</bold></white>"));
       gui.setItem(21, this.createItem(Material.BOOK, "<white><bold>⚙ config設定を編集</bold></white>", "<gray>config.ymlの全設定をGUIから直接変更できます</gray>"));
-      gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
+      gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
       p.openInventory(gui);
    }
@@ -11075,7 +11076,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      }
                   } else if (t.equals(this.tHub)) {
-                     if (mat == Material.GOLD_INGOT) {
+                     if (mat == Material.BARRIER) {
+                        p.closeInventory();
+                     } else if (mat == Material.GOLD_INGOT) {
                         this.openBankHubGUI(p);
                      } else if (mat == Material.EMERALD) {
                         this.openMarketHubGUI(p);
