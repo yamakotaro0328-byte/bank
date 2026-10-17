@@ -105,4 +105,41 @@ final class BankUtil {
          return false;
       }
    }
+
+   static String jsonEscape(String s) {
+      if (s == null) {
+         return "";
+      } else {
+         StringBuilder sb = new StringBuilder(s.length() + 8);
+
+         for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+               case '"' -> sb.append("\\\"");
+               case '\\' -> sb.append("\\\\");
+               case '\n' -> sb.append("\\n");
+               case '\r' -> sb.append("\\r");
+               case '\t' -> sb.append("\\t");
+               default -> {
+                  if (c < ' ' || c == '\u2028' || c == '\u2029') {
+                     sb.append(String.format("\\u%04x", (int)c));
+                  } else {
+                     sb.append(c);
+                  }
+               }
+            }
+         }
+
+         return sb.toString();
+      }
+   }
+
+   static byte[] pbkdf2(String password, byte[] salt, int iterations) {
+      try {
+         javax.crypto.SecretKeyFactory f = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+         return f.generateSecret(new javax.crypto.spec.PBEKeySpec(password.toCharArray(), salt, iterations, 256)).getEncoded();
+      } catch (Exception e) {
+         throw new IllegalStateException(e);
+      }
+   }
 }

@@ -100,6 +100,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
@@ -125,6 +126,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private static Economy econ = null;
    private NamespacedKey lenderKey;
    private NamespacedKey loanSlotKey;
+   private NamespacedKey loanPlanKey;
    private NamespacedKey auctionIdKey;
    private NamespacedKey hubItemKey;
    private NamespacedKey adminTargetKey;
@@ -172,8 +174,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private double cfgBankEstablishCost = 10000.0;
    private double cfgDepositStep = 1000.0;
    private double cfgFixedDepositAmount = 10000.0;
-   private double cfgFixedDepositRate = 0.2;
-   private long cfgFixedDepositDurationMs = 60000L;
+   private double cfgFixedDepositRate = 0.02;
+   private long cfgFixedDepositDurationMs = 86400000L;
    private double cfgGovLoanAmount = 10000.0;
    private long cfgGovLoanDurationMs = 1200000L;
    private double cfgGovLoanPenaltyCapMultiplier = 2.0;
@@ -239,7 +241,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<UUID, Long> insuranceLastClaim = new HashMap<>();
    private double cfgInsurancePremium = 3000.0;
    private double cfgInsurancePayout = 5000.0;
-   private long cfgInsuranceDurationMs = 1800000L;
+   private long cfgInsuranceDurationMs = 86400000L;
    private long cfgInsuranceClaimCooldownMs = 300000L;
    private final HashMap<UUID, HashSet<String>> unlockedAchievements = new HashMap<>();
    private static final String[] ACHIEVEMENT_IDS = new String[]{
@@ -467,6 +469,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final List<StandingTransfer> standingTransfers = new ArrayList<>();
    private int cfgStandingTransferMaxPerPlayer = 5;
    private int cfgStandingTransferMinIntervalHours = 1;
+   private volatile String economyJsonCache = "{}";
+   private final java.util.concurrent.ConcurrentHashMap<UUID, long[]> webAuthFailures = new java.util.concurrent.ConcurrentHashMap<>();
+   private final HashMap<UUID, Long> chartCooldown = new HashMap<>();
+   // false until data has been fully loaded; saving before that would overwrite the database with empty state
+   private volatile boolean dataLoaded = false;
    private final Set<UUID> soundsOff = new HashSet<>();
    // kind -> {sound key, volume, pitch}; overridable under sounds.<kind> in config.yml ("none" mutes)
    private static final Map<String, String[]> UI_SOUND_DEFAULTS = new LinkedHashMap<>();
@@ -614,7 +621,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private static final int DASHBOARD_HISTORY_LIMIT = 60;
    private final ArrayDeque<Long> dashboardHistoryTimestamps = new ArrayDeque<>();
    private final ArrayDeque<Long> dashboardHistoryTreasury = new ArrayDeque<>();
-   private static final String MY_DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>個人ページ | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>\ud83d\udc64 個人ページ</h1>\n    <div class=\"sub\" id=\"playerName\">読込中...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>オフライン操作用パスワード</h2>\n      <div class=\"empty\">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中は不要です。</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"パスワード\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">所持金</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">銀行残高</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">信用スコア</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">実績解除数</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">受取箱</h2>\n        <button class=\"btn\" id=\"collectBtn\">\ud83d\udce6 受取箱を確認する</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>保有中の世界株 / 購入</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"銘柄(例: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"株数\">\n        <button class=\"btn\" id=\"stockBuyBtn\">購入する</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>オークション</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>レンタル倉庫</h2>\n      <div id=\"storageArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>直近の取引履歴</h2>\n      <div id=\"logsArea\"><div class=\"empty\">読込中...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';\n        document.getElementById('onlineStatus').textContent = data.online ? '\ud83d\udfe2 ログイン中' : '⚪ オフライン';\n        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで\n        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。\n        document.getElementById('passwordPanel').hidden = data.online;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">保有中の株はありません。</div>' :\n          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + s.symbol + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">取引履歴はありません。</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">読込に失敗しました。</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return 'まもなく終了';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '分' + (s % 60) + '秒';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">出品中のオークションはありません。</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">即決 (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + esc(a.item) + (a.is_own ? '(自分の出品)' : '') + '</div>' +\n          '<div class=\"meta\">出品者: ' + esc(a.seller) + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"入札額\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">入札する</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">契約する</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    // ★修正: 連打/複数タブでの二重送信対策として、他の操作(入札・購入・家賃支払い等)が\n    // 処理中の間は新しい操作を受け付けない(サーバー側の重複実行防止の完全な代替ではないが、\n    // 誤操作による二重処理を安価に大きく減らせる)。\n    let actionBusy = false;\n    async function postAction(path, params) {\n      if (actionBusy) return { ok: false, message: '前の操作を処理中です。少し待ってからお試しください。' };\n      actionBusy = true;\n      try {\n        const password = (document.getElementById('offlinePassword') || {}).value || '';\n        const body = new URLSearchParams(Object.assign({ token, password }, params));\n        const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n        if (!res.ok) {\n          const err = await res.json().catch(() => ({}));\n          return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };\n        }\n        return await res.json();\n      } finally {\n        actionBusy = false;\n      }\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        const msg = !r.ok ? (r.message || '失敗しました。')\n          : (r.remaining ? ('インベントリが満杯のため ' + r.remaining + ' 個は受け取れませんでした。空きを作ってからもう一度お試しください。') : '受取箱を確認しました。');\n        showStatus('collectMsg', r.ok && !r.remaining, msg);\n        load();\n      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n";
+   private static final String MY_DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>個人ページ | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>\ud83d\udc64 個人ページ</h1>\n    <div class=\"sub\" id=\"playerName\">読込中...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>オフライン操作用パスワード</h2>\n      <div class=\"empty\">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中は不要です。</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"パスワード\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">所持金</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">銀行残高</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">信用スコア</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">実績解除数</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">受取箱</h2>\n        <button class=\"btn\" id=\"collectBtn\">\ud83d\udce6 受取箱を確認する</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>保有中の世界株 / 購入</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"銘柄(例: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"株数\">\n        <button class=\"btn\" id=\"stockBuyBtn\">購入する</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>オークション</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>レンタル倉庫</h2>\n      <div id=\"storageArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>直近の取引履歴</h2>\n      <div id=\"logsArea\"><div class=\"empty\">読込中...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';\n        document.getElementById('onlineStatus').textContent = data.online ? '\ud83d\udfe2 ログイン中' : '⚪ オフライン';\n        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで\n        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。\n        document.getElementById('passwordPanel').hidden = data.online;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">保有中の株はありません。</div>' :\n          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + esc(s.symbol) + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">取引履歴はありません。</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">読込に失敗しました。</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return 'まもなく終了';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '分' + (s % 60) + '秒';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">出品中のオークションはありません。</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">即決 (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + esc(a.item) + (a.is_own ? '(自分の出品)' : '') + '</div>' +\n          '<div class=\"meta\">出品者: ' + esc(a.seller) + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"入札額\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">入札する</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">契約する</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    // ★修正: 連打/複数タブでの二重送信対策として、他の操作(入札・購入・家賃支払い等)が\n    // 処理中の間は新しい操作を受け付けない(サーバー側の重複実行防止の完全な代替ではないが、\n    // 誤操作による二重処理を安価に大きく減らせる)。\n    let actionBusy = false;\n    async function postAction(path, params) {\n      if (actionBusy) return { ok: false, message: '前の操作を処理中です。少し待ってからお試しください。' };\n      actionBusy = true;\n      try {\n        const password = (document.getElementById('offlinePassword') || {}).value || '';\n        const body = new URLSearchParams(Object.assign({ token, password }, params));\n        const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n        if (!res.ok) {\n          const err = await res.json().catch(() => ({}));\n          return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };\n        }\n        return await res.json();\n      } finally {\n        actionBusy = false;\n      }\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        const msg = !r.ok ? (r.message || '失敗しました。')\n          : (r.remaining ? ('インベントリが満杯のため ' + r.remaining + ' 個は受け取れませんでした。空きを作ってからもう一度お試しください。') : '受取箱を確認しました。');\n        showStatus('collectMsg', r.ok && !r.remaining, msg);\n        load();\n      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n";
    private static final String DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>経済ダッシュボード | MinecraftBank</title>\n<style>\n  :root {\n    --bg: #0b0f19;\n    --panel: #141b2c;\n    --panel-alt: #101625;\n    --panel-border: #232c42;\n    --text: #eaeefb;\n    --text-dim: #8b93a7;\n    --gold: #f4c542;\n    --emerald: #4ade9b;\n    --red: #ff6b6b;\n    --accent: #5b8cff;\n    --purple: #b18cff;\n    --cyan: #43d9e0;\n\n    /* ★追加: データ可視化用の検証済みパレット(dataviz skillのcolor-formula.mdに準拠)\n       カテゴリカル8色は固定順で識別(系列/カテゴリ)専用、ステータス4色は状態専用、\n       シーケンシャル/ダイバージングは大小・極性の表現専用。色の役割を混同しないこと。 */\n    --cat-1: #3987e5; /* blue */\n    --cat-2: #d95926; /* orange */\n    --cat-3: #199e70; /* aqua */\n    --cat-4: #c98500; /* yellow */\n    --cat-5: #d55181; /* magenta */\n    --cat-6: #008300; /* green */\n    --cat-7: #9085e9; /* violet */\n    --cat-8: #e66767; /* red */\n    --status-good: #0ca30c;\n    --status-warning: #fab219;\n    --status-serious: #ec835a;\n    --status-critical: #d03b3b;\n    --seq-100: #cde2fb;\n    --seq-400: #3987e5;\n    --seq-700: #0d366b;\n    --div-neg: #3987e5;  /* 基準値より安い(マイナス側の極) */\n    --div-pos: #e66767;  /* 基準値より高い(プラス側の極) */\n    --div-mid: #383835;  /* 中立(基準値と同水準) */\n  }\n  * { box-sizing: border-box; }\n  ::-webkit-scrollbar { width: 10px; height: 10px; }\n  ::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 6px; }\n  ::-webkit-scrollbar-track { background: transparent; }\n  body {\n    margin: 0;\n    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;\n    background:\n      radial-gradient(circle at 15% -10%, #24304f66 0%, transparent 45%),\n      radial-gradient(circle at 100% 0%, #1a2c2266 0%, transparent 40%),\n      var(--bg);\n    color: var(--text);\n    min-height: 100vh;\n    padding: 32px 20px 60px;\n  }\n  .wrap { max-width: 1180px; margin: 0 auto; }\n  @keyframes fadeInUp {\n    from { opacity: 0; transform: translateY(10px); }\n    to { opacity: 1; transform: translateY(0); }\n  }\n  header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 12px;\n    margin-bottom: 24px;\n    animation: fadeInUp .4s ease both;\n  }\n  header h1 {\n    font-size: 25px;\n    margin: 0 0 6px;\n    letter-spacing: 0.3px;\n  }\n  header h1 span { color: var(--gold); }\n  .sub-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n  .event-badge {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    background: #1c2440;\n    border: 1px solid var(--panel-border);\n    color: var(--cyan);\n    font-size: 12px;\n    font-weight: 600;\n    padding: 5px 12px;\n    border-radius: 999px;\n  }\n  .event-badge::before { content: '●'; font-size: 8px; color: var(--cyan); }\n  #updated {\n    font-size: 12px;\n    color: var(--text-dim);\n    text-align: right;\n  }\n  #updated b { color: var(--emerald); }\n  #countdown { color: var(--text-dim); font-variant-numeric: tabular-nums; }\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));\n    gap: 14px;\n    margin-bottom: 18px;\n  }\n  .stat-card {\n    background: linear-gradient(160deg, var(--panel), var(--panel-alt));\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 16px 18px;\n    animation: fadeInUp .45s ease both;\n    transition: transform .15s ease, border-color .15s ease;\n  }\n  .stat-card:hover { transform: translateY(-2px); border-color: #34406a; }\n  .stat-card .label {\n    font-size: 11.5px;\n    color: var(--text-dim);\n    margin-bottom: 6px;\n    white-space: nowrap;\n  }\n  .stat-card .value {\n    font-size: 23px;\n    font-weight: 700;\n    font-variant-numeric: tabular-nums;\n  }\n  .stat-card.gold .value { color: var(--gold); }\n  .stat-card.emerald .value { color: var(--emerald); }\n  .stat-card.accent .value { color: var(--accent); }\n  .stat-card.red .value { color: var(--red); }\n  .stat-card.purple .value { color: var(--purple); }\n  .stat-card.cyan .value { color: var(--cyan); }\n  .stat-card.status-good .value { color: var(--status-good); }\n  .stat-card.status-warning .value { color: var(--status-warning); }\n  .stat-card.status-critical .value { color: var(--status-critical); }\n\n  /* ★追加: 「マーケット概況」「やること概況」向けの新規コンポーネント */\n  .subpanel {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    border-radius: 12px;\n    padding: 14px 16px;\n  }\n  .subpanel h3 {\n    font-size: 12.5px;\n    margin: 0 0 12px;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .rank-list { display: flex; flex-direction: column; gap: 9px; }\n  .rank-list-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }\n  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }\n  .rank-list-name { font-weight: 600; font-variant-numeric: tabular-nums; }\n  .rank-list-meta { margin-left: auto; color: var(--text-dim); font-size: 11.5px; text-align: right; white-space: nowrap; }\n  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }\n  .badge {\n    display: flex;\n    align-items: center;\n    gap: 7px;\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 8px;\n    padding: 7px 10px;\n    font-size: 12px;\n  }\n  .badge .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }\n  .badge-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }\n  .badge-trend { font-variant-numeric: tabular-nums; color: var(--text-dim); font-weight: 600; white-space: nowrap; }\n  .mini-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; }\n  .mini-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .merchant-refresh { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }\n  .merchant-refresh b { color: var(--text); font-variant-numeric: tabular-nums; }\n  .deal-grid { display: flex; flex-direction: column; gap: 10px; }\n  .deal-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; }\n  .deal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }\n  .deal-name { font-weight: 600; font-size: 13px; }\n  .deal-discount { color: var(--emerald); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n  .meter-track { height: 7px; border-radius: 4px; background: var(--seq-100); overflow: hidden; }\n  .meter-fill { height: 100%; background: var(--seq-400); border-radius: 4px; transition: width .4s ease; }\n  .deal-stock { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }\n  .hero-tile { text-align: center; padding: 4px 0 16px; }\n  .hero-tile .hero-value {\n    font-size: 40px;\n    font-weight: 700;\n    color: var(--gold);\n    line-height: 1.15;\n    /* ★重要: 大きな単独の数値は比例数字を使う(等幅のtabular-numsは大きい文字だと間延びして見える) */\n  }\n  .hero-tile .hero-label {\n    font-size: 12px;\n    color: var(--text-dim);\n    margin-top: 6px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .mini-stats { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--text-dim); }\n  .mini-stats b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }\n  .panel {\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 20px 22px;\n    margin-bottom: 16px;\n    animation: fadeInUp .5s ease both;\n  }\n  .panel-head {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 10px;\n    margin-bottom: 14px;\n  }\n  .panel h2 {\n    font-size: 14px;\n    margin: 0;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: 1px;\n  }\n  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }\n  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .chart-box { position: relative; width: 100%; height: 220px; }\n  .chart-box canvas { width: 100%; height: 100%; display: block; }\n  .alert-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7; }\n  .alert-box.ok { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--emerald); }\n  .alert-box.warn { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.4); color: #f87171; }\n  .alert-box ul { margin: 6px 0 0 18px; padding: 0; }\n  .alert-box .alert-time { color: var(--text-dim); font-size: 11px; margin-top: 6px; }\n  .bars-box { position: relative; width: 100%; height: 160px; }\n  .panels-2col {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 16px;\n  }\n  @media (max-width: 820px) {\n    .panels-2col { grid-template-columns: 1fr; }\n  }\n  .toolbar {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    flex-wrap: wrap;\n  }\n  .search-input {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    font-size: 13px;\n    padding: 7px 12px;\n    border-radius: 8px;\n    outline: none;\n    min-width: 160px;\n  }\n  .search-input:focus { border-color: var(--accent); }\n  table { width: 100%; border-collapse: collapse; font-size: 13px; }\n  thead th {\n    position: sticky;\n    top: 0;\n    background: var(--panel);\n    text-align: left;\n    color: var(--text-dim);\n    font-weight: 600;\n    font-size: 11.5px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n    padding: 8px 10px;\n    border-bottom: 1px solid var(--panel-border);\n    cursor: pointer;\n    user-select: none;\n    white-space: nowrap;\n  }\n  thead th:hover { color: var(--text); }\n  thead th .arrow { opacity: .5; margin-left: 3px; font-size: 10px; }\n  tbody td {\n    padding: 8px 10px;\n    border-bottom: 1px solid #1c2438;\n    vertical-align: middle;\n  }\n  tbody tr { transition: background .12s ease; }\n  tbody tr:hover { background: #1a2136; }\n  tbody tr:nth-child(even) { background: #121a2b55; }\n  tbody tr:nth-child(even):hover { background: #1a2136; }\n  .rank-cell { width: 34px; font-weight: 700; color: var(--text-dim); }\n  .medal { font-size: 14px; }\n  .name-cell { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .bar-cell { min-width: 90px; }\n  .bar-track { height: 8px; background: #1c2338; border-radius: 5px; overflow: hidden; }\n  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--emerald)); border-radius: 5px; transition: width .4s ease; }\n  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; white-space: nowrap; }\n  .score-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--cyan); white-space: nowrap; }\n  .pagination {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    margin-top: 12px;\n    font-size: 12px;\n    color: var(--text-dim);\n  }\n  .pagination button {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    padding: 5px 12px;\n    border-radius: 7px;\n    cursor: pointer;\n    font-size: 12px;\n  }\n  .pagination button:disabled { opacity: .35; cursor: default; }\n  .pagination button:not(:disabled):hover { border-color: var(--accent); }\n  .empty { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }\n  footer {\n    text-align: center;\n    color: var(--text-dim);\n    font-size: 12px;\n    margin-top: 8px;\n  }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <header>\n      <div>\n        <h1>\ud83d\udcb0 <span>MinecraftBank</span> 経済ダッシュボード</h1><a href=\"/economy.html\" style=\"color:#5b8cff;margin-left:12px;font-size:14px\">\ud83d\udcc8 経済マーケット(税・お金の流れ・全資源チャート) →</a>\n        <div class=\"sub-row\">\n          <div class=\"event-badge\" id=\"eventBadge\">通常</div>\n        </div>\n      </div>\n      <div id=\"updated\">最終更新: <b id=\"updatedAt\">-</b><br><span id=\"countdown\"></span></div>\n    </header>\n\n    <div class=\"grid\" id=\"statGrid\">\n      <div class=\"stat-card gold\">\n        <div class=\"label\">国庫残高</div>\n        <div class=\"value\" id=\"treasury\">-</div>\n      </div>\n      <div class=\"stat-card red\">\n        <div class=\"label\">政府債務合計</div>\n        <div class=\"value\" id=\"totalGovDebt\">-</div>\n      </div>\n      <div class=\"stat-card gold\">\n        <div class=\"label\">今週の取引量</div>\n        <div class=\"value\" id=\"weeklyTrade\">-</div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>異常検知</h2>\n      </div>\n      <div class=\"alert-box ok\" id=\"selfcheckBox\">確認中...</div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>国庫残高の推移</h2>\n      </div>\n      <div class=\"chart-box\"><canvas id=\"treasuryChart\"></canvas></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>資産ランキング</h2>\n        <div class=\"toolbar\">\n          <input class=\"search-input\" id=\"lbSearch\" type=\"text\" placeholder=\"プレイヤー名で検索...\">\n        </div>\n      </div>\n      <div style=\"overflow-x:auto\">\n        <table>\n          <thead>\n            <tr>\n              <th data-key=\"rank\">#<span class=\"arrow\"></span></th>\n              <th data-key=\"name\">プレイヤー<span class=\"arrow\"></span></th>\n              <th data-key=\"credit_score\">信用スコア<span class=\"arrow\"></span></th>\n              <th data-key=\"total_assets\">総資産<span class=\"arrow\"></span></th>\n            </tr>\n          </thead>\n          <tbody id=\"lbBody\"></tbody>\n        </table>\n      </div>\n      <div id=\"lbEmpty\" class=\"empty\" style=\"display:none\">データがありません</div>\n      <div class=\"pagination\">\n        <span id=\"lbPageInfo\"></span>\n        <button id=\"lbPrev\">← 前へ</button>\n        <button id=\"lbNext\">次へ →</button>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83d\uded2 マーケット概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"marketStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83d\udcc8 世界株式市場 - 保有株数トップ5</h3>\n          <div class=\"rank-list\" id=\"worldStockTopList\"></div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83e\uddf3 巡回商人</h3>\n          <div id=\"merchantStatus\"></div>\n        </div>\n      </div>\n\n      <div class=\"subpanel\" style=\"margin-top:16px\">\n        <h3>⛏ 資源相場ショップ - 基準価格との乖離</h3>\n        <div class=\"mini-legend\">\n          <span><span class=\"dot\" style=\"background:var(--div-neg)\"></span>基準より安い</span>\n          <span><span class=\"dot\" style=\"background:var(--div-mid)\"></span>横ばい</span>\n          <span><span class=\"dot\" style=\"background:var(--div-pos)\"></span>基準より高い</span>\n        </div>\n        <div class=\"badge-grid\" id=\"resourceBadgeGrid\"></div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83c\udfaf やること概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"questStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83c\udf9f 宝くじ</h3>\n          <div class=\"hero-tile\">\n            <div class=\"hero-value\" id=\"lotteryPool\">-</div>\n            <div class=\"hero-label\">次回抽選の賞金プール</div>\n          </div>\n          <div class=\"mini-stats\">\n            <div>次回抽選まで: <b id=\"lotteryCountdown\">-</b></div>\n            <div>販売チケット数: <b id=\"lotteryTickets\">-</b></div>\n            <div>前回の当せん: <b id=\"lotteryLastWinner\">-</b></div>\n          </div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83d\udce6 倉庫レンタル / \ud83d\udcb3 分割払い / ⛏ 埋蔵金</h3>\n          <div class=\"grid\" id=\"miscStatGrid\"></div>\n        </div>\n      </div>\n    </div>\n\n    <footer>10秒ごとに自動更新されます</footer>\n  </div>\n\n  <script>\n    const PAGE_SIZE = 10;\n    let lastData = null;\n    const state = {\n      lb: { sortKey: 'rank', sortDir: 1, page: 1, search: '' }\n    };\n\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    function fmtNum(n) { return Math.round(n).toLocaleString('ja-JP'); }\n    function medal(rank) {\n      if (rank === 1) return '\ud83e\udd47';\n      if (rank === 2) return '\ud83e\udd48';\n      if (rank === 3) return '\ud83e\udd49';\n      return rank;\n    }\n\n    // ★追加: カテゴリカルパレット(固定8色・固定順。系列/カテゴリの識別専用。ステータス色とは混同しないこと)\n    const CAT_COLORS = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];\n\n    // ★追加: ダイバージング配色(青⇔グレー⇔赤)。基準値からの乖離%を±30%でクランプして線形補間する。\n    function divergingColor(pct) {\n      const clamped = Math.max(-30, Math.min(30, pct || 0));\n      const t = clamped / 30; // -1..1\n      const neg = [0x39, 0x87, 0xe5];  // --cat-1 / --div-neg (blue)\n      const mid = [0x38, 0x38, 0x35];  // --div-mid (neutral gray)\n      const pos = [0xe6, 0x67, 0x67];  // --cat-8 / --div-pos (red)\n      const from = t < 0 ? neg : pos;\n      const amt = Math.abs(t);\n      const rgb = mid.map((m, i) => Math.round(m + (from[i] - m) * amt));\n      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;\n    }\n\n    // ★追加: 資源相場ショップ/巡回商人の素材名 日本語表示(未登録の素材は整形して表示)\n    const MATERIAL_JA = {\n      COAL: '石炭', IRON_INGOT: '鉄インゴット', GOLD_INGOT: '金インゴット', COPPER_INGOT: '銅インゴット',\n      REDSTONE: 'レッドストーン', LAPIS_LAZULI: 'ラピスラズリ', DIAMOND: 'ダイヤモンド', EMERALD: 'エメラルド',\n      NETHERITE_SCRAP: 'ネザライトの欠片', WHEAT: '小麦', CARROT: 'ニンジン', POTATO: 'ジャガイモ',\n      BEETROOT: 'ビートルート', MELON_SLICE: 'スイカ', PUMPKIN: 'カボチャ', SUGAR_CANE: 'サトウキビ',\n      NETHER_WART: 'ネザーウォート', COCOA_BEANS: 'カカオ豆', ROTTEN_FLESH: '腐った肉', BONE: '骨',\n      STRING: '糸', GUNPOWDER: '火薬', SPIDER_EYE: 'クモの目', SLIME_BALL: 'スライムボール',\n      ENDER_PEARL: 'エンダーパール', BLAZE_ROD: 'ブレイズロッド', GHAST_TEAR: 'ガストの涙',\n      OAK_LOG: 'オークの原木', SPRUCE_LOG: 'トウヒの原木', BIRCH_LOG: 'シラカバの原木', JUNGLE_LOG: 'ジャングルの原木',\n      ACACIA_LOG: 'アカシアの原木', DARK_OAK_LOG: 'ダークオークの原木', MANGROVE_LOG: 'マングローブの原木', CHERRY_LOG: 'サクラの原木',\n      ELYTRA: 'エリトラ', TOTEM_OF_UNDYING: '不死のトーテム', NETHERITE_INGOT: 'ネザライトインゴット',\n      NETHERITE_BLOCK: 'ネザライトブロック', ENCHANTED_GOLDEN_APPLE: 'エンチャントされた金のリンゴ',\n      SADDLE: 'サドル', NAME_TAG: '名札', SHULKER_BOX: 'シュルカーボックス', TRIDENT: 'トライデント',\n      NETHER_STAR: 'ネザースター', DRAGON_EGG: 'ドラゴンの卵', BEACON: 'ビーコン', DIAMOND_BLOCK: 'ダイヤモンドブロック',\n      EMERALD_BLOCK: 'エメラルドブロック', MUSIC_DISC_PIGSTEP: 'レコード(Pigstep)', MUSIC_DISC_OTHERSIDE: 'レコード(Otherside)',\n      HEART_OF_THE_SEA: '海の心', CONDUIT: 'コンジット', END_CRYSTAL: 'エンドクリスタル', GOLDEN_CARROT: '金のニンジン'\n    };\n    function materialLabel(name) {\n      if (MATERIAL_JA[name]) return MATERIAL_JA[name];\n      return String(name).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n    }\n\n    // ★追加: 残りミリ秒を「◯日◯時間」「◯時間◯分」「◯分」形式に整形\n    function fmtDuration(ms) {\n      if (!ms || ms <= 0) return 'まもなく';\n      const totalMin = Math.floor(ms / 60000);\n      const d = Math.floor(totalMin / 1440);\n      const h = Math.floor((totalMin % 1440) / 60);\n      const m = totalMin % 60;\n      if (d > 0) return d + '日' + h + '時間';\n      if (h > 0) return h + '時間' + m + '分';\n      return m + '分';\n    }\n\n    function sortRows(rows, key, dir) {\n      return [...rows].sort((a, b) => {\n        const av = a[key], bv = b[key];\n        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * dir;\n        return ((av ?? 0) - (bv ?? 0)) * dir;\n      });\n    }\n\n    function bindSortableHeaders(tableSelector, sortState, renderFn) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        th.addEventListener('click', () => {\n          const key = th.getAttribute('data-key');\n          if (sortState.sortKey === key) {\n            sortState.sortDir *= -1;\n          } else {\n            sortState.sortKey = key;\n            sortState.sortDir = 1;\n          }\n          sortState.page = 1;\n          renderFn();\n        });\n      });\n    }\n\n    function updateHeaderArrows(tableSelector, sortState) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        const arrow = th.querySelector('.arrow');\n        if (th.getAttribute('data-key') === sortState.sortKey) {\n          arrow.textContent = sortState.sortDir === 1 ? '▲' : '▼';\n        } else {\n          arrow.textContent = '';\n        }\n      });\n    }\n\n    function drawLineChart(canvas, series, labels) {\n      if (!canvas) return;\n      const dpr = window.devicePixelRatio || 1;\n      const rect = canvas.parentElement.getBoundingClientRect();\n      const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);\n      canvas.width = w * dpr; canvas.height = h * dpr;\n      const ctx = canvas.getContext('2d');\n      ctx.scale(dpr, dpr);\n      ctx.clearRect(0, 0, w, h);\n\n      const padL = 54, padR = 12, padT = 12, padB = 24;\n      const plotW = w - padL - padR, plotH = h - padT - padB;\n\n      const allVals = series.flatMap(s => s.data);\n      if (allVals.length === 0) {\n        ctx.fillStyle = '#8b93a7';\n        ctx.font = '12px sans-serif';\n        ctx.fillText('データが蓄積されるとここに表示されます', padL, h / 2);\n        return;\n      }\n      let min = Math.min(...allVals), max = Math.max(...allVals);\n      if (min === max) { min -= 1; max += 1; }\n      const pad = (max - min) * 0.1;\n      min -= pad; max += pad;\n\n      ctx.strokeStyle = '#1f2740';\n      ctx.lineWidth = 1;\n      ctx.font = '10.5px sans-serif';\n      ctx.fillStyle = '#8b93a7';\n      const gridLines = 4;\n      for (let i = 0; i <= gridLines; i++) {\n        const y = padT + (plotH / gridLines) * i;\n        ctx.beginPath();\n        ctx.moveTo(padL, y);\n        ctx.lineTo(w - padR, y);\n        ctx.stroke();\n        const val = max - ((max - min) / gridLines) * i;\n        ctx.fillText(Math.round(val).toLocaleString('ja-JP'), 2, y + 3);\n      }\n\n      const n = Math.max(...series.map(s => s.data.length), 2);\n      series.forEach(s => {\n        if (s.data.length < 2) return;\n        ctx.beginPath();\n        s.data.forEach((v, i) => {\n          const x = padL + (i / (n - 1)) * plotW;\n          const y = padT + plotH - ((v - min) / (max - min)) * plotH;\n          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);\n        });\n        ctx.strokeStyle = s.color;\n        ctx.lineWidth = 2;\n        ctx.lineJoin = 'round';\n        ctx.stroke();\n      });\n\n      if (labels && labels.length >= 2) {\n        ctx.fillStyle = '#8b93a7';\n        const first = new Date(labels[0]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        const last = new Date(labels[labels.length - 1]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        ctx.fillText(first, padL, h - 6);\n        ctx.fillText(last, w - padR - 34, h - 6);\n      }\n    }\n\n    function renderLeaderboard() {\n      if (!lastData) return;\n      let rows = lastData.leaderboard || [];\n      if (state.lb.search) {\n        const q = state.lb.search.toLowerCase();\n        rows = rows.filter(r => r.name.toLowerCase().includes(q));\n      }\n      rows = sortRows(rows, state.lb.sortKey, state.lb.sortDir);\n      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));\n      state.lb.page = Math.min(state.lb.page, totalPages);\n      const pageRows = rows.slice((state.lb.page - 1) * PAGE_SIZE, state.lb.page * PAGE_SIZE);\n      const maxAsset = Math.max(1, ...rows.map(r => r.total_assets));\n\n      const body = document.getElementById('lbBody');\n      document.getElementById('lbEmpty').style.display = rows.length === 0 ? 'block' : 'none';\n      body.innerHTML = pageRows.map(p => `\n        <tr>\n          <td class=\"rank-cell\"><span class=\"medal\">${medal(p.rank)}</span></td>\n          <td class=\"name-cell\" title=\"${esc(p.name)}\">${esc(p.name)}</td>\n          <td class=\"score-cell\">${p.credit_score}</td>\n          <td class=\"amount-cell\">\n            <div style=\"display:flex;align-items:center;gap:8px;justify-content:flex-end\">\n              <div class=\"bar-track bar-cell\"><div class=\"bar-fill\" style=\"width:${Math.max(4, p.total_assets / maxAsset * 100)}%\"></div></div>\n              <span>${fmtYen(p.total_assets)}</span>\n            </div>\n          </td>\n        </tr>\n      `).join('');\n\n      document.getElementById('lbPageInfo').textContent = rows.length === 0 ? '' : `${state.lb.page} / ${totalPages} ページ (全${rows.length}件)`;\n      document.getElementById('lbPrev').disabled = state.lb.page <= 1;\n      document.getElementById('lbNext').disabled = state.lb.page >= totalPages;\n      updateHeaderArrows('#lbBody', state.lb);\n      updateHeaderArrows('table:has(#lbBody)', state.lb);\n    }\n\n    function renderCharts() {\n      if (!lastData) return;\n      const hist = lastData.history || { labels: [], treasury: [] };\n      drawLineChart(document.getElementById('treasuryChart'),\n        [{ label: '国庫残高', color: '#f4c542', data: hist.treasury || [] }], hist.labels);\n    }\n\n    // ★追加: 「\ud83d\uded2 マーケット概況」セクションの描画(世界株式市場/資源相場ショップ/巡回商人/オークション)\n    function renderMarket() {\n      if (!lastData) return;\n      const ws = lastData.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };\n      const merchant = lastData.merchant || { refresh_at: 0, deals: [] };\n      const auction = lastData.auction || { active_listings: 0 };\n      const resources = lastData.resource_shop || [];\n\n      document.getElementById('marketStatGrid').innerHTML = `\n        <div class=\"stat-card accent\"><div class=\"label\">株式投資家数</div><div class=\"value\">${fmtNum(ws.active_investors)}人</div></div>\n        <div class=\"stat-card cyan\"><div class=\"label\">保有銘柄数(種類)</div><div class=\"value\">${fmtNum(ws.distinct_symbols)}</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">株式評価額合計</div><div class=\"value\">${fmtYen(ws.total_portfolio_value)}</div></div>\n        <div class=\"stat-card purple\"><div class=\"label\">オークション出品中</div><div class=\"value\">${fmtNum(auction.active_listings)}件</div></div>\n      `;\n\n      const topList = document.getElementById('worldStockTopList');\n      const topSymbols = ws.top_symbols || [];\n      topList.innerHTML = topSymbols.length === 0 ? '<div class=\"empty\">保有データがありません</div>' :\n        topSymbols.map((s, i) => `\n          <div class=\"rank-list-item\">\n            <span class=\"cat-dot\" style=\"background:${CAT_COLORS[i % CAT_COLORS.length]}\"></span>\n            <span class=\"rank-list-name\">${s.symbol}</span>\n            <span class=\"rank-list-meta\">${fmtNum(s.holders)}人保有 ・ ${fmtNum(s.total_shares)}株</span>\n          </div>\n        `).join('');\n\n      const remainMs = Math.max(0, (merchant.refresh_at || 0) - Date.now());\n      const deals = merchant.deals || [];\n      const dealsHtml = deals.length === 0 ? '<div class=\"empty\">現在の品揃えはありません</div>' :\n        deals.map(d => {\n          const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;\n          return `\n            <div class=\"deal-card\">\n              <div class=\"deal-card-head\">\n                <span class=\"deal-name\">${materialLabel(d.material)}</span>\n                <span class=\"deal-discount\">-${Math.round(d.discount_percent)}%</span>\n              </div>\n              <div class=\"meter-track\"><div class=\"meter-fill\" style=\"width:${(ratio * 100).toFixed(0)}%\"></div></div>\n              <div class=\"deal-stock\">残り ${fmtNum(d.stock_remaining)} / ${fmtNum(d.stock_total)}</div>\n            </div>\n          `;\n        }).join('');\n      document.getElementById('merchantStatus').innerHTML = `\n        <div class=\"merchant-refresh\">次回入荷まで: <b>${fmtDuration(remainMs)}</b></div>\n        <div class=\"deal-grid\">${dealsHtml}</div>\n      `;\n\n      document.getElementById('resourceBadgeGrid').innerHTML = resources.map(r => {\n        const color = divergingColor(r.trend_percent);\n        const sign = r.trend_percent > 0 ? '+' : '';\n        return `\n          <div class=\"badge\" title=\"基準価格 ${fmtNum(r.base_price)}円/個\">\n            <span class=\"dot\" style=\"background:${color}\"></span>\n            <span class=\"badge-name\">${materialLabel(r.material)}</span>\n            <span class=\"badge-trend\">${sign}${r.trend_percent.toFixed(1)}%</span>\n          </div>\n        `;\n      }).join('');\n    }\n\n    // ★追加: 「\ud83c\udfaf やること概況」セクションの描画(依頼ボード/宝くじ/倉庫レンタル/分割払い/埋蔵金)\n    function renderQuestsPanel() {\n      if (!lastData) return;\n      const q = lastData.quests || { available: 0, in_progress: 0, cooldown: 0, system_posted: 0, player_posted: 0 };\n      document.getElementById('questStatGrid').innerHTML = `\n        <div class=\"stat-card status-good\"><div class=\"label\">募集中</div><div class=\"value\">${fmtNum(q.available)}件</div></div>\n        <div class=\"stat-card accent\"><div class=\"label\">受注中</div><div class=\"value\">${fmtNum(q.in_progress)}件</div></div>\n        <div class=\"stat-card status-warning\"><div class=\"label\">クールダウン中</div><div class=\"value\">${fmtNum(q.cooldown)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">運営投稿</div><div class=\"value\">${fmtNum(q.system_posted)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">プレイヤー投稿</div><div class=\"value\">${fmtNum(q.player_posted)}件</div></div>\n      `;\n\n      const lottery = lastData.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };\n      document.getElementById('lotteryPool').textContent = fmtYen(lottery.pool);\n      document.getElementById('lotteryCountdown').textContent = fmtDuration((lottery.draw_at || 0) - Date.now());\n      document.getElementById('lotteryTickets').textContent = fmtNum(lottery.total_tickets_sold) + '枚';\n      document.getElementById('lotteryLastWinner').textContent = lottery.last_winner_name +\n        (lottery.last_winner_amount > 0 ? ` (${fmtYen(lottery.last_winner_amount)})` : '');\n\n      const treasure = lastData.treasure || { active: false, reward: 0 };\n      const storage = lastData.storage || { active_renters: 0 };\n      const installments = lastData.installments || { active_plans: 0, total_outstanding: 0 };\n      document.getElementById('miscStatGrid').innerHTML = `\n        <div class=\"stat-card ${treasure.active ? 'status-good' : ''}\">\n          <div class=\"label\">埋蔵金イベント</div>\n          <div class=\"value\">${treasure.active ? ('発生中 (' + fmtYen(treasure.reward) + ')') : '待機中'}</div>\n        </div>\n        <div class=\"stat-card\"><div class=\"label\">倉庫レンタル契約数</div><div class=\"value\">${fmtNum(storage.active_renters)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">分割払いプラン数</div><div class=\"value\">${fmtNum(installments.active_plans)}件</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">分割払い未払い合計</div><div class=\"value\">${fmtYen(installments.total_outstanding)}</div></div>\n      `;\n    }\n\n    function renderSelfCheck() {\n      const sc = (lastData && lastData.selfcheck) || { checked_at: 0, issues: [] };\n      const box = document.getElementById('selfcheckBox');\n      const issues = sc.issues || [];\n      const timeStr = sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '未実行';\n      if (issues.length === 0) {\n        box.className = 'alert-box ok';\n        box.innerHTML = '✅ 異常は検出されていません。<div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      } else {\n        box.className = 'alert-box warn';\n        const items = issues.map(i => '<li>' + String(i).replace(/</g, '&lt;') + '</li>').join('');\n        box.innerHTML = '⚠️ ' + issues.length + ' 件の不整合を検出し、自動修復しました。<ul>' + items + '</ul><div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      }\n    }\n\n    function renderAll() {\n      renderLeaderboard();\n      renderCharts();\n      renderMarket();\n      renderQuestsPanel();\n      renderSelfCheck();\n    }\n\n    let nextRefreshAt = Date.now() + 10000;\n    async function refresh() {\n      try {\n        const res = await fetch('/dashboard.json', { cache: 'no-store' });\n        const data = await res.json();\n        lastData = data;\n        document.getElementById('treasury').textContent = fmtYen(data.treasury || 0);\n        document.getElementById('totalGovDebt').textContent = fmtYen(data.total_gov_debt || 0);\n        const weekly = data.weekly || {};\n        document.getElementById('weeklyTrade').textContent = fmtYen(weekly.trade_volume || 0);\n        document.getElementById('eventBadge').textContent = data.active_event || '通常';\n        document.getElementById('updatedAt').textContent = new Date(data.generated_at || Date.now()).toLocaleString('ja-JP');\n        renderAll();\n        nextRefreshAt = Date.now() + 10000;\n      } catch (e) {\n        document.getElementById('updatedAt').textContent = '取得エラー';\n      }\n    }\n\n    document.getElementById('lbSearch').addEventListener('input', e => { state.lb.search = e.target.value; state.lb.page = 1; renderLeaderboard(); });\n    document.getElementById('lbPrev').addEventListener('click', () => { state.lb.page--; renderLeaderboard(); });\n    document.getElementById('lbNext').addEventListener('click', () => { state.lb.page++; renderLeaderboard(); });\n    bindSortableHeaders('table:has(#lbBody)', state.lb, renderLeaderboard);\n\n    window.addEventListener('resize', renderCharts);\n    setInterval(() => {\n      const secLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));\n      document.getElementById('countdown').textContent = secLeft + '秒後に更新';\n    }, 1000);\n\n    refresh();\n    setInterval(refresh, 10000);\n  </script>\n</body>\n</html>\n";
    private static final int RESOURCE_MAX_TRADE_QTY = 2304;
    private static final LinkedHashMap<String, String> DEFAULT_MESSAGES = new LinkedHashMap<>();
@@ -728,6 +735,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       } else {
          this.lenderKey = new NamespacedKey(this, "lender_uuid");
          this.loanSlotKey = new NamespacedKey(this, "loan_slot");
+         this.loanPlanKey = new NamespacedKey(this, "loan_plan");
          this.auctionIdKey = new NamespacedKey(this, "auction_id");
          this.hubItemKey = new NamespacedKey(this, "economy_hub_item");
          this.adminTargetKey = new NamespacedKey(this, "admin_target");
@@ -780,6 +788,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             }
          } catch (SQLException ex) {
             this.getLogger().severe("データベース(" + this.cfgStorageType + ")の初期化に失敗しました。プラグインを停止します: " + ex.getMessage());
+            if (this.db != null) {
+               this.db.close();
+               this.db = null;
+            }
+
             this.getServer().getPluginManager().disablePlugin(this);
             return;
          }
@@ -792,6 +805,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (this.lotteryDrawAt <= 0L) {
                this.lotteryDrawAt = System.currentTimeMillis() + this.cfgLotteryDrawIntervalHours * 3600000L;
             }
+         }
+
+         if (this.db != null && this.db.isSyncEnabled()) {
+            this.initCounterSync();
          }
 
          boolean startupLeader = this.db == null || !this.db.isSyncEnabled() || this.cfgSyncLeader;
@@ -831,7 +848,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkCollateralDeadlines), 1200L, 1200L);
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::processStandingTransfers), 1200L, 1200L);
          if (this.db != null && this.db.isSyncEnabled()) {
-            this.initCounterSync();
             long syncTicks = this.cfgSyncIntervalSeconds * 20L;
             Bukkit.getScheduler().runTaskTimer(this, this::runSyncTick, syncTicks, syncTicks);
          }
@@ -1190,8 +1206,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgVipGoldScore = c.getInt("economy.vip-gold-score", this.cfgVipGoldScore);
       this.cfgVipPlatinumScore = c.getInt("economy.vip-platinum-score", this.cfgVipPlatinumScore);
       this.cfgVipFeeDiscountSilver = c.getDouble("economy.vip-fee-discount-silver", this.cfgVipFeeDiscountSilver);
+      this.cfgVipFeeDiscountSilver = Math.max(0.0, Math.min(0.9, this.cfgVipFeeDiscountSilver));
       this.cfgVipFeeDiscountGold = c.getDouble("economy.vip-fee-discount-gold", this.cfgVipFeeDiscountGold);
+      this.cfgVipFeeDiscountGold = Math.max(0.0, Math.min(0.9, this.cfgVipFeeDiscountGold));
       this.cfgVipFeeDiscountPlatinum = c.getDouble("economy.vip-fee-discount-platinum", this.cfgVipFeeDiscountPlatinum);
+      this.cfgVipFeeDiscountPlatinum = Math.max(0.0, Math.min(0.9, this.cfgVipFeeDiscountPlatinum));
       this.cfgVipStipendEnabled = c.getBoolean("economy.vip-stipend-enabled", this.cfgVipStipendEnabled);
       this.cfgVipStipendSilver = c.getDouble("economy.vip-stipend-silver", this.cfgVipStipendSilver);
       this.cfgVipStipendGold = c.getDouble("economy.vip-stipend-gold", this.cfgVipStipendGold);
@@ -1261,6 +1280,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgWebDashboardExportIntervalMinutes = c.getLong("webdashboard.export-interval-minutes", this.cfgWebDashboardExportIntervalMinutes);
       this.cfgWebDashboardPublicUrl = c.getString("webdashboard.public-url", this.cfgWebDashboardPublicUrl);
       this.cfgAuctionMinIncrement = c.getDouble("economy.auction-min-increment", this.cfgAuctionMinIncrement);
+      this.cfgAuctionMinIncrement = Math.max(1.0, this.cfgAuctionMinIncrement);
       this.cfgAuctionFeeRate = c.getDouble("economy.auction-fee-rate", this.cfgAuctionFeeRate);
       this.cfgAuctionDurationMs = c.getLong("economy.auction-duration-minutes", this.cfgAuctionDurationMs / 60000L) * 60000L;
       this.cfgAuctionMaxListingsPerPlayer = c.getInt("economy.auction-max-listings-per-player", this.cfgAuctionMaxListingsPerPlayer);
@@ -1281,8 +1301,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgRandomEventChance = c.getDouble("economy.random-event-chance", this.cfgRandomEventChance);
       this.cfgRandomEventIntervalMinutes = c.getInt("economy.random-event-interval-minutes", this.cfgRandomEventIntervalMinutes);
       this.cfgLotteryTicketPrice = c.getDouble("economy.lottery-ticket-price", this.cfgLotteryTicketPrice);
+      this.cfgLotteryTicketPrice = Math.max(1.0, this.cfgLotteryTicketPrice);
       this.cfgLotteryDrawIntervalHours = c.getInt("economy.lottery-draw-interval-hours", this.cfgLotteryDrawIntervalHours);
       this.cfgLotteryPayoutRate = c.getDouble("economy.lottery-payout-rate", this.cfgLotteryPayoutRate);
+      this.cfgLotteryPayoutRate = Math.max(0.0, Math.min(1.0, this.cfgLotteryPayoutRate));
       this.cfgCitizenDividendEnabled = c.getBoolean("economy.citizen-dividend-enabled", this.cfgCitizenDividendEnabled);
       this.cfgCitizenDividendAmount = c.getDouble("economy.citizen-dividend-amount", this.cfgCitizenDividendAmount);
       this.cfgCitizenDividendMinTreasury = c.getDouble("economy.citizen-dividend-min-treasury", this.cfgCitizenDividendMinTreasury);
@@ -1313,7 +1335,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          if (!this.govDebt.containsKey(u) || this.govDebt.getOrDefault(u, 0.0) <= 0.0) {
             this.govDebtDueTime.remove(u);
          } else if (now > due) {
-            double debt = this.govDebt.getOrDefault(u, 0.0);
+            double debt = this.collectOverdueGovDebt(u);
+            if (debt <= 0.0) {
+               continue;
+            }
+
             double ceiling = this.getGovLoanCap(this.getScore(u)) * this.cfgGovLoanPenaltyCapMultiplier;
             double penalty = Math.max(0.0, Math.min(debt * 0.05, ceiling - debt));
             this.govDebt.put(u, debt + penalty);
@@ -1448,6 +1474,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void placeAuctionBid(OfflinePlayer p, UUID auctionId, double amount) {
       UUID u = p.getUniqueId();
       Player online = p instanceof Player pl && pl.isOnline() ? pl : null;
+      if (System.currentTimeMillis() >= this.auctionEndTime.getOrDefault(auctionId, Long.MAX_VALUE)) {
+         if (online != null) {
+            this.msgKey(online, "auction.listing-ended");
+            this.errorSound(online);
+         }
+
+         this.checkAuctionEnd();
+         return;
+      }
+
       double pocket = econ.getBalance(p);
       UUID seller = this.auctionSeller.get(auctionId);
       ItemStack auctionedItem = this.auctionItem.get(auctionId);
@@ -1700,17 +1736,26 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             case ENCHANTED_BOOK -> 0.0;
             default -> 0.0;
          } * item.getAmount();
+         double enchantBonus = 0.0;
          if (item.getItemMeta() instanceof EnchantmentStorageMeta esm) {
             for (Entry<Enchantment, Integer> ench : esm.getStoredEnchants().entrySet()) {
-               total += ench.getValue().intValue() * 800.0;
+               if (!ench.getKey().isCursed()) {
+                  enchantBonus += Math.min(ench.getValue().intValue(), ench.getKey().getMaxLevel()) * 300.0;
+               }
             }
+
+            enchantBonus = Math.min(enchantBonus, 2000.0);
+         } else if (item.getItemMeta() != null && item.getItemMeta().hasEnchants() && item.getType().getMaxDurability() > 0) {
+            for (Entry<Enchantment, Integer> ench : item.getItemMeta().getEnchants().entrySet()) {
+               if (!ench.getKey().isCursed()) {
+                  enchantBonus += Math.min(ench.getValue().intValue(), ench.getKey().getMaxLevel()) * 150.0;
+               }
+            }
+
+            enchantBonus = Math.min(enchantBonus, 3000.0);
          }
 
-         if (item.getItemMeta() != null && item.getItemMeta().hasEnchants()) {
-            for (Entry<Enchantment, Integer> ench : item.getItemMeta().getEnchants().entrySet()) {
-               total += ench.getValue().intValue() * 300.0;
-            }
-         }
+         total += enchantBonus;
 
          return total;
       } else {
@@ -1937,15 +1982,63 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    public void onDisable() {
-      this.saveData();
-      if (this.webDashboardServer != null) {
-         this.webDashboardServer.stop(0);
-         this.getLogger().info("[Webダッシュボード] HTTPサーバーを停止しました。");
+      try {
+         if (this.dataLoaded) {
+            this.flushCountersOnShutdown();
+            this.saveData();
+         } else if (this.db != null) {
+            this.getLogger().warning("[データ保護] データの読み込みが完了していないため、停止時の保存をスキップしました。");
+         }
+      } catch (Exception ex) {
+         this.getLogger().severe("[データ保護] 停止時の保存に失敗しました: " + ex);
+      } finally {
+         if (this.webDashboardServer != null) {
+            this.webDashboardServer.stop(0);
+            this.getLogger().info("[Webダッシュボード] HTTPサーバーを停止しました。");
+         }
+
+         this.getServer().getServicesManager().unregister(MinecraftBankAPI.class, this);
+         if (this.db != null) {
+            this.db.close();
+         }
+      }
+   }
+
+   private void flushCountersOnShutdown() {
+      if (this.db != null && this.db.isSyncEnabled() && this.syncedCounters != null) {
+         double[] now = this.counterValues();
+         double[] deltas = new double[now.length];
+         boolean any = false;
+
+         for (int i = 0; i < now.length; i++) {
+            deltas[i] = now[i] - this.syncedCounters[i];
+            any |= deltas[i] != 0.0;
+         }
+
+         if (any) {
+            try {
+               this.db.syncCountersAsync(SYNC_COUNTER_NAMES, now, deltas, false).get(10L, TimeUnit.SECONDS);
+            } catch (Exception ex) {
+               this.getLogger().warning("[サーバー間同期] 停止時の共有カウンター送信に失敗しました: " + ex.getMessage());
+            }
+         }
+      }
+   }
+
+   @EventHandler
+   public void onPlayerQuitBank(PlayerQuitEvent e) {
+      Player p = e.getPlayer();
+      UUID u = p.getUniqueId();
+      String pendingInput = this.awaitingChatInput.remove(u);
+      this.awaitingChatInputAt.remove(u);
+      if (pendingInput != null) {
+         this.returnAuctionDraftIfPricing(p, pendingInput);
       }
 
-      this.getServer().getServicesManager().unregister(MinecraftBankAPI.class, this);
-      if (this.db != null) {
-         this.db.close();
+      this.adminPendingAction.remove(u);
+      this.adminPendingActionAt.remove(u);
+      if (this.db != null && this.db.isSyncEnabled()) {
+         this.runSyncTick();
       }
    }
 
@@ -1977,6 +2070,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void migrateLegacyYamlDataToSqlite() {
       this.legacyImportLoadDataFromYaml();
+      this.dataLoaded = true;
       this.saveData();
       FileConfiguration c = this.getConfig();
 
@@ -3199,17 +3293,22 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       this.loadExtraFeatureData();
+      this.dataLoaded = true;
    }
 
    private void saveData() {
-      if (this.db != null) {
+      if (this.db != null && this.dataLoaded) {
          this.db.beginTransaction();
          boolean written = false;
 
          try {
             for (Entry<UUID, Inventory> entry : this.storageInventories.entrySet()) {
-               this.persistPlayerStorage(entry.getKey(), entry.getValue());
+               if (!entry.getValue().getViewers().isEmpty()) {
+                  this.persistPlayerStorage(entry.getKey(), entry.getValue());
+               }
             }
+
+            this.storageInventories.entrySet().removeIf(en -> en.getValue().getViewers().isEmpty());
 
             this.db.removeSection("storage_rent");
 
@@ -3725,6 +3824,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void grantDonationCreditScore(UUID u, double donationAmount) {
+      if (donationAmount < 1000.0) {
+         return;
+      }
+
       long now = System.currentTimeMillis();
       if (this.isDailyCounterResetDue(u, this.donationScoreResetAt, now)) {
          this.donationScoreToday.put(u, 0);
@@ -4155,7 +4258,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
       }
 
-      return total * this.economyMultiplier();
+      return total;
    }
 
    private void driftResourcePrices() {
@@ -4165,6 +4268,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             double floor = entry.getValue() * this.cfgResourcePriceFloorPercent;
             this.resourcePrices.put(mat, Math.max(floor, this.getResourcePrice(mat) * (1.0 - this.cfgResourceIdleDecayRate)));
          }
+
+         double cur = this.getResourcePrice(mat);
+         this.resourcePrices.put(mat, cur + (entry.getValue() - cur) * 0.03);
       }
 
       this.resourceBoughtSinceLastDrift.clear();
@@ -4255,7 +4361,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       UUID u = p.getUniqueId();
-      int have = this.countMaterialInInventory(p, mat);
+      int have = this.countPlainMaterial(p, mat);
       if (have < qty) {
          this.msgKey(p, "resourceshop.not-enough-items", "material", this.resourceDisplayName(mat), "have", String.valueOf(have), "need", String.valueOf(qty));
          this.errorSound(p);
@@ -4265,7 +4371,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             return;
          }
 
-         this.removeMaterialFromInventory(p, mat, qty);
+         this.removePlainMaterial(p, mat, qty);
          double salesTax = this.collectSalesTax(u, total);
          this.ecoDeposit(p, total - salesTax);
          this.resourceSoldToday.merge(u, total, Double::sum);
@@ -4327,6 +4433,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void buyLotteryTickets(Player p, int qty) {
       UUID u = p.getUniqueId();
+      if (!this.featureAllowed(p, "lottery")) {
+         return;
+      }
+
+      if (qty <= 0 || qty > 1000 || (long)this.lotteryTickets.getOrDefault(u, 0) + qty > 10000L) {
+         this.msgKey(p, "lottery.qty-limit", "max", "1000", "total", "10000");
+         this.errorSound(p);
+         return;
+      }
+
       double totalCost = this.cfgLotteryTicketPrice * qty;
       if (econ.getBalance(p) < totalCost) {
          this.msgKey(p, "lottery.funds-insufficient");
@@ -4364,6 +4480,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          } else {
             boolean jackpotBoosted = false;
             if (this.cfgLotteryJackpotBoostEnabled
+               && this.lotteryTickets.size() >= 3
+               && this.lotteryTickets.values().stream().mapToLong(Integer::longValue).sum() >= 20L
                && this.lotteryPool < this.cfgLotteryJackpotBoostThreshold
                && this.treasury >= this.cfgLotteryJackpotBoostAmount) {
                this.treasury = this.treasury - this.cfgLotteryJackpotBoostAmount;
@@ -4481,6 +4599,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       for (Entry<UUID, List<WorldStockAlert>> entry : new HashMap<>(this.worldStockAlerts).entrySet()) {
          UUID owner = entry.getKey();
+         if (this.db != null && this.db.isSyncEnabled() && Bukkit.getPlayer(owner) == null) {
+            continue;
+         }
+
          List<WorldStockAlert> alerts = entry.getValue();
          if (alerts != null && !alerts.isEmpty()) {
             for (WorldStockAlert alert : new ArrayList<>(alerts)) {
@@ -4604,6 +4726,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          String url = base + "/me.html?token=" + token;
          String newPassword = this.generateRandomPassword(10);
          this.webAdminPasswordHash.put(targetId, this.hashWebPassword(newPassword));
+         this.auditLog(sender.getName() + " が " + target.getName() + " のWeb用管理パスワードを発行");
+         this.sendDiscordWebhook("\ud83d\udee0️ 管理者 **" + sender.getName() + "** が **" + target.getName() + "** のWeb用管理パスワードを発行しました。");
+         Player targetOnline = Bukkit.getPlayer(targetId);
+         if (targetOnline != null) {
+            this.msgKey(targetOnline, "webpage.admin-password-issued", "admin", sender.getName());
+         }
+
          sender.sendMessage("=== " + target.getName() + " のWeb個人ページ ===");
          sender.sendMessage("URL: " + url);
          sender.sendMessage("裏パスワード(このコンソールログにしか表示されません。本人には知らされません): " + newPassword);
@@ -4886,12 +5015,18 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            int removed = this.cleanupOrphanedMerchants();
                            this.msgKey(p, "admin.merchant-cleanup", "count", String.valueOf(removed));
                            return true;
-                        } else if (args.length < 3) {
+                        } else if (args.length < 3 && List.of("give", "take", "setcredit", "setgovdebt", "reset").contains(adminSub)) {
                            this.msgKey(p, "admin.need-playername");
                            return true;
                         } else {
-                           OfflinePlayer target = Bukkit.getOfflinePlayer(args[2]);
-                           UUID tUuid = target.getUniqueId();
+                           boolean needsTarget = List.of("give", "take", "setcredit", "setgovdebt", "reset").contains(adminSub);
+                           OfflinePlayer target = needsTarget ? this.lookupKnownPlayer(args[2]) : null;
+                           if (needsTarget && target == null) {
+                              this.msgKey(p, "admin.player-not-found", "name", args[2]);
+                              return true;
+                           }
+
+                           UUID tUuid = target != null ? target.getUniqueId() : null;
                            if (adminSub.equals("give")) {
                               if (args.length < 4) {
                                  this.msgKey(p, "admin.usage-give");
@@ -4899,6 +5034,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               } else {
                                  try {
                                     double amount = parseFiniteDouble(args[3]);
+                                    if (amount <= 0.0) {
+                                       this.msgKey(p, "common.amount-must-be-positive");
+                                       return true;
+                                    }
+
                                     if (this.needsAdminConfirm(p, amount)) {
                                        this.requestAdminConfirm(
                                           p, "付与: " + target.getName() + " / " + this.fmtCur(amount), "meco admin give " + args[2] + " " + args[3], null
@@ -4906,7 +5046,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        return true;
                                     }
 
-                                    this.ecoDeposit(target, amount);
+                                    if (!this.ecoDeposit(target, amount).transactionSuccess()) {
+                                       this.msgKey(p, "admin.economy-failed");
+                                       return true;
+                                    }
                                     this.msgKey(p, "admin.give-success", "player", target.getName(), "amount", this.fmtCur(amount));
                                     this.addLog(tUuid, "[管理者操作] " + p.getName() + " から +" + this.fmtCur(amount));
                                     this.sendDiscordWebhook(
@@ -4925,6 +5068,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               } else {
                                  try {
                                     double amount = parseFiniteDouble(args[3]);
+                                    if (amount <= 0.0) {
+                                       this.msgKey(p, "common.amount-must-be-positive");
+                                       return true;
+                                    }
+
                                     if (this.needsAdminConfirm(p, amount)) {
                                        this.requestAdminConfirm(
                                           p, "没収: " + target.getName() + " / " + this.fmtCur(amount), "meco admin take " + args[2] + " " + args[3], null
@@ -4932,7 +5080,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        return true;
                                     }
 
-                                    this.ecoWithdraw(target, amount);
+                                    if (!this.ecoWithdraw(target, amount).transactionSuccess()) {
+                                       this.msgKey(p, "admin.economy-failed");
+                                       return true;
+                                    }
                                     this.msgKey(p, "admin.take-success", "player", target.getName(), "amount", this.fmtCur(amount));
                                     this.addLog(tUuid, "[管理者操作] " + p.getName() + " により -" + this.fmtCur(amount));
                                     this.sendDiscordWebhook(
@@ -5142,7 +5293,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
                            }
                         } else {
-                           Player target = Bukkit.getPlayer(args[1]);
+                           Player target = Bukkit.getPlayerExact(args[1]);
                            if (target == null) {
                               this.msgKey(p, "common.target-offline");
                               return true;
@@ -5280,7 +5431,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.msgKey(p, "guarantor.usage-request-arg");
                               return true;
                            } else {
-                              Player target = Bukkit.getPlayer(args[2]);
+                              Player target = Bukkit.getPlayerExact(args[2]);
                               if (target == null) {
                                  this.msgKey(p, "common.target-offline");
                                  return true;
@@ -5348,7 +5499,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                            return true;
                         } else {
-                           Player target = Bukkit.getPlayer(args[1]);
+                           Player target = Bukkit.getPlayerExact(args[1]);
                            if (target == null) {
                               this.msgKey(p, "common.target-offline");
                               return true;
@@ -5382,7 +5533,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     this.msgKey(p, this.findAnyRoleGroupAccount(u, args[2]) != null ? "group.not-owner" : "group.not-found");
                                     return true;
                                  } else {
-                                    Player target = Bukkit.getPlayer(args[3]);
+                                    Player target = Bukkit.getPlayerExact(args[3]);
                                     if (target == null) {
                                        this.msgKey(p, "common.target-offline");
                                        return true;
@@ -5522,7 +5673,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     this.msgKey(p, this.findMemberFund(u, args[2]) != null ? "fund.not-manager" : "fund.not-found");
                                     return true;
                                  } else {
-                                    Player target = Bukkit.getPlayer(args[3]);
+                                    Player target = Bukkit.getPlayerExact(args[3]);
                                     if (target == null) {
                                        this.msgKey(p, "common.target-offline");
                                        return true;
@@ -6075,7 +6226,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private boolean isValidAccountName(String name) {
-      return name.length() <= 24 && name.chars().noneMatch(c -> c == '<' || c == '>' || c == '\\' || Character.isISOControl(c));
+      return name.length() <= 24 && name.chars().noneMatch(c -> c == '<' || c == '>' || c == '\\' || c == '@' || Character.isWhitespace(c) || Character.isISOControl(c));
    }
 
    private boolean createGroupAccount(Player p, String name) {
@@ -6658,6 +6809,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openFundStockGUI(Player p, UUID fundId) {
+      if (!this.featureAllowed(p, "worldstock")) {
+         return;
+      }
+
       InvestmentFund fund = this.investmentFunds.get(fundId);
       UUID u = p.getUniqueId();
       if (fund != null && fund.manager.equals(u)) {
@@ -6937,6 +7092,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openTradeSelectGUI(Player p) {
+      if (!this.featureAllowed(p, "trade")) {
+         return;
+      }
+
       Inventory gui = Bukkit.createInventory(null, 54, this.tTradeSelect);
       int slot = 0;
 
@@ -7050,7 +7209,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Material.GOLD_NUGGET,
             "<gold><bold>\ud83d\udcb0 " + nameA + " の提示金額</bold></gold>",
             "<gray>現在:</gray> <yellow>" + this.fmtCur(session.moneyOfferedA) + "</yellow>",
-            "<yellow>クリックしてチャットに金額を入力</yellow>"
+            "<yellow>左クリック: +1,000 / 右クリック: +10,000 / シフト+クリック: 0に戻す</yellow>"
          )
       );
       inv.setItem(
@@ -7059,7 +7218,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Material.GOLD_NUGGET,
             "<gold><bold>\ud83d\udcb0 " + nameB + " の提示金額</bold></gold>",
             "<gray>現在:</gray> <yellow>" + this.fmtCur(session.moneyOfferedB) + "</yellow>",
-            "<yellow>クリックしてチャットに金額を入力</yellow>"
+            "<yellow>左クリック: +1,000 / 右クリック: +10,000 / シフト+クリック: 0に戻す</yellow>"
          )
       );
       inv.setItem(
@@ -7157,16 +7316,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      switch (rawSlot) {
                         case 20:
                            if (isA) {
-                              this.awaitChatInput(p.getUniqueId(), "trade_money");
-                              this.msgKey(p, "trade.money-prompt");
+                              this.adjustTradeMoney(p, session, true, e.getClick());
                            } else {
                               this.errorSound(p);
                            }
                            break;
                         case 24:
                            if (!isA) {
-                              this.awaitChatInput(p.getUniqueId(), "trade_money");
-                              this.msgKey(p, "trade.money-prompt");
+                              this.adjustTradeMoney(p, session, false, e.getClick());
                            } else {
                               this.errorSound(p);
                            }
@@ -7206,6 +7363,36 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             }
          }
       }
+   }
+
+   private void adjustTradeMoney(Player p, TradeSession session, boolean isA, org.bukkit.event.inventory.ClickType click) {
+      double current = isA ? session.moneyOfferedA : session.moneyOfferedB;
+      double next;
+      if (click.isShiftClick()) {
+         next = 0.0;
+      } else {
+         next = current + (click.isRightClick() ? 10000.0 : 1000.0);
+      }
+
+      double pocket = econ.getBalance(p);
+      if (next > pocket) {
+         this.msgKey(p, "trade.money-insufficient");
+         this.sendShortfall(p, next, pocket);
+         this.errorSound(p);
+         return;
+      }
+
+      if (isA) {
+         session.moneyOfferedA = next;
+      } else {
+         session.moneyOfferedB = next;
+      }
+
+      session.confirmedA = false;
+      session.confirmedB = false;
+      this.refreshTradeGui(session);
+      this.msgKey(p, "trade.money-set", "amount", this.fmtCur(next));
+      this.clickSound(p);
    }
 
    private void resetTradeConfirmations(TradeSession session) {
@@ -8239,6 +8426,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (meta != null) {
          meta.getPersistentDataContainer().set(this.lenderKey, PersistentDataType.STRING, lenderId.toString());
          meta.getPersistentDataContainer().set(this.loanSlotKey, PersistentDataType.INTEGER, slotNum);
+         meta.getPersistentDataContainer().set(this.loanPlanKey, PersistentDataType.STRING, planData);
          item.setItemMeta(meta);
       }
 
@@ -8307,6 +8495,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void openBankerGUI(Player p) {
+      if (!this.bankers.contains(p.getUniqueId())) {
+         this.openBankHubGUI(p);
+         return;
+      }
+
       Inventory gui = Bukkit.createInventory(null, 27, this.tBanker);
       UUID u = p.getUniqueId();
       double capital = this.bankCapital.getOrDefault(u, 0.0);
@@ -9339,7 +9532,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          double normalPrice = pool.get(mat);
          double minD = Math.min(minDiscountPercentCfg, maxDiscountPercentCfg);
          double maxD = Math.max(minDiscountPercentCfg, maxDiscountPercentCfg);
-         double discountPercent = minD + rnd.nextDouble() * (maxD - minD);
+         double discountPercent = Math.max(0.0, Math.min(90.0, minD + rnd.nextDouble() * (maxD - minD)));
+         double resaleFloor = this.resourceResaleValue(mat) * 1.1;
+         if (resaleFloor > 0.0 && normalPrice * (1.0 - discountPercent / 100.0) < resaleFloor) {
+            normalPrice = resaleFloor / (1.0 - discountPercent / 100.0);
+         }
+
          int minS = Math.min(minStockCfg, maxStockCfg);
          int maxS = Math.max(minStockCfg, maxStockCfg);
          int stock = minS + (maxS > minS ? rnd.nextInt(maxS - minS + 1) : 0);
@@ -9588,7 +9786,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          return;
       }
 
-      this.ecoWithdraw(p, fee);
+      if (!this.treasureActive) {
+         long remainMs = this.treasureNextSpawnAt - System.currentTimeMillis();
+         this.msgKey(p, "treasure.location-not-found", "minutes", String.valueOf(Math.max(0L, remainMs / 60000L)));
+         return;
+      }
+
+      if (!this.ecoWithdraw(p, fee).transactionSuccess()) {
+         this.errorSound(p);
+         return;
+      }
+
       this.addLog(p.getUniqueId(), "埋蔵金の場所を調査 -" + this.fmtCur(fee));
       if (this.treasureActive) {
          this.msgKey(
@@ -10298,7 +10506,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack item = this.createItem(
             Material.PAPER,
             "<aqua>" + key + "</aqua>",
-            "<gray>現在値:</gray> <white>" + value + "</white>",
+            "<gray>現在値:</gray> <white>" + (isSecretConfigKey(key) ? "********" : MiniMessage.miniMessage().escapeTags(String.valueOf(value))) + "</white>",
             "<dark_gray>型: " + typeName + "</dark_gray>",
             "<yellow>クリックしてチャットで新しい値を入力</yellow>"
          );
@@ -10383,7 +10591,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             || t.equals(this.tVipLounge)) {
             e.setCancelled(true);
             ItemStack item = e.getCurrentItem();
-            if (item != null && item.getType() != Material.BLACK_STAINED_GLASS_PANE && item.getType() != Material.AIR) {
+            if (item != null
+               && e.getClickedInventory() == e.getView().getTopInventory()
+               && item.getType() != Material.BLACK_STAINED_GLASS_PANE
+               && item.getType() != Material.AIR) {
                UUID u = p.getUniqueId();
                long nowClick = System.currentTimeMillis();
                long lastClick = this.lastGuiClickTime.getOrDefault(u, 0L);
@@ -10445,7 +10656,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      this.clickSound(p);
                   } else if (t.equals(this.tWorldStock)) {
                      if (mat == Material.IRON_DOOR) {
-                        this.openHubGUI(p);
+                        this.openMarketHubGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.COMPASS) {
                         this.awaitChatInput(u, "world_stock_search");
@@ -10470,7 +10681,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      this.handleWorldStockDetailClick(p, u, mat, item, null);
                   } else if (t.equals(this.tResourceShop)) {
                      if (mat == Material.IRON_DOOR) {
-                        this.openHubGUI(p);
+                        this.openMarketHubGUI(p);
                         this.clickSound(p);
                      } else {
                         String category = switch (mat) {
@@ -10554,7 +10765,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tLottery)) {
                      if (mat == Material.IRON_DOOR) {
-                        this.openHubGUI(p);
+                        this.openTodoHubGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.PAPER) {
                         this.buyLotteryTickets(p, 1);
@@ -10569,7 +10780,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tStorageRent)) {
                      if (mat == Material.IRON_DOOR) {
-                        this.openHubGUI(p);
+                        this.openTodoHubGUI(p);
                         this.clickSound(p);
                      } else if (!this.storageRentDueTime.containsKey(u)) {
                         if (mat == Material.EMERALD) {
@@ -10638,7 +10849,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tQuestBoard)) {
                      if (mat == Material.IRON_DOOR) {
-                        this.openHubGUI(p);
+                        this.openTodoHubGUI(p);
                         this.clickSound(p);
                      } else if (mat == Material.EMERALD) {
                         long postedByMe = this.quests.values().stream().filter(q -> q.posterId.equals(u)).count();
@@ -11061,7 +11272,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
 
                               this.msgKey(p, "collateral.repaid");
-                              this.addScore(u, 10);
+                              this.grantRepaymentCreditScore(u, 10);
                               this.playUiSound(p, "success");
                               this.addLog(u, "担保融資完済 -" + this.fmtCur(totalRepay));
                               this.sendDiscordWebhook("\ud83d\udd13 **" + p.getName() + "** が担保融資を完済しました。返済額: " + this.fmtCur(totalRepay));
@@ -11548,7 +11759,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openAuctionGUI(p);
                      } else {
                         if (e.getRawSlot() < 45) {
-                           ItemStack selected = item.clone();
+                           ItemStack real = p.getInventory().getItem(e.getRawSlot());
+                           if (real == null || !real.equals(item)) {
+                              this.openAuctionSelectGUI(p);
+                              return;
+                           }
+
+                           ItemStack selected = real.clone();
                            p.getInventory().setItem(e.getRawSlot(), null);
                            this.returnAuctionDraftIfPricing(p, "auction_list_price");
                            this.auctionListingDraft.put(u, selected);
@@ -11562,7 +11779,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openCollateralGUI(p);
                      } else {
                         if (e.getRawSlot() < 45) {
-                           ItemStack selected = item.clone();
+                           ItemStack real = p.getInventory().getItem(e.getRawSlot());
+                           if (real == null || !real.equals(item) || this.collateralSelection.containsKey(u)) {
+                              this.openCollateralGUI(p);
+                              return;
+                           }
+
+                           ItemStack selected = real.clone();
                            double value = this.evaluateItemValue(selected);
                            if (value <= 0.0) {
                               this.msgKey(p, "collateral.item-not-valid");
@@ -11576,8 +11799,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
                   } else if (t.equals(this.tAuction)) {
                      int rawSlot = e.getRawSlot();
-                     if (mat == Material.IRON_DOOR) {
-                        this.openHubGUI(p);
+                     if (rawSlot == 53) {
+                        this.openMarketHubGUI(p);
                         this.clickSound(p);
                      } else if (rawSlot == 45) {
                         int mode = (this.auctionSortMode.getOrDefault(u, 0) + 1) % 3;
@@ -11610,7 +11833,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.auctionPage.merge(u, 1, Integer::sum);
                         this.openAuctionGUI(p);
                         this.clickSound(p);
-                     } else if (mat == Material.EMERALD) {
+                     } else if (rawSlot == 49) {
+                        if (mat != Material.EMERALD) {
+                           return;
+                        }
+
                         long myListings = this.auctionSeller.values().stream().filter(s -> s.equals(u)).count();
                         if (myListings >= this.cfgAuctionMaxListingsPerPlayer) {
                            this.msgKey(p, "auction.listing-limit", "count", String.valueOf(this.cfgAuctionMaxListingsPerPlayer));
@@ -11720,8 +11947,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            if (expiry > System.currentTimeMillis()) {
                               this.msgKey(p, "insurance.already-active");
                               this.errorSound(p);
-                           } else if (pocket >= this.cfgInsurancePremium) {
-                              this.ecoWithdraw(p, this.cfgInsurancePremium);
+                           } else if (System.currentTimeMillis() - this.insuranceLastClaim.getOrDefault(u, 0L) < 86400000L) {
+                              this.msgKey(
+                                 p,
+                                 "insurance.rebuy-cooldown",
+                                 "time",
+                                 this.fmtRemain(this.insuranceLastClaim.getOrDefault(u, 0L) + 86400000L - System.currentTimeMillis())
+                              );
+                              this.errorSound(p);
+                           } else if (pocket >= this.cfgInsurancePremium && this.ecoWithdraw(p, this.cfgInsurancePremium).transactionSuccess()) {
+                              this.treasury += this.cfgInsurancePremium;
                               this.insuranceExpiry.put(u, System.currentTimeMillis() + this.cfgInsuranceDurationMs);
                               this.msgKey(p, "insurance.joined", "minutes", String.valueOf(this.cfgInsuranceDurationMs / 60000L));
                               this.playUiSound(p, "success");
@@ -11862,6 +12097,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               String planData = targetMap.get(lenderId);
                               if (planData == null) {
                                  this.msgKey(p, "loan.plan-not-exist");
+                                 this.errorSound(p);
+                                 this.openMarketGUI(p);
+                                 return;
+                              }
+
+                              String shownPlan = (String)meta.getPersistentDataContainer().get(this.loanPlanKey, PersistentDataType.STRING);
+                              if (!planData.equals(shownPlan)) {
+                                 this.msgKey(p, "loan.plan-changed");
                                  this.errorSound(p);
                                  this.openMarketGUI(p);
                                  return;
@@ -12039,6 +12282,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      }
                   } else if (t.equals(this.tBanker)) {
+                     if (!this.bankers.contains(u)) {
+                        p.closeInventory();
+                        return;
+                     }
+
                      if (mat == Material.IRON_DOOR) {
                         this.openBankHubGUI(p);
                      } else {
@@ -12111,6 +12359,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      }
                   } else if (t.equals(this.tPlan)) {
+                     if (!this.bankers.contains(u)) {
+                        p.closeInventory();
+                        return;
+                     }
+
                      if (mat == Material.IRON_DOOR) {
                         this.openBankerGUI(p);
                      } else {
@@ -12250,12 +12503,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.msgKey(p, "deposit.slot1-not-matured");
                               this.errorSound(p);
                            } else {
-                              double reward = amount * (1.0 + this.cfgFixedDepositRate);
+                              double reward = amount + this.payInterestFromTreasury(amount * this.cfgFixedDepositRate);
                               this.ecoDeposit(p, reward);
                               this.fixedDeposit.put(u, 0.0);
                               this.fixedDepositUnlockTime.put(u, 0L);
                               this.msgKey(p, "fixed-deposit.matured", "amount", this.fmtCur(reward));
-                              this.addScore(u, 15);
+                              this.grantRepaymentCreditScore(u, 5);
                               this.playUiSound(p, "achievement");
                               this.addLog(u, "定期預金(1枠)満期 +" + this.fmtCur(reward));
                               this.sendDiscordWebhook("\ud83c\udf89 **" + p.getName() + "** の定期預金1枠目が満期になりました。受取額: " + this.fmtCur(reward));
@@ -12289,12 +12542,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.msgKey(p, "deposit.slot2-not-matured");
                               this.errorSound(p);
                            } else {
-                              double reward = a2 * (1.0 + this.cfgFixedDepositRate);
+                              double reward = a2 + this.payInterestFromTreasury(a2 * this.cfgFixedDepositRate);
                               this.ecoDeposit(p, reward);
                               this.fixedDeposit2.put(u, 0.0);
                               this.fixedDepositUnlockTime2.put(u, 0L);
                               this.msgKey(p, "fixed-deposit.matured-2", "amount", this.fmtCur(reward));
-                              this.addScore(u, 15);
+                              this.grantRepaymentCreditScore(u, 5);
                               this.playUiSound(p, "achievement");
                               this.addLog(u, "定期預金(2枠)満期 +" + this.fmtCur(reward));
                               this.sendDiscordWebhook("\ud83c\udf89 **" + p.getName() + "** の定期預金2枠目が満期になりました。受取額: " + this.fmtCur(reward));
@@ -12328,12 +12581,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.msgKey(p, "deposit.slot3-not-matured");
                               this.errorSound(p);
                            } else {
-                              double reward = a3 * (1.0 + this.cfgFixedDepositRate);
+                              double reward = a3 + this.payInterestFromTreasury(a3 * this.cfgFixedDepositRate);
                               this.ecoDeposit(p, reward);
                               this.fixedDeposit3.put(u, 0.0);
                               this.fixedDepositUnlockTime3.put(u, 0L);
                               this.msgKey(p, "fixed-deposit.matured-3", "amount", this.fmtCur(reward));
-                              this.addScore(u, 15);
+                              this.grantRepaymentCreditScore(u, 5);
                               this.playUiSound(p, "achievement");
                               this.addLog(u, "定期預金(3枠)満期 +" + this.fmtCur(reward));
                               this.sendDiscordWebhook("\ud83c\udf89 **" + p.getName() + "** の定期預金3枠目が満期になりました。受取額: " + this.fmtCur(reward));
@@ -12468,7 +12721,23 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    public void onStorageLockerClose(InventoryCloseEvent e) {
       if (e.getPlayer() instanceof Player p) {
          if (e.getView().title().equals(this.tStorageLocker)) {
-            this.persistPlayerStorage(p.getUniqueId(), e.getInventory());
+            if (!this.storageRentDueTime.containsKey(p.getUniqueId())) {
+               for (ItemStack left : e.getInventory().getContents()) {
+                  if (left != null && left.getType() != Material.AIR) {
+                     for (ItemStack over : p.getInventory().addItem(left).values()) {
+                        p.getWorld().dropItemNaturally(p.getLocation(), over);
+                     }
+                  }
+               }
+
+               e.getInventory().clear();
+               this.storageInventories.remove(p.getUniqueId());
+               this.db.removeByPathPrefix("storage_items", p.getUniqueId().toString());
+            } else {
+               this.db.beginTransaction();
+               this.persistPlayerStorage(p.getUniqueId(), e.getInventory());
+               this.db.endTransaction();
+            }
          }
       }
    }
@@ -12901,11 +13170,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.msgKey(p, "insurance.claim-cooldown");
          } else {
             this.insuranceLastClaim.put(u, System.currentTimeMillis());
-            this.ecoDeposit(p, this.cfgInsurancePayout);
-            this.msgKey(p, "insurance.payout", "amount", this.fmtCur(this.cfgInsurancePayout));
-            this.sendToast(p, "保険金支払い", "+" + this.fmtCur(this.cfgInsurancePayout) + " が振り込まれました！");
-            this.addLog(u, "保険金受給 +" + this.fmtCur(this.cfgInsurancePayout));
-            this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** に生命保険金 " + this.fmtCur(this.cfgInsurancePayout) + " が支払われました。");
+            this.insuranceExpiry.remove(u);
+            double insurancePaid = Math.min(this.cfgInsurancePayout, Math.max(0.0, this.treasury));
+            if (insurancePaid <= 0.0) {
+               this.msgKey(p, "insurance.treasury-empty");
+               return;
+            }
+
+            this.treasury -= insurancePaid;
+            this.ecoDeposit(p, insurancePaid);
+            this.msgKey(p, "insurance.payout", "amount", this.fmtCur(insurancePaid));
+            this.sendToast(p, "保険金支払い", "+" + this.fmtCur(insurancePaid) + " が振り込まれました！");
+            this.addLog(u, "保険金受給 +" + this.fmtCur(insurancePaid));
+            this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** に生命保険金 " + this.fmtCur(insurancePaid) + " が支払われました。");
          }
       }
    }
@@ -12916,6 +13193,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Bukkit.getScheduler().runTaskTimer(this, this::exportDashboardJson, 100L, ticks);
 
          try {
+            System.setProperty("sun.net.httpserver.maxReqTime", "15");
+            System.setProperty("sun.net.httpserver.maxRspTime", "15");
             this.webDashboardServer = HttpServer.create(new InetSocketAddress(this.cfgWebDashboardPort), 0);
             this.webDashboardServer.createContext("/dashboard.json", this::handleDashboardRequest);
             this.webDashboardServer.createContext("/", this::handleDashboardPage);
@@ -12930,7 +13209,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.webDashboardServer.createContext("/me-plus.html", ex -> this.serveWebResource(ex, "web/me-plus.html"));
             this.webDashboardServer.createContext("/me/extra.json", this::handleMyExtraJson);
             Bukkit.getScheduler().runTaskTimer(this, this::refreshLedgerStatsCache, 200L, 6000L);
-            this.webDashboardServer.setExecutor(null);
+            this.webDashboardServer.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(4, r -> {
+               Thread th = new Thread(r, "MinecraftBank-Web");
+               th.setDaemon(true);
+               return th;
+            }));
+            Bukkit.getScheduler().runTaskTimer(this, () -> this.economyJsonCache = this.buildEconomyJson(), 40L, 1200L);
             this.webDashboardServer.start();
             this.getLogger().info("[Webダッシュボード] http://<サーバーIP>:" + this.cfgWebDashboardPort + "/ で配信を開始しました。(JSON APIは /dashboard.json)");
          } catch (Exception ex) {
@@ -12939,10 +13223,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
+   private void addSecurityHeaders(HttpExchange exchange) {
+      exchange.getResponseHeaders().add("X-Content-Type-Options", "nosniff");
+      exchange.getResponseHeaders().add("X-Frame-Options", "DENY");
+      exchange.getResponseHeaders().add("Referrer-Policy", "no-referrer");
+   }
+
    private void serveWebResource(HttpExchange exchange, String path) {
       try (InputStream in = this.getResource(path)) {
          byte[] body = in != null ? in.readAllBytes() : "not found".getBytes(StandardCharsets.UTF_8);
          exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+         this.addSecurityHeaders(exchange);
          exchange.getResponseHeaders().add("Cache-Control", "no-cache");
          exchange.sendResponseHeaders(in != null ? 200 : 404, body.length);
 
@@ -13100,7 +13391,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void handleEconomyJson(HttpExchange exchange) {
       try {
-         this.sendJson(exchange, 200, this.runOnMainThreadSync(this::buildEconomyJson));
+         this.sendJson(exchange, 200, this.economyJsonCache);
       } catch (Exception ex) {
          this.getLogger().warning("[Webダッシュボード] economy.json の生成中にエラー: " + ex.getMessage());
       } finally {
@@ -13218,6 +13509,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          byte[] body = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>経済ダッシュボード | MinecraftBank</title>\n<style>\n  :root {\n    --bg: #0b0f19;\n    --panel: #141b2c;\n    --panel-alt: #101625;\n    --panel-border: #232c42;\n    --text: #eaeefb;\n    --text-dim: #8b93a7;\n    --gold: #f4c542;\n    --emerald: #4ade9b;\n    --red: #ff6b6b;\n    --accent: #5b8cff;\n    --purple: #b18cff;\n    --cyan: #43d9e0;\n\n    /* ★追加: データ可視化用の検証済みパレット(dataviz skillのcolor-formula.mdに準拠)\n       カテゴリカル8色は固定順で識別(系列/カテゴリ)専用、ステータス4色は状態専用、\n       シーケンシャル/ダイバージングは大小・極性の表現専用。色の役割を混同しないこと。 */\n    --cat-1: #3987e5; /* blue */\n    --cat-2: #d95926; /* orange */\n    --cat-3: #199e70; /* aqua */\n    --cat-4: #c98500; /* yellow */\n    --cat-5: #d55181; /* magenta */\n    --cat-6: #008300; /* green */\n    --cat-7: #9085e9; /* violet */\n    --cat-8: #e66767; /* red */\n    --status-good: #0ca30c;\n    --status-warning: #fab219;\n    --status-serious: #ec835a;\n    --status-critical: #d03b3b;\n    --seq-100: #cde2fb;\n    --seq-400: #3987e5;\n    --seq-700: #0d366b;\n    --div-neg: #3987e5;  /* 基準値より安い(マイナス側の極) */\n    --div-pos: #e66767;  /* 基準値より高い(プラス側の極) */\n    --div-mid: #383835;  /* 中立(基準値と同水準) */\n  }\n  * { box-sizing: border-box; }\n  ::-webkit-scrollbar { width: 10px; height: 10px; }\n  ::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 6px; }\n  ::-webkit-scrollbar-track { background: transparent; }\n  body {\n    margin: 0;\n    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;\n    background:\n      radial-gradient(circle at 15% -10%, #24304f66 0%, transparent 45%),\n      radial-gradient(circle at 100% 0%, #1a2c2266 0%, transparent 40%),\n      var(--bg);\n    color: var(--text);\n    min-height: 100vh;\n    padding: 32px 20px 60px;\n  }\n  .wrap { max-width: 1180px; margin: 0 auto; }\n  @keyframes fadeInUp {\n    from { opacity: 0; transform: translateY(10px); }\n    to { opacity: 1; transform: translateY(0); }\n  }\n  header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 12px;\n    margin-bottom: 24px;\n    animation: fadeInUp .4s ease both;\n  }\n  header h1 {\n    font-size: 25px;\n    margin: 0 0 6px;\n    letter-spacing: 0.3px;\n  }\n  header h1 span { color: var(--gold); }\n  .sub-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n  .event-badge {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    background: #1c2440;\n    border: 1px solid var(--panel-border);\n    color: var(--cyan);\n    font-size: 12px;\n    font-weight: 600;\n    padding: 5px 12px;\n    border-radius: 999px;\n  }\n  .event-badge::before { content: '●'; font-size: 8px; color: var(--cyan); }\n  #updated {\n    font-size: 12px;\n    color: var(--text-dim);\n    text-align: right;\n  }\n  #updated b { color: var(--emerald); }\n  #countdown { color: var(--text-dim); font-variant-numeric: tabular-nums; }\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));\n    gap: 14px;\n    margin-bottom: 18px;\n  }\n  .stat-card {\n    background: linear-gradient(160deg, var(--panel), var(--panel-alt));\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 16px 18px;\n    animation: fadeInUp .45s ease both;\n    transition: transform .15s ease, border-color .15s ease;\n  }\n  .stat-card:hover { transform: translateY(-2px); border-color: #34406a; }\n  .stat-card .label {\n    font-size: 11.5px;\n    color: var(--text-dim);\n    margin-bottom: 6px;\n    white-space: nowrap;\n  }\n  .stat-card .value {\n    font-size: 23px;\n    font-weight: 700;\n    font-variant-numeric: tabular-nums;\n  }\n  .stat-card.gold .value { color: var(--gold); }\n  .stat-card.emerald .value { color: var(--emerald); }\n  .stat-card.accent .value { color: var(--accent); }\n  .stat-card.red .value { color: var(--red); }\n  .stat-card.purple .value { color: var(--purple); }\n  .stat-card.cyan .value { color: var(--cyan); }\n  .stat-card.status-good .value { color: var(--status-good); }\n  .stat-card.status-warning .value { color: var(--status-warning); }\n  .stat-card.status-critical .value { color: var(--status-critical); }\n\n  /* ★追加: 「マーケット概況」「やること概況」向けの新規コンポーネント */\n  .subpanel {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    border-radius: 12px;\n    padding: 14px 16px;\n  }\n  .subpanel h3 {\n    font-size: 12.5px;\n    margin: 0 0 12px;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .rank-list { display: flex; flex-direction: column; gap: 9px; }\n  .rank-list-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }\n  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }\n  .rank-list-name { font-weight: 600; font-variant-numeric: tabular-nums; }\n  .rank-list-meta { margin-left: auto; color: var(--text-dim); font-size: 11.5px; text-align: right; white-space: nowrap; }\n  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }\n  .badge {\n    display: flex;\n    align-items: center;\n    gap: 7px;\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 8px;\n    padding: 7px 10px;\n    font-size: 12px;\n  }\n  .badge .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }\n  .badge-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }\n  .badge-trend { font-variant-numeric: tabular-nums; color: var(--text-dim); font-weight: 600; white-space: nowrap; }\n  .mini-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; }\n  .mini-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .merchant-refresh { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }\n  .merchant-refresh b { color: var(--text); font-variant-numeric: tabular-nums; }\n  .deal-grid { display: flex; flex-direction: column; gap: 10px; }\n  .deal-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; }\n  .deal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }\n  .deal-name { font-weight: 600; font-size: 13px; }\n  .deal-discount { color: var(--emerald); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n  .meter-track { height: 7px; border-radius: 4px; background: var(--seq-100); overflow: hidden; }\n  .meter-fill { height: 100%; background: var(--seq-400); border-radius: 4px; transition: width .4s ease; }\n  .deal-stock { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }\n  .hero-tile { text-align: center; padding: 4px 0 16px; }\n  .hero-tile .hero-value {\n    font-size: 40px;\n    font-weight: 700;\n    color: var(--gold);\n    line-height: 1.15;\n    /* ★重要: 大きな単独の数値は比例数字を使う(等幅のtabular-numsは大きい文字だと間延びして見える) */\n  }\n  .hero-tile .hero-label {\n    font-size: 12px;\n    color: var(--text-dim);\n    margin-top: 6px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .mini-stats { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--text-dim); }\n  .mini-stats b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }\n  .panel {\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 20px 22px;\n    margin-bottom: 16px;\n    animation: fadeInUp .5s ease both;\n  }\n  .panel-head {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 10px;\n    margin-bottom: 14px;\n  }\n  .panel h2 {\n    font-size: 14px;\n    margin: 0;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: 1px;\n  }\n  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }\n  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .chart-box { position: relative; width: 100%; height: 220px; }\n  .chart-box canvas { width: 100%; height: 100%; display: block; }\n  .alert-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7; }\n  .alert-box.ok { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--emerald); }\n  .alert-box.warn { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.4); color: #f87171; }\n  .alert-box ul { margin: 6px 0 0 18px; padding: 0; }\n  .alert-box .alert-time { color: var(--text-dim); font-size: 11px; margin-top: 6px; }\n  .bars-box { position: relative; width: 100%; height: 160px; }\n  .panels-2col {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 16px;\n  }\n  @media (max-width: 820px) {\n    .panels-2col { grid-template-columns: 1fr; }\n  }\n  .toolbar {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    flex-wrap: wrap;\n  }\n  .search-input {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    font-size: 13px;\n    padding: 7px 12px;\n    border-radius: 8px;\n    outline: none;\n    min-width: 160px;\n  }\n  .search-input:focus { border-color: var(--accent); }\n  table { width: 100%; border-collapse: collapse; font-size: 13px; }\n  thead th {\n    position: sticky;\n    top: 0;\n    background: var(--panel);\n    text-align: left;\n    color: var(--text-dim);\n    font-weight: 600;\n    font-size: 11.5px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n    padding: 8px 10px;\n    border-bottom: 1px solid var(--panel-border);\n    cursor: pointer;\n    user-select: none;\n    white-space: nowrap;\n  }\n  thead th:hover { color: var(--text); }\n  thead th .arrow { opacity: .5; margin-left: 3px; font-size: 10px; }\n  tbody td {\n    padding: 8px 10px;\n    border-bottom: 1px solid #1c2438;\n    vertical-align: middle;\n  }\n  tbody tr { transition: background .12s ease; }\n  tbody tr:hover { background: #1a2136; }\n  tbody tr:nth-child(even) { background: #121a2b55; }\n  tbody tr:nth-child(even):hover { background: #1a2136; }\n  .rank-cell { width: 34px; font-weight: 700; color: var(--text-dim); }\n  .medal { font-size: 14px; }\n  .name-cell { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .bar-cell { min-width: 90px; }\n  .bar-track { height: 8px; background: #1c2338; border-radius: 5px; overflow: hidden; }\n  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--emerald)); border-radius: 5px; transition: width .4s ease; }\n  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; white-space: nowrap; }\n  .score-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--cyan); white-space: nowrap; }\n  .pagination {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    margin-top: 12px;\n    font-size: 12px;\n    color: var(--text-dim);\n  }\n  .pagination button {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    padding: 5px 12px;\n    border-radius: 7px;\n    cursor: pointer;\n    font-size: 12px;\n  }\n  .pagination button:disabled { opacity: .35; cursor: default; }\n  .pagination button:not(:disabled):hover { border-color: var(--accent); }\n  .empty { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }\n  footer {\n    text-align: center;\n    color: var(--text-dim);\n    font-size: 12px;\n    margin-top: 8px;\n  }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <header>\n      <div>\n        <h1>\ud83d\udcb0 <span>MinecraftBank</span> 経済ダッシュボード</h1>\n        <div class=\"sub-row\">\n          <div class=\"event-badge\" id=\"eventBadge\">通常</div>\n        </div>\n      </div>\n      <div id=\"updated\">最終更新: <b id=\"updatedAt\">-</b><br><span id=\"countdown\"></span></div>\n    </header>\n\n    <div class=\"grid\" id=\"statGrid\">\n      <div class=\"stat-card gold\">\n        <div class=\"label\">国庫残高</div>\n        <div class=\"value\" id=\"treasury\">-</div>\n      </div>\n      <div class=\"stat-card red\">\n        <div class=\"label\">政府債務合計</div>\n        <div class=\"value\" id=\"totalGovDebt\">-</div>\n      </div>\n      <div class=\"stat-card gold\">\n        <div class=\"label\">今週の取引量</div>\n        <div class=\"value\" id=\"weeklyTrade\">-</div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>異常検知</h2>\n      </div>\n      <div class=\"alert-box ok\" id=\"selfcheckBox\">確認中...</div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>国庫残高の推移</h2>\n      </div>\n      <div class=\"chart-box\"><canvas id=\"treasuryChart\"></canvas></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>資産ランキング</h2>\n        <div class=\"toolbar\">\n          <input class=\"search-input\" id=\"lbSearch\" type=\"text\" placeholder=\"プレイヤー名で検索...\">\n        </div>\n      </div>\n      <div style=\"overflow-x:auto\">\n        <table>\n          <thead>\n            <tr>\n              <th data-key=\"rank\">#<span class=\"arrow\"></span></th>\n              <th data-key=\"name\">プレイヤー<span class=\"arrow\"></span></th>\n              <th data-key=\"credit_score\">信用スコア<span class=\"arrow\"></span></th>\n              <th data-key=\"total_assets\">総資産<span class=\"arrow\"></span></th>\n            </tr>\n          </thead>\n          <tbody id=\"lbBody\"></tbody>\n        </table>\n      </div>\n      <div id=\"lbEmpty\" class=\"empty\" style=\"display:none\">データがありません</div>\n      <div class=\"pagination\">\n        <span id=\"lbPageInfo\"></span>\n        <button id=\"lbPrev\">← 前へ</button>\n        <button id=\"lbNext\">次へ →</button>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83d\uded2 マーケット概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"marketStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83d\udcc8 世界株式市場 - 保有株数トップ5</h3>\n          <div class=\"rank-list\" id=\"worldStockTopList\"></div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83e\uddf3 巡回商人</h3>\n          <div id=\"merchantStatus\"></div>\n        </div>\n      </div>\n\n      <div class=\"subpanel\" style=\"margin-top:16px\">\n        <h3>⛏ 資源相場ショップ - 基準価格との乖離</h3>\n        <div class=\"mini-legend\">\n          <span><span class=\"dot\" style=\"background:var(--div-neg)\"></span>基準より安い</span>\n          <span><span class=\"dot\" style=\"background:var(--div-mid)\"></span>横ばい</span>\n          <span><span class=\"dot\" style=\"background:var(--div-pos)\"></span>基準より高い</span>\n        </div>\n        <div class=\"badge-grid\" id=\"resourceBadgeGrid\"></div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83c\udfaf やること概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"questStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83c\udf9f 宝くじ</h3>\n          <div class=\"hero-tile\">\n            <div class=\"hero-value\" id=\"lotteryPool\">-</div>\n            <div class=\"hero-label\">次回抽選の賞金プール</div>\n          </div>\n          <div class=\"mini-stats\">\n            <div>次回抽選まで: <b id=\"lotteryCountdown\">-</b></div>\n            <div>販売チケット数: <b id=\"lotteryTickets\">-</b></div>\n            <div>前回の当せん: <b id=\"lotteryLastWinner\">-</b></div>\n          </div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83d\udce6 倉庫レンタル / \ud83d\udcb3 分割払い / ⛏ 埋蔵金</h3>\n          <div class=\"grid\" id=\"miscStatGrid\"></div>\n        </div>\n      </div>\n    </div>\n\n    <footer>10秒ごとに自動更新されます</footer>\n  </div>\n\n  <script>\n    const PAGE_SIZE = 10;\n    let lastData = null;\n    const state = {\n      lb: { sortKey: 'rank', sortDir: 1, page: 1, search: '' }\n    };\n\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    function fmtNum(n) { return Math.round(n).toLocaleString('ja-JP'); }\n    function medal(rank) {\n      if (rank === 1) return '\ud83e\udd47';\n      if (rank === 2) return '\ud83e\udd48';\n      if (rank === 3) return '\ud83e\udd49';\n      return rank;\n    }\n\n    // ★追加: カテゴリカルパレット(固定8色・固定順。系列/カテゴリの識別専用。ステータス色とは混同しないこと)\n    const CAT_COLORS = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];\n\n    // ★追加: ダイバージング配色(青⇔グレー⇔赤)。基準値からの乖離%を±30%でクランプして線形補間する。\n    function divergingColor(pct) {\n      const clamped = Math.max(-30, Math.min(30, pct || 0));\n      const t = clamped / 30; // -1..1\n      const neg = [0x39, 0x87, 0xe5];  // --cat-1 / --div-neg (blue)\n      const mid = [0x38, 0x38, 0x35];  // --div-mid (neutral gray)\n      const pos = [0xe6, 0x67, 0x67];  // --cat-8 / --div-pos (red)\n      const from = t < 0 ? neg : pos;\n      const amt = Math.abs(t);\n      const rgb = mid.map((m, i) => Math.round(m + (from[i] - m) * amt));\n      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;\n    }\n\n    // ★追加: 資源相場ショップ/巡回商人の素材名 日本語表示(未登録の素材は整形して表示)\n    const MATERIAL_JA = {\n      COAL: '石炭', IRON_INGOT: '鉄インゴット', GOLD_INGOT: '金インゴット', COPPER_INGOT: '銅インゴット',\n      REDSTONE: 'レッドストーン', LAPIS_LAZULI: 'ラピスラズリ', DIAMOND: 'ダイヤモンド', EMERALD: 'エメラルド',\n      NETHERITE_SCRAP: 'ネザライトの欠片', WHEAT: '小麦', CARROT: 'ニンジン', POTATO: 'ジャガイモ',\n      BEETROOT: 'ビートルート', MELON_SLICE: 'スイカ', PUMPKIN: 'カボチャ', SUGAR_CANE: 'サトウキビ',\n      NETHER_WART: 'ネザーウォート', COCOA_BEANS: 'カカオ豆', ROTTEN_FLESH: '腐った肉', BONE: '骨',\n      STRING: '糸', GUNPOWDER: '火薬', SPIDER_EYE: 'クモの目', SLIME_BALL: 'スライムボール',\n      ENDER_PEARL: 'エンダーパール', BLAZE_ROD: 'ブレイズロッド', GHAST_TEAR: 'ガストの涙',\n      OAK_LOG: 'オークの原木', SPRUCE_LOG: 'トウヒの原木', BIRCH_LOG: 'シラカバの原木', JUNGLE_LOG: 'ジャングルの原木',\n      ACACIA_LOG: 'アカシアの原木', DARK_OAK_LOG: 'ダークオークの原木', MANGROVE_LOG: 'マングローブの原木', CHERRY_LOG: 'サクラの原木',\n      ELYTRA: 'エリトラ', TOTEM_OF_UNDYING: '不死のトーテム', NETHERITE_INGOT: 'ネザライトインゴット',\n      NETHERITE_BLOCK: 'ネザライトブロック', ENCHANTED_GOLDEN_APPLE: 'エンチャントされた金のリンゴ',\n      SADDLE: 'サドル', NAME_TAG: '名札', SHULKER_BOX: 'シュルカーボックス', TRIDENT: 'トライデント',\n      NETHER_STAR: 'ネザースター', DRAGON_EGG: 'ドラゴンの卵', BEACON: 'ビーコン', DIAMOND_BLOCK: 'ダイヤモンドブロック',\n      EMERALD_BLOCK: 'エメラルドブロック', MUSIC_DISC_PIGSTEP: 'レコード(Pigstep)', MUSIC_DISC_OTHERSIDE: 'レコード(Otherside)',\n      HEART_OF_THE_SEA: '海の心', CONDUIT: 'コンジット', END_CRYSTAL: 'エンドクリスタル', GOLDEN_CARROT: '金のニンジン'\n    };\n    function materialLabel(name) {\n      if (MATERIAL_JA[name]) return MATERIAL_JA[name];\n      return String(name).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n    }\n\n    // ★追加: 残りミリ秒を「◯日◯時間」「◯時間◯分」「◯分」形式に整形\n    function fmtDuration(ms) {\n      if (!ms || ms <= 0) return 'まもなく';\n      const totalMin = Math.floor(ms / 60000);\n      const d = Math.floor(totalMin / 1440);\n      const h = Math.floor((totalMin % 1440) / 60);\n      const m = totalMin % 60;\n      if (d > 0) return d + '日' + h + '時間';\n      if (h > 0) return h + '時間' + m + '分';\n      return m + '分';\n    }\n\n    function sortRows(rows, key, dir) {\n      return [...rows].sort((a, b) => {\n        const av = a[key], bv = b[key];\n        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * dir;\n        return ((av ?? 0) - (bv ?? 0)) * dir;\n      });\n    }\n\n    function bindSortableHeaders(tableSelector, sortState, renderFn) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        th.addEventListener('click', () => {\n          const key = th.getAttribute('data-key');\n          if (sortState.sortKey === key) {\n            sortState.sortDir *= -1;\n          } else {\n            sortState.sortKey = key;\n            sortState.sortDir = 1;\n          }\n          sortState.page = 1;\n          renderFn();\n        });\n      });\n    }\n\n    function updateHeaderArrows(tableSelector, sortState) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        const arrow = th.querySelector('.arrow');\n        if (th.getAttribute('data-key') === sortState.sortKey) {\n          arrow.textContent = sortState.sortDir === 1 ? '▲' : '▼';\n        } else {\n          arrow.textContent = '';\n        }\n      });\n    }\n\n    function drawLineChart(canvas, series, labels) {\n      if (!canvas) return;\n      const dpr = window.devicePixelRatio || 1;\n      const rect = canvas.parentElement.getBoundingClientRect();\n      const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);\n      canvas.width = w * dpr; canvas.height = h * dpr;\n      const ctx = canvas.getContext('2d');\n      ctx.scale(dpr, dpr);\n      ctx.clearRect(0, 0, w, h);\n\n      const padL = 54, padR = 12, padT = 12, padB = 24;\n      const plotW = w - padL - padR, plotH = h - padT - padB;\n\n      const allVals = series.flatMap(s => s.data);\n      if (allVals.length === 0) {\n        ctx.fillStyle = '#8b93a7';\n        ctx.font = '12px sans-serif';\n        ctx.fillText('データが蓄積されるとここに表示されます', padL, h / 2);\n        return;\n      }\n      let min = Math.min(...allVals), max = Math.max(...allVals);\n      if (min === max) { min -= 1; max += 1; }\n      const pad = (max - min) * 0.1;\n      min -= pad; max += pad;\n\n      ctx.strokeStyle = '#1f2740';\n      ctx.lineWidth = 1;\n      ctx.font = '10.5px sans-serif';\n      ctx.fillStyle = '#8b93a7';\n      const gridLines = 4;\n      for (let i = 0; i <= gridLines; i++) {\n        const y = padT + (plotH / gridLines) * i;\n        ctx.beginPath();\n        ctx.moveTo(padL, y);\n        ctx.lineTo(w - padR, y);\n        ctx.stroke();\n        const val = max - ((max - min) / gridLines) * i;\n        ctx.fillText(Math.round(val).toLocaleString('ja-JP'), 2, y + 3);\n      }\n\n      const n = Math.max(...series.map(s => s.data.length), 2);\n      series.forEach(s => {\n        if (s.data.length < 2) return;\n        ctx.beginPath();\n        s.data.forEach((v, i) => {\n          const x = padL + (i / (n - 1)) * plotW;\n          const y = padT + plotH - ((v - min) / (max - min)) * plotH;\n          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);\n        });\n        ctx.strokeStyle = s.color;\n        ctx.lineWidth = 2;\n        ctx.lineJoin = 'round';\n        ctx.stroke();\n      });\n\n      if (labels && labels.length >= 2) {\n        ctx.fillStyle = '#8b93a7';\n        const first = new Date(labels[0]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        const last = new Date(labels[labels.length - 1]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        ctx.fillText(first, padL, h - 6);\n        ctx.fillText(last, w - padR - 34, h - 6);\n      }\n    }\n\n    function renderLeaderboard() {\n      if (!lastData) return;\n      let rows = lastData.leaderboard || [];\n      if (state.lb.search) {\n        const q = state.lb.search.toLowerCase();\n        rows = rows.filter(r => r.name.toLowerCase().includes(q));\n      }\n      rows = sortRows(rows, state.lb.sortKey, state.lb.sortDir);\n      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));\n      state.lb.page = Math.min(state.lb.page, totalPages);\n      const pageRows = rows.slice((state.lb.page - 1) * PAGE_SIZE, state.lb.page * PAGE_SIZE);\n      const maxAsset = Math.max(1, ...rows.map(r => r.total_assets));\n\n      const body = document.getElementById('lbBody');\n      document.getElementById('lbEmpty').style.display = rows.length === 0 ? 'block' : 'none';\n      body.innerHTML = pageRows.map(p => `\n        <tr>\n          <td class=\"rank-cell\"><span class=\"medal\">${medal(p.rank)}</span></td>\n          <td class=\"name-cell\" title=\"${esc(p.name)}\">${esc(p.name)}</td>\n          <td class=\"score-cell\">${p.credit_score}</td>\n          <td class=\"amount-cell\">\n            <div style=\"display:flex;align-items:center;gap:8px;justify-content:flex-end\">\n              <div class=\"bar-track bar-cell\"><div class=\"bar-fill\" style=\"width:${Math.max(4, p.total_assets / maxAsset * 100)}%\"></div></div>\n              <span>${fmtYen(p.total_assets)}</span>\n            </div>\n          </td>\n        </tr>\n      `).join('');\n\n      document.getElementById('lbPageInfo').textContent = rows.length === 0 ? '' : `${state.lb.page} / ${totalPages} ページ (全${rows.length}件)`;\n      document.getElementById('lbPrev').disabled = state.lb.page <= 1;\n      document.getElementById('lbNext').disabled = state.lb.page >= totalPages;\n      updateHeaderArrows('#lbBody', state.lb);\n      updateHeaderArrows('table:has(#lbBody)', state.lb);\n    }\n\n    function renderCharts() {\n      if (!lastData) return;\n      const hist = lastData.history || { labels: [], treasury: [] };\n      drawLineChart(document.getElementById('treasuryChart'),\n        [{ label: '国庫残高', color: '#f4c542', data: hist.treasury || [] }], hist.labels);\n    }\n\n    // ★追加: 「\ud83d\uded2 マーケット概況」セクションの描画(世界株式市場/資源相場ショップ/巡回商人/オークション)\n    function renderMarket() {\n      if (!lastData) return;\n      const ws = lastData.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };\n      const merchant = lastData.merchant || { refresh_at: 0, deals: [] };\n      const auction = lastData.auction || { active_listings: 0 };\n      const resources = lastData.resource_shop || [];\n\n      document.getElementById('marketStatGrid').innerHTML = `\n        <div class=\"stat-card accent\"><div class=\"label\">株式投資家数</div><div class=\"value\">${fmtNum(ws.active_investors)}人</div></div>\n        <div class=\"stat-card cyan\"><div class=\"label\">保有銘柄数(種類)</div><div class=\"value\">${fmtNum(ws.distinct_symbols)}</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">株式評価額合計</div><div class=\"value\">${fmtYen(ws.total_portfolio_value)}</div></div>\n        <div class=\"stat-card purple\"><div class=\"label\">オークション出品中</div><div class=\"value\">${fmtNum(auction.active_listings)}件</div></div>\n      `;\n\n      const topList = document.getElementById('worldStockTopList');\n      const topSymbols = ws.top_symbols || [];\n      topList.innerHTML = topSymbols.length === 0 ? '<div class=\"empty\">保有データがありません</div>' :\n        topSymbols.map((s, i) => `\n          <div class=\"rank-list-item\">\n            <span class=\"cat-dot\" style=\"background:${CAT_COLORS[i % CAT_COLORS.length]}\"></span>\n            <span class=\"rank-list-name\">${s.symbol}</span>\n            <span class=\"rank-list-meta\">${fmtNum(s.holders)}人保有 ・ ${fmtNum(s.total_shares)}株</span>\n          </div>\n        `).join('');\n\n      const remainMs = Math.max(0, (merchant.refresh_at || 0) - Date.now());\n      const deals = merchant.deals || [];\n      const dealsHtml = deals.length === 0 ? '<div class=\"empty\">現在の品揃えはありません</div>' :\n        deals.map(d => {\n          const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;\n          return `\n            <div class=\"deal-card\">\n              <div class=\"deal-card-head\">\n                <span class=\"deal-name\">${materialLabel(d.material)}</span>\n                <span class=\"deal-discount\">-${Math.round(d.discount_percent)}%</span>\n              </div>\n              <div class=\"meter-track\"><div class=\"meter-fill\" style=\"width:${(ratio * 100).toFixed(0)}%\"></div></div>\n              <div class=\"deal-stock\">残り ${fmtNum(d.stock_remaining)} / ${fmtNum(d.stock_total)}</div>\n            </div>\n          `;\n        }).join('');\n      document.getElementById('merchantStatus').innerHTML = `\n        <div class=\"merchant-refresh\">次回入荷まで: <b>${fmtDuration(remainMs)}</b></div>\n        <div class=\"deal-grid\">${dealsHtml}</div>\n      `;\n\n      document.getElementById('resourceBadgeGrid').innerHTML = resources.map(r => {\n        const color = divergingColor(r.trend_percent);\n        const sign = r.trend_percent > 0 ? '+' : '';\n        return `\n          <div class=\"badge\" title=\"基準価格 ${fmtNum(r.base_price)}円/個\">\n            <span class=\"dot\" style=\"background:${color}\"></span>\n            <span class=\"badge-name\">${materialLabel(r.material)}</span>\n            <span class=\"badge-trend\">${sign}${r.trend_percent.toFixed(1)}%</span>\n          </div>\n        `;\n      }).join('');\n    }\n\n    // ★追加: 「\ud83c\udfaf やること概況」セクションの描画(依頼ボード/宝くじ/倉庫レンタル/分割払い/埋蔵金)\n    function renderQuestsPanel() {\n      if (!lastData) return;\n      const q = lastData.quests || { available: 0, in_progress: 0, cooldown: 0, system_posted: 0, player_posted: 0 };\n      document.getElementById('questStatGrid').innerHTML = `\n        <div class=\"stat-card status-good\"><div class=\"label\">募集中</div><div class=\"value\">${fmtNum(q.available)}件</div></div>\n        <div class=\"stat-card accent\"><div class=\"label\">受注中</div><div class=\"value\">${fmtNum(q.in_progress)}件</div></div>\n        <div class=\"stat-card status-warning\"><div class=\"label\">クールダウン中</div><div class=\"value\">${fmtNum(q.cooldown)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">運営投稿</div><div class=\"value\">${fmtNum(q.system_posted)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">プレイヤー投稿</div><div class=\"value\">${fmtNum(q.player_posted)}件</div></div>\n      `;\n\n      const lottery = lastData.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };\n      document.getElementById('lotteryPool').textContent = fmtYen(lottery.pool);\n      document.getElementById('lotteryCountdown').textContent = fmtDuration((lottery.draw_at || 0) - Date.now());\n      document.getElementById('lotteryTickets').textContent = fmtNum(lottery.total_tickets_sold) + '枚';\n      document.getElementById('lotteryLastWinner').textContent = lottery.last_winner_name +\n        (lottery.last_winner_amount > 0 ? ` (${fmtYen(lottery.last_winner_amount)})` : '');\n\n      const treasure = lastData.treasure || { active: false, reward: 0 };\n      const storage = lastData.storage || { active_renters: 0 };\n      const installments = lastData.installments || { active_plans: 0, total_outstanding: 0 };\n      document.getElementById('miscStatGrid').innerHTML = `\n        <div class=\"stat-card ${treasure.active ? 'status-good' : ''}\">\n          <div class=\"label\">埋蔵金イベント</div>\n          <div class=\"value\">${treasure.active ? ('発生中 (' + fmtYen(treasure.reward) + ')') : '待機中'}</div>\n        </div>\n        <div class=\"stat-card\"><div class=\"label\">倉庫レンタル契約数</div><div class=\"value\">${fmtNum(storage.active_renters)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">分割払いプラン数</div><div class=\"value\">${fmtNum(installments.active_plans)}件</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">分割払い未払い合計</div><div class=\"value\">${fmtYen(installments.total_outstanding)}</div></div>\n      `;\n    }\n\n    function renderSelfCheck() {\n      const sc = (lastData && lastData.selfcheck) || { checked_at: 0, issues: [] };\n      const box = document.getElementById('selfcheckBox');\n      const issues = sc.issues || [];\n      const timeStr = sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '未実行';\n      if (issues.length === 0) {\n        box.className = 'alert-box ok';\n        box.innerHTML = '✅ 異常は検出されていません。<div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      } else {\n        box.className = 'alert-box warn';\n        const items = issues.map(i => '<li>' + String(i).replace(/</g, '&lt;') + '</li>').join('');\n        box.innerHTML = '⚠️ ' + issues.length + ' 件の不整合を検出し、自動修復しました。<ul>' + items + '</ul><div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      }\n    }\n\n    function renderAll() {\n      renderLeaderboard();\n      renderCharts();\n      renderMarket();\n      renderQuestsPanel();\n      renderSelfCheck();\n    }\n\n    let nextRefreshAt = Date.now() + 10000;\n    async function refresh() {\n      try {\n        const res = await fetch('/dashboard.json', { cache: 'no-store' });\n        const data = await res.json();\n        lastData = data;\n        document.getElementById('treasury').textContent = fmtYen(data.treasury || 0);\n        document.getElementById('totalGovDebt').textContent = fmtYen(data.total_gov_debt || 0);\n        const weekly = data.weekly || {};\n        document.getElementById('weeklyTrade').textContent = fmtYen(weekly.trade_volume || 0);\n        document.getElementById('eventBadge').textContent = data.active_event || '通常';\n        document.getElementById('updatedAt').textContent = new Date(data.generated_at || Date.now()).toLocaleString('ja-JP');\n        renderAll();\n        nextRefreshAt = Date.now() + 10000;\n      } catch (e) {\n        document.getElementById('updatedAt').textContent = '取得エラー';\n      }\n    }\n\n    document.getElementById('lbSearch').addEventListener('input', e => { state.lb.search = e.target.value; state.lb.page = 1; renderLeaderboard(); });\n    document.getElementById('lbPrev').addEventListener('click', () => { state.lb.page--; renderLeaderboard(); });\n    document.getElementById('lbNext').addEventListener('click', () => { state.lb.page++; renderLeaderboard(); });\n    bindSortableHeaders('table:has(#lbBody)', state.lb, renderLeaderboard);\n\n    window.addEventListener('resize', renderCharts);\n    setInterval(() => {\n      const secLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));\n      document.getElementById('countdown').textContent = secLeft + '秒後に更新';\n    }, 1000);\n\n    refresh();\n    setInterval(refresh, 10000);\n  </script>\n</body>\n</html>\n"
             .getBytes(StandardCharsets.UTF_8);
          exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+         this.addSecurityHeaders(exchange);
          exchange.sendResponseHeaders(200, body.length);
 
          try (OutputStream os = exchange.getResponseBody()) {
@@ -13231,20 +13523,24 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private String hashWebPassword(String password) {
-      try {
-         byte[] salt = new byte[16];
-         new SecureRandom().nextBytes(salt);
-         MessageDigest md = MessageDigest.getInstance("SHA-256");
-         md.update(salt);
-         byte[] hash = md.digest(password.getBytes(StandardCharsets.UTF_8));
-         return Base64.getEncoder().encodeToString(salt) + ":" + Base64.getEncoder().encodeToString(hash);
-      } catch (Exception e) {
-         throw new RuntimeException(e);
-      }
+      byte[] salt = new byte[16];
+      new SecureRandom().nextBytes(salt);
+      return "pbkdf2$120000$" + Base64.getEncoder().encodeToString(salt) + "$" + Base64.getEncoder().encodeToString(BankUtil.pbkdf2(password, salt, 120000));
    }
 
    private boolean verifyWebPassword(String stored, String password) {
-      if (stored != null && password != null) {
+      if (stored != null && password != null && stored.startsWith("pbkdf2$")) {
+         String[] parts = stored.split("\\$");
+
+         try {
+            return parts.length == 4
+               && MessageDigest.isEqual(
+                  Base64.getDecoder().decode(parts[3]), BankUtil.pbkdf2(password, Base64.getDecoder().decode(parts[2]), Integer.parseInt(parts[1]))
+               );
+         } catch (Exception e) {
+            return false;
+         }
+      } else if (stored != null && password != null) {
          int sep = stored.indexOf(58);
          if (sep < 0) {
             return false;
@@ -13268,13 +13564,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private <T> T runOnMainThreadSync(Callable<T> task) throws Exception {
       CompletableFuture<T> future = new CompletableFuture<>();
       Bukkit.getScheduler().runTask(this, () -> {
-         try {
-            future.complete(task.call());
-         } catch (Throwable t) {
-            future.completeExceptionally(t);
+         if (!future.isDone()) {
+            try {
+               future.complete(task.call());
+            } catch (Throwable t) {
+               future.completeExceptionally(t);
+            }
          }
       });
-      return future.get(5L, TimeUnit.SECONDS);
+
+      try {
+         return future.get(5L, TimeUnit.SECONDS);
+      } catch (java.util.concurrent.TimeoutException ex) {
+         future.cancel(false);
+         throw ex;
+      }
    }
 
    private String parseParam(String raw, String name) {
@@ -13299,6 +13603,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private String readRequestBody(HttpExchange exchange) throws IOException {
+      String declared = exchange.getRequestHeaders().getFirst("Content-Length");
+      if (declared != null) {
+         try {
+            if (Long.parseLong(declared.trim()) > 65536L) {
+               throw new IOException("request body too large");
+            }
+         } catch (NumberFormatException ex) {
+            throw new IOException("bad content-length");
+         }
+      }
+
       try (InputStream is = exchange.getRequestBody()) {
          byte[] data = is.readNBytes(65537);
          if (data.length > 65536) {
@@ -13352,15 +13667,31 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             String path = exchange.getRequestURI().getPath();
             Player online = Bukkit.getPlayer(owner);
             boolean isOnline = online != null && online.isOnline();
+            long[] fails = this.webAuthFailures.get(owner);
+            if (fails != null && fails[1] > System.currentTimeMillis()) {
+               this.sendJsonResponse(exchange, 429, "{\"ok\":false,\"message\":\"パスワードを何度も間違えたため、しばらく操作できません\"}");
+               return;
+            }
+
             if (path.equals("/me/collect")) {
                if (!isOnline) {
                   this.sendJsonResponse(exchange, 409, "{\"ok\":false,\"message\":\"受取箱の受取はログイン中のみ操作できます\"}");
                   return;
                }
-            } else if (!isOnline) {
+            } else {
                String password = this.getFormParam(body, "password");
                boolean authorized = this.verifyWebPassword(this.webPasswordHash.get(owner), password)
                   || this.verifyWebPassword(this.webAdminPasswordHash.get(owner), password);
+               if (authorized) {
+                  this.webAuthFailures.remove(owner);
+               } else {
+                  long[] f = this.webAuthFailures.computeIfAbsent(owner, k -> new long[2]);
+                  if (++f[0] >= 5L) {
+                     f[0] = 0L;
+                     f[1] = System.currentTimeMillis() + 300000L;
+                  }
+               }
+
                if (!authorized) {
                   this.sendJsonResponse(exchange, 403, "{\"ok\":false,\"message\":\"パスワードが違います(未設定の場合はゲーム内で /meco webpage password を設定してください)\"}");
                   return;
@@ -13389,20 +13720,33 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       try {
          switch (path) {
             case "/me/auction/bid":
+               if (!this.isFeatureEnabled("auction")) {
+                  return "{\"ok\":false,\"message\":\"オークションは無効になっています\"}";
+               }
+
                UUID auctionId = UUID.fromString(this.getFormParam(body, "auction_id"));
                double amount = parseFiniteDouble(this.getFormParam(body, "amount"));
                this.placeAuctionBid(p, auctionId, amount);
-               return "{\"ok\":true}";
+               boolean bidOk = p.getUniqueId().equals(this.auctionBidder.get(auctionId)) && Math.abs(this.auctionBid.getOrDefault(auctionId, -1.0) - amount) < 0.005;
+               return bidOk ? "{\"ok\":true}" : "{\"ok\":false,\"message\":\"入札できませんでした（金額・残高・終了時刻を確認してください）\"}";
             case "/me/worldstock/buy":
                String symbol = this.getFormParam(body, "symbol");
                int qty = Integer.parseInt(this.getFormParam(body, "qty"));
-               if (symbol != null && qty > 0) {
+               if (!this.isFeatureEnabled("worldstock")) {
+                  return "{\"ok\":false,\"message\":\"世界株式市場は無効になっています\"}";
+               }
+
+               if (symbol != null && qty > 0 && qty <= 100000 && symbol.toUpperCase().matches("[A-Z0-9.\\-^=]{1,15}")) {
                   this.executeWorldStockBuy(p, symbol.toUpperCase(), qty, null);
-                  return "{\"ok\":true}";
+                  return "{\"ok\":true,\"message\":\"購入を受け付けました。結果は取引履歴で確認してください\"}";
                }
 
                return "{\"ok\":false,\"message\":\"invalid parameters\"}";
             case "/me/storage/pay-rent":
+               if (!this.isFeatureEnabled("storage")) {
+                  return "{\"ok\":false,\"message\":\"レンタル倉庫は無効になっています\"}";
+               }
+
                boolean ok = this.payOrStartStorageRent(p);
                return "{\"ok\":" + ok + "}";
             case "/me/collect":
@@ -13572,9 +13916,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void handleMyDashboardPage(HttpExchange exchange) {
       try {
-         byte[] body = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>個人ページ | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>\ud83d\udc64 個人ページ</h1>\n    <div class=\"sub\" id=\"playerName\">読込中...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>オフライン操作用パスワード</h2>\n      <div class=\"empty\">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中は不要です。</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"パスワード\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">所持金</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">銀行残高</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">信用スコア</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">実績解除数</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">受取箱</h2>\n        <button class=\"btn\" id=\"collectBtn\">\ud83d\udce6 受取箱を確認する</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>保有中の世界株 / 購入</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"銘柄(例: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"株数\">\n        <button class=\"btn\" id=\"stockBuyBtn\">購入する</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>オークション</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>レンタル倉庫</h2>\n      <div id=\"storageArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>直近の取引履歴</h2>\n      <div id=\"logsArea\"><div class=\"empty\">読込中...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';\n        document.getElementById('onlineStatus').textContent = data.online ? '\ud83d\udfe2 ログイン中' : '⚪ オフライン';\n        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで\n        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。\n        document.getElementById('passwordPanel').hidden = data.online;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">保有中の株はありません。</div>' :\n          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + s.symbol + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">取引履歴はありません。</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">読込に失敗しました。</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return 'まもなく終了';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '分' + (s % 60) + '秒';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">出品中のオークションはありません。</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">即決 (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + esc(a.item) + (a.is_own ? '(自分の出品)' : '') + '</div>' +\n          '<div class=\"meta\">出品者: ' + esc(a.seller) + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"入札額\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">入札する</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">契約する</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    // ★修正: 連打/複数タブでの二重送信対策として、他の操作(入札・購入・家賃支払い等)が\n    // 処理中の間は新しい操作を受け付けない(サーバー側の重複実行防止の完全な代替ではないが、\n    // 誤操作による二重処理を安価に大きく減らせる)。\n    let actionBusy = false;\n    async function postAction(path, params) {\n      if (actionBusy) return { ok: false, message: '前の操作を処理中です。少し待ってからお試しください。' };\n      actionBusy = true;\n      try {\n        const password = (document.getElementById('offlinePassword') || {}).value || '';\n        const body = new URLSearchParams(Object.assign({ token, password }, params));\n        const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n        if (!res.ok) {\n          const err = await res.json().catch(() => ({}));\n          return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };\n        }\n        return await res.json();\n      } finally {\n        actionBusy = false;\n      }\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        const msg = !r.ok ? (r.message || '失敗しました。')\n          : (r.remaining ? ('インベントリが満杯のため ' + r.remaining + ' 個は受け取れませんでした。空きを作ってからもう一度お試しください。') : '受取箱を確認しました。');\n        showStatus('collectMsg', r.ok && !r.remaining, msg);\n        load();\n      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n"
+         byte[] body = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>個人ページ | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>\ud83d\udc64 個人ページ</h1>\n    <div class=\"sub\" id=\"playerName\">読込中...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>オフライン操作用パスワード</h2>\n      <div class=\"empty\">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中は不要です。</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"パスワード\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">所持金</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">銀行残高</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">信用スコア</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">実績解除数</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">受取箱</h2>\n        <button class=\"btn\" id=\"collectBtn\">\ud83d\udce6 受取箱を確認する</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>保有中の世界株 / 購入</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"銘柄(例: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"株数\">\n        <button class=\"btn\" id=\"stockBuyBtn\">購入する</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>オークション</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>レンタル倉庫</h2>\n      <div id=\"storageArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>直近の取引履歴</h2>\n      <div id=\"logsArea\"><div class=\"empty\">読込中...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';\n        document.getElementById('onlineStatus').textContent = data.online ? '\ud83d\udfe2 ログイン中' : '⚪ オフライン';\n        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで\n        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。\n        document.getElementById('passwordPanel').hidden = data.online;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">保有中の株はありません。</div>' :\n          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + esc(s.symbol) + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">取引履歴はありません。</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">読込に失敗しました。</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return 'まもなく終了';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '分' + (s % 60) + '秒';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">出品中のオークションはありません。</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">即決 (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + esc(a.item) + (a.is_own ? '(自分の出品)' : '') + '</div>' +\n          '<div class=\"meta\">出品者: ' + esc(a.seller) + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"入札額\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">入札する</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">契約する</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    // ★修正: 連打/複数タブでの二重送信対策として、他の操作(入札・購入・家賃支払い等)が\n    // 処理中の間は新しい操作を受け付けない(サーバー側の重複実行防止の完全な代替ではないが、\n    // 誤操作による二重処理を安価に大きく減らせる)。\n    let actionBusy = false;\n    async function postAction(path, params) {\n      if (actionBusy) return { ok: false, message: '前の操作を処理中です。少し待ってからお試しください。' };\n      actionBusy = true;\n      try {\n        const password = (document.getElementById('offlinePassword') || {}).value || '';\n        const body = new URLSearchParams(Object.assign({ token, password }, params));\n        const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n        if (!res.ok) {\n          const err = await res.json().catch(() => ({}));\n          return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };\n        }\n        return await res.json();\n      } finally {\n        actionBusy = false;\n      }\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        const msg = !r.ok ? (r.message || '失敗しました。')\n          : (r.remaining ? ('インベントリが満杯のため ' + r.remaining + ' 個は受け取れませんでした。空きを作ってからもう一度お試しください。') : '受取箱を確認しました。');\n        showStatus('collectMsg', r.ok && !r.remaining, msg);\n        load();\n      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n"
             .getBytes(StandardCharsets.UTF_8);
          exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+         this.addSecurityHeaders(exchange);
          exchange.sendResponseHeaders(200, body.length);
 
          try (OutputStream os = exchange.getResponseBody()) {
@@ -13588,7 +13933,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private String jsonEscape(String s) {
-      return s == null ? "" : s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
+      return BankUtil.jsonEscape(s);
    }
 
    private String joinLongs(Collection<Long> values) {
@@ -14049,6 +14394,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       UUID u = p.getUniqueId();
       Long promptedAt = this.awaitingChatInputAt.get(u);
       if (promptedAt != null && System.currentTimeMillis() - promptedAt > CHAT_INPUT_TIMEOUT_MS && this.awaitingChatInput.containsKey(u)) {
+         e.setCancelled(true);
          String expired = this.awaitingChatInput.remove(u);
          this.awaitingChatInputAt.remove(u);
          Bukkit.getScheduler().runTask(this, () -> {
@@ -14105,12 +14451,14 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            }
 
                            cfg.set(key, parsed);
-                           this.auditLog("管理者 " + p.getName() + " が設定 " + key + " を " + current + " → " + parsed + " に変更");
+                           this.auditLog(
+                              "管理者 " + p.getName() + " が設定 " + key + " を " + (isSecretConfigKey(key) ? "(非表示)" : current + " → " + parsed) + " に変更"
+                           );
                            this.saveConfig();
                            this.reloadConfig();
                            this.loadConfigValues();
                            this.loadMessages();
-                           this.msgKey(p, "config.updated", "key", key, "value", String.valueOf(parsed));
+                           this.msgKey(p, "config.updated", "key", key, "value", isSecretConfigKey(key) ? "********" : MiniMessage.miniMessage().escapeTags(String.valueOf(parsed)));
                            this.playUiSound(p, "success");
                            this.openConfigEditorGUI(p, this.configEditorPage.getOrDefault(u, 0));
                         }
@@ -14601,6 +14949,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  case "trade_money":
                                     TradeSession session = this.activeTradeSessions.get(u);
                                     if (session == null) {
+                                       this.msgKey(p, "trade.no-session");
                                        return;
                                     }
 
@@ -14690,7 +15039,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   UUID u = op.getUniqueId();
                   double pocket = econ.getBalance(op);
                   double bank = this.personalBank.getOrDefault(u, 0.0);
-                  double wealth = pocket + bank;
+                  double wealth = pocket + bank + this.hiddenAssets(u);
                   double tax = this.estimateWealthTax(wealth);
                   if (!(tax < 0.01)) {
                      double fromPocket = Math.min(Math.max(0.0, pocket), tax);
@@ -14841,6 +15190,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             Bukkit.getScheduler().runTask(this, () -> {
                if (finalResult != null) {
                   this.stockHistoryCache.put(symbol, finalResult);
+               } else {
+                  this.stockHistoryFetchedAt.put(symbol, System.currentTimeMillis() - 1740000L);
                }
 
                callback.accept(finalResult);
@@ -14850,6 +15201,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private void showChart(Player p, String raw) {
+      long chartNow = System.currentTimeMillis();
+      if (chartNow - this.chartCooldown.getOrDefault(p.getUniqueId(), 0L) < 3000L) {
+         return;
+      }
+
+      this.chartCooldown.put(p.getUniqueId(), chartNow);
+      if (this.stockHistoryCache.size() > 300) {
+         this.stockHistoryCache.clear();
+         this.stockHistoryFetchedAt.clear();
+      }
+
       Material mat = Material.matchMaterial(raw);
       if (mat != null && RESOURCE_BASE_PRICES.containsKey(mat)) {
          LinkedList<Double> hist = this.resourcePriceHistory.get(mat);
@@ -14862,6 +15224,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          }
       } else {
          String symbol = raw.trim().toUpperCase();
+         if (!this.featureAllowed(p, "worldstock")) {
+            return;
+         }
+
          if (!symbol.matches("[A-Z0-9.^=\\-]{1,20}")) {
             this.msgKey(p, "chart.usage");
          } else {
@@ -15071,7 +15437,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void runSyncTick() {
       if (this.db != null && this.db.isSyncEnabled() && !this.syncInFlight) {
          this.syncInFlight = true;
-         this.saveData();
+
+         try {
+            this.saveData();
+         } catch (Exception ex) {
+            this.syncInFlight = false;
+            this.getLogger().severe("[サーバー間同期] 保存に失敗したため今回の同期を中止しました: " + ex);
+            return;
+         }
+
          double[] snapshot = this.counterValues();
          double[] base = this.syncedCounters != null ? this.syncedCounters : snapshot;
          double[] deltas = new double[snapshot.length];
@@ -15102,14 +15476,22 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.getLogger().warning("[サーバー間同期] 変更の取り込みに失敗しました(次回再試行): " + err.getMessage());
             } else {
                double[] keep = this.counterValues();
-               this.saveData();
-               Set<String> changed = this.db.applyRemote(rows, SYNC_SKIP_KEYS);
-               if (!changed.isEmpty()) {
-                  this.clearPersistedState();
-                  this.loadData();
-               }
 
-               this.setCounterValues(keep);
+               try {
+                  this.saveData();
+                  Set<String> changed = this.db.applyRemote(rows, SYNC_SKIP_KEYS);
+                  if (!changed.isEmpty()) {
+                     this.clearPersistedState();
+                     this.dataLoaded = false;
+                     this.loadData();
+                     this.storageInventories.entrySet().removeIf(en -> en.getValue().getViewers().isEmpty());
+                  }
+               } catch (Exception ex) {
+                  this.dataLoaded = false;
+                  this.getLogger().severe("[サーバー間同期] 変更の反映中にエラーが発生しました。データ保護のため保存を停止しました。サーバーを再起動してください: " + ex);
+               } finally {
+                  this.setCounterValues(keep);
+               }
             }
          }));
          CompletableFuture.allOf(pull, counters).whenComplete((v, err) -> Bukkit.getScheduler().runTask(this, () -> this.syncInFlight = false));
@@ -15199,6 +15581,127 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.worldStockLastTradeTime.clear();
       this.worldStockProfitToday.clear();
       this.worldStockTradesToday.clear();
+   }
+
+   private double payInterestFromTreasury(double interest) {
+      double paid = Math.max(0.0, Math.min(interest, this.treasury));
+      this.treasury -= paid;
+      return paid;
+   }
+
+   private double hiddenAssets(UUID u) {
+      return this.fixedDeposit.getOrDefault(u, 0.0)
+         + this.fixedDeposit2.getOrDefault(u, 0.0)
+         + this.fixedDeposit3.getOrDefault(u, 0.0)
+         + this.bankCapital.getOrDefault(u, 0.0);
+   }
+
+   private double collectOverdueGovDebt(UUID u) {
+      double debt = this.govDebt.getOrDefault(u, 0.0);
+      OfflinePlayer op = Bukkit.getOfflinePlayer(u);
+      double fromWallet = Math.min(debt, Math.max(0.0, econ.getBalance(op)));
+      if (fromWallet > 0.0 && this.ecoWithdraw(op, fromWallet).transactionSuccess()) {
+         debt -= fromWallet;
+      } else {
+         fromWallet = 0.0;
+      }
+
+      double bank = this.personalBank.getOrDefault(u, 0.0);
+      double fromBank = Math.min(debt, Math.max(0.0, bank));
+      if (fromBank > 0.0) {
+         this.personalBank.put(u, bank - fromBank);
+         debt -= fromBank;
+      }
+
+      double seized = fromWallet + fromBank;
+      if (seized > 0.0) {
+         this.addLog(u, "国営ローン延滞による差し押さえ -" + this.fmtCur(seized));
+         Player online = Bukkit.getPlayer(u);
+         if (online != null) {
+            this.msgKey(online, "loan.gov-seized", "amount", this.fmtCur(seized), "remaining", this.fmtCur(Math.max(0.0, debt)));
+         }
+      }
+
+      if (debt <= 0.005) {
+         this.govDebt.remove(u);
+         this.govDebtDueTime.remove(u);
+         return 0.0;
+      } else {
+         this.govDebt.put(u, debt);
+         return debt;
+      }
+   }
+
+   private double resourceResaleValue(Material mat) {
+      Double direct = RESOURCE_BASE_PRICES.get(mat);
+      if (direct != null) {
+         return direct;
+      } else {
+         return switch (mat) {
+            case NETHERITE_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.NETHERITE_INGOT, 0.0);
+            case DIAMOND_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.DIAMOND, 0.0);
+            case EMERALD_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.EMERALD, 0.0);
+            case GOLD_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.GOLD_INGOT, 0.0);
+            case IRON_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.IRON_INGOT, 0.0);
+            case COAL_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.COAL, 0.0);
+            case LAPIS_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.LAPIS_LAZULI, 0.0);
+            case REDSTONE_BLOCK -> 9.0 * RESOURCE_BASE_PRICES.getOrDefault(Material.REDSTONE, 0.0);
+            default -> 0.0;
+         };
+      }
+   }
+
+   private static boolean isPlainItem(ItemStack item, Material mat) {
+      return item != null && item.getType() == mat && item.isSimilar(new ItemStack(mat));
+   }
+
+   private int countPlainMaterial(Player p, Material mat) {
+      int n = 0;
+
+      for (ItemStack item : p.getInventory().getStorageContents()) {
+         if (isPlainItem(item, mat)) {
+            n += item.getAmount();
+         }
+      }
+
+      return n;
+   }
+
+   private void removePlainMaterial(Player p, Material mat, int qty) {
+      ItemStack[] contents = p.getInventory().getStorageContents();
+      int left = qty;
+
+      for (int i = 0; i < contents.length && left > 0; i++) {
+         ItemStack item = contents[i];
+         if (isPlainItem(item, mat)) {
+            int take = Math.min(left, item.getAmount());
+            left -= take;
+            if (take >= item.getAmount()) {
+               contents[i] = null;
+            } else {
+               item.setAmount(item.getAmount() - take);
+            }
+         }
+      }
+
+      p.getInventory().setStorageContents(contents);
+   }
+
+   private OfflinePlayer lookupKnownPlayer(String name) {
+      Player online = Bukkit.getPlayerExact(name);
+      if (online != null) {
+         return online;
+      } else {
+         OfflinePlayer cached = Bukkit.getOfflinePlayerIfCached(name);
+         return cached != null && cached.hasPlayedBefore() ? cached : null;
+      }
+   }
+
+   private static final Set<String> SECRET_CONFIG_WORDS = Set.of("token", "password", "secret");
+
+   private static boolean isSecretConfigKey(String key) {
+      String k = key.toLowerCase();
+      return SECRET_CONFIG_WORDS.stream().anyMatch(k::contains);
    }
 
    private void sendShortfall(Player p, double need, double have) {
@@ -15838,8 +16341,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             HttpURLConnection conn = null;
 
             try {
-               String escaped = plainMessage.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-               String json = "{\"content\":\"" + escaped + "\"}";
+               String safe = plainMessage.replace("@", "@\u200b");
+               if (safe.length() > 1900) {
+                  safe = safe.substring(0, 1900) + "…";
+               }
+
+               String json = "{\"content\":\"" + BankUtil.jsonEscape(safe) + "\",\"allowed_mentions\":{\"parse\":[]}}";
                URL url = new URL("https://discord.com/api/v10/channels/" + channelId + "/messages");
                conn = (HttpURLConnection)url.openConnection();
                conn.setRequestMethod("POST");
@@ -15909,8 +16416,19 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      String body = stream != null ? new String(stream.readAllBytes(), StandardCharsets.UTF_8) : "";
                      if (code >= 200 && code < 300) {
                         Double price = this.extractJsonNumber(body, "regularMarketPrice");
-                        if (price != null) {
+                        if (price != null && Double.isFinite(price) && price > 0.0) {
                            String currency = this.extractJsonString(body, "currency");
+                           if ("GBp".equals(currency) || "GBX".equals(currency)) {
+                              price = price / 100.0;
+                              currency = "GBP";
+                           } else if ("ILA".equals(currency)) {
+                              price = price / 100.0;
+                              currency = "ILS";
+                           } else if ("ZAc".equals(currency)) {
+                              price = price / 100.0;
+                              currency = "ZAR";
+                           }
+
                            String exch = this.extractJsonString(body, "fullExchangeName");
                            String realSymbol = this.extractJsonString(body, "symbol");
                            result = new WorldStockQuote(
@@ -15940,7 +16458,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private Double extractJsonNumber(String json, String key) {
-      Matcher m = Pattern.compile("\"" + key + "\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?)").matcher(json);
+      Matcher m = Pattern.compile("\"" + key + "\"\\s*:\\s*(-?[0-9]+(?:\\.[0-9]+)?(?:[eE][-+]?[0-9]+)?)").matcher(json);
       if (m.find()) {
          try {
             return Double.parseDouble(m.group(1));
@@ -16078,7 +16596,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private static final Set<String> USER_TEXT_PLACEHOLDERS = Set.of("group", "fund");
+   private static final Set<String> USER_TEXT_PLACEHOLDERS = Set.of("group", "fund", "query", "error");
 
    private String getMsg(String key, String... kv) {
       String template = this.messages != null ? this.messages.getString(key) : null;

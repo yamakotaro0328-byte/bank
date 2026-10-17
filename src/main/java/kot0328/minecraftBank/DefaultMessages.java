@@ -381,6 +381,14 @@ final class DefaultMessages {
    );
    m.put("sounds.on", "<green>メニューの効果音をONにしました。</green>");
    m.put("sounds.off", "<gray>メニューの効果音をOFFにしました。（/meco sounds でON）</gray>");
+   m.put("insurance.rebuy-cooldown", "<red>保険金を受け取ってから24時間は再加入できません。（あと {time}）</red>");
+   m.put("insurance.treasury-empty", "<red>国庫が空のため、保険金を支払えませんでした。</red>");
+   m.put("loan.plan-changed", "<red>表示中に融資条件が変更されました。新しい条件を確認してください。</red>");
+   m.put("loan.gov-seized", "<red>国営ローンの返済期限を過ぎたため {amount} を差し押さえました。（残債 {remaining}）</red>");
+   m.put("lottery.qty-limit", "<red>1回に購入できるのは {max} 枚まで、1人の保有は {total} 枚までです。</red>");
+   m.put("trade.no-session", "<gray>取引は終了しています。</gray>");
+   m.put("admin.economy-failed", "<red>経済プラグイン側で処理が拒否されました（残高不足・上限など）。</red>");
+   m.put("webpage.admin-password-issued", "<yellow>管理者 {admin} があなたのWebページ用の管理パスワードを発行しました。</yellow>");
    m.put("common.shortfall", "<gray>→ あと <red>{amount}</red> 足りません。</gray>");
    m.put("common.presets-label", "<gray>クイック入力(クリック→Enter):</gray>");
    m.put(
@@ -396,10 +404,10 @@ final class DefaultMessages {
    m.put("admin.audit-empty", "<gray>監査ログはまだありません。</gray>");
    m.put("admin.audit-line", "<gray>{line}</gray>");
    m.put("admin.audit-footer", "<gray>次のページ: /meco admin audit {next}</gray>");
-   m.put("transfer.header", "<aqua><bold>===== 振り込み履歴 ({page}/{pages}) =====</bold></aqua>");
-   m.put("transfer.empty", "<gray>振り込み履歴はまだありません。</gray>");
-   m.put("transfer.line", "<white>{line}</white>");
-   m.put("transfer.footer", "<gray>次のページ: /meco transfers {next}</gray>");
+   m.put("transfer-header", "<aqua><bold>===== 振り込み履歴 ({page}/{pages}) =====</bold></aqua>");
+   m.put("transfer-empty", "<gray>振り込み履歴はまだありません。</gray>");
+   m.put("transfer-line", "<white>{line}</white>");
+   m.put("transfer-footer", "<gray>次のページ: /meco transfers {next}</gray>");
    m.put("standing.usage", "<yellow>使用法: /meco standing add <プレイヤー> <金額> <間隔(時間)> | list | cancel <番号></yellow>");
    m.put("standing.player-not-found", "<red>そのプレイヤーは見つかりません（一度でもサーバーに参加したことが必要です）。</red>");
    m.put("standing.cannot-self", "<red>自分自身には定期送金できません。</red>");

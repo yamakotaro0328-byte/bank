@@ -411,6 +411,10 @@ final class PluginDataStore {
          this.flushTouched();
       }
 
+      if (!this.retryOps.isEmpty()) {
+         this.writer.submit(() -> this.applyOps(new ArrayList<>()));
+      }
+
       this.writer.submit(this::drainLedger);
       this.writer.shutdown();
 
@@ -532,10 +536,9 @@ final class PluginDataStore {
                   }
                }
 
-               ops.clear();
             }
 
-            for (String[] op : ops) {
+            for (String[] op : origin != null ? List.<String[]>of() : ops) {
                if (op[2] == null) {
                   del.setString(1, op[0]);
                   del.setString(2, op[1]);
@@ -578,6 +581,8 @@ final class PluginDataStore {
 
    private void drainLedger() {
       if (!this.ledgerQueue.isEmpty()) {
+         List<Object[]> batch = new ArrayList<>();
+
          try {
             this.ensureConnection();
             this.conn.setAutoCommit(false);
@@ -585,6 +590,7 @@ final class PluginDataStore {
             try (PreparedStatement ps = this.conn.prepareStatement("INSERT INTO " + this.ledgerTable + "(ts, player, delta, source) VALUES (?, ?, ?, ?)")) {
                Object[] row;
                while ((row = this.ledgerQueue.poll()) != null) {
+                  batch.add(row);
                   ps.setLong(1, (Long)row[0]);
                   ps.setString(2, (String)row[1]);
                   ps.setDouble(3, (Double)row[2]);
@@ -601,7 +607,11 @@ final class PluginDataStore {
             } catch (SQLException var11) {
             }
 
-            this.log.warning("[台帳] 書き込みに失敗しました: " + e.getMessage());
+            if (this.ledgerQueue.size() < 100000) {
+               this.ledgerQueue.addAll(batch);
+            }
+
+            this.log.warning("[台帳] 書き込みに失敗しました(次回再試行): " + e.getMessage());
          } finally {
             try {
                this.conn.setAutoCommit(true);
