@@ -58,6 +58,14 @@ final class BankUtil {
       return v;
    }
 
+   static long parseLongOr(String raw, long fallback) {
+      try {
+         return Long.parseLong(raw.trim());
+      } catch (NumberFormatException ex) {
+         return fallback;
+      }
+   }
+
    static String percentText(double rate) {
       double pct = rate * 100.0;
       return (pct == Math.floor(pct) ? String.valueOf((long)pct) : String.format("%.2f", pct).replaceAll("0+$", "")) + "%";

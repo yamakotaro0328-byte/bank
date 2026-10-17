@@ -118,7 +118,7 @@ final class DefaultMessages {
    m.put("quest.already-active", "<red>すでに別の依頼を受注中です。先にその依頼を達成するか、取り消してください。</red>");
    m.put("input.expired", "<gray>入力待ちが時間切れ(5分)になったため、今のメッセージは通常のチャットとして送信しました。</gray>");
    m.put("worldstock.quote-refresh-failed", "<red>最新の株価を取得できなかったため、取引を中止しました。少し待ってから再度お試しください。</red>");
-   m.put("common.invalid-name", "<red>名前は24文字以内で、< > \\ は使えません。</red>");
+   m.put("common.invalid-name", "<red>名前は24文字以内で、空白・@・< > \\ は使えません。</red>");
    m.put("resourceshop.qty-out-of-range", "<red>数量は1〜{max}個で指定してください。</red>");
    m.put("admin.treasure-inactive", "<gray>【埋蔵金】現在出現していません。次回出現まで約{minutes}分。</gray>");
    m.put(
@@ -404,6 +404,7 @@ final class DefaultMessages {
    m.put("invoice.cancelled", "<gray>請求を取り消しました。</gray>");
    m.put("invoice.cancelled-notify", "<gray>【請求書】{player} が {amount} の請求を取り消しました。</gray>");
    m.put("invoice.expired-notify", "<gray>【請求書】{player} への {amount} の請求は期限切れになりました。</gray>");
+   m.put("insurance.not-covered", "<gray>この死因は保険の対象外です（他のプレイヤーやモブに倒された場合のみ支払われます）。契約は継続しています。</gray>");
    m.put("common.shortfall", "<gray>→ あと <red>{amount}</red> 足りません。</gray>");
    m.put("common.presets-label", "<gray>クイック入力(クリック→Enter):</gray>");
    m.put(

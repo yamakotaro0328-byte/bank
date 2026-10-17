@@ -262,7 +262,8 @@ final class PluginDataStore {
 
    private volatile long lastKeyedPullAt = 0L;
 
-   CompletableFuture<Map<String, Double>> syncKeyedAsync(Map<String, Double> seeds, Map<String, Double> deltas) {
+   /** initial: seeds only fill missing rows and take the shared total; later seeds are added, since the shared total never included them. */
+   CompletableFuture<Map<String, Double>> syncKeyedAsync(Map<String, Double> seeds, Map<String, Double> deltas, boolean initial) {
       return CompletableFuture.supplyAsync(() -> {
          Map<String, Double> totals = new HashMap<>();
          String nowExpr = "ROUND(UNIX_TIMESTAMP(CURRENT_TIMESTAMP(3)) * 1000)";
@@ -287,16 +288,23 @@ final class PluginDataStore {
                         + ", ?) ON DUPLICATE KEY UPDATE value = value + ?, updated_at = VALUES(updated_at), origin = VALUES(origin)"
                   );
             ) {
-               for (Entry<String, Double> en : seeds.entrySet()) {
-                  seed.setString(1, en.getKey());
-                  seed.setDouble(2, en.getValue());
-                  seed.setString(3, this.syncOrigin);
-                  seed.addBatch();
+               if (initial) {
+                  for (Entry<String, Double> en : seeds.entrySet()) {
+                     seed.setString(1, en.getKey());
+                     seed.setDouble(2, en.getValue());
+                     seed.setString(3, this.syncOrigin);
+                     seed.addBatch();
+                  }
+
+                  seed.executeBatch();
                }
 
-               seed.executeBatch();
+               Map<String, Double> adds = new HashMap<>(deltas);
+               if (!initial) {
+                  adds.putAll(seeds);
+               }
 
-               for (Entry<String, Double> en : deltas.entrySet()) {
+               for (Entry<String, Double> en : adds.entrySet()) {
                   add.setString(1, en.getKey());
                   add.setDouble(2, en.getValue());
                   add.setString(3, this.syncOrigin);
@@ -307,7 +315,7 @@ final class PluginDataStore {
                add.executeBatch();
             }
 
-            this.conn.commit();
+            // read the totals inside the transaction: if this fails nothing is committed and the deltas are resent once
             List<String> seedKeys = new ArrayList<>(seeds.keySet());
 
             for (int i = 0; i < seedKeys.size(); i += 500) {
@@ -331,16 +339,17 @@ final class PluginDataStore {
                   .prepareStatement("SELECT name, value, updated_at FROM " + this.counterTable() + " WHERE updated_at > ? AND name LIKE '%:%'")) {
                sel.setLong(1, this.lastKeyedPullAt - 5000L);
 
-               try (ResultSet rs = sel.executeQuery()) {
-                  long max = this.lastKeyedPullAt;
+               long max = this.lastKeyedPullAt;
 
+               try (ResultSet rs = sel.executeQuery()) {
                   while (rs.next()) {
                      totals.put(rs.getString(1), rs.getDouble(2));
                      max = Math.max(max, rs.getLong(3));
                   }
-
-                  this.lastKeyedPullAt = max;
                }
+
+               this.conn.commit();
+               this.lastKeyedPullAt = max;
             }
 
             return totals;
