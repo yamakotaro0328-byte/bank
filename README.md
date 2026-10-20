@@ -49,3 +49,18 @@ storage:
 - プレイヤーが参加したときは同期を待ってから参加時の処理（差し押さえ・配布など）を行います。
 - リーダーが0台/2台以上のとき、同じ server-id のサーバーが動いているときはログに警告を出します。
 - 所持金(Vault)は経済プラグイン側の管理です。サーバー間で共有するには、所持金をMySQLで共有できる経済プラグインを併用してください。
+
+## リソースパック（専用アイコン・効果音）
+
+プラグインに同梱のリソースパックを、参加したプレイヤーに自動で配ります。パックを入れていない人には今まで通りバニラの見た目で表示されます。
+
+- 配布先: `webdashboard.enabled: true` と `webdashboard.public-url` を設定すると、`<public-url>/pack.zip` から配信します。
+- 外部に置く場合: `plugins/MinecraftBank/MinecraftBank-pack.zip` をアップロードし、そのURLを `resource-pack.url` に設定します。
+- 主な設定: `resource-pack.enabled`、`resource-pack.required`（拒否した人をキックする）、`resource-pack.prompt`、`resource-pack.custom-sounds`。
+- 絵や音の差し替え: `plugins/MinecraftBank/resourcepack/` にパック内と同じパスでファイルを置くと上書きされます。
+  - 例: `assets/minecraftbank/textures/item/coin.png`
+- 同梱の絵と音は `tools/resourcepack/generate.py` で生成しています。ffmpeg が必要です。
+
+## Webダッシュボード
+
+ページは `src/main/resources/web/` にあります。共通のデザインとメニューは `bank.css` と `bank.js` です。

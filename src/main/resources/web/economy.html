@@ -72,11 +72,12 @@
   .empty { color: var(--text-dim); font-size: 13px; }
   @media (max-width: 520px) { .flow-row { grid-template-columns: 96px 1fr 84px; } }
 </style>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js" defer></script>
 </head>
-<body>
-<header>
+<body data-page="market">
+<header class="page-hero">
   <h1>📈 経済マーケット</h1>
-  <a href="/">← ダッシュボードへ戻る</a>
   <span class="updated" id="updated">読み込み中…</span>
 </header>
 <main>

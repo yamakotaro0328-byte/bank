@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ホーム | MinecraftBank</title>
+<style>
+  :root {
+    --bg: #0b0f19;
+    --panel: #141b2c;
+    --panel-alt: #101625;
+    --panel-border: #232c42;
+    --text: #eaeefb;
+    --text-dim: #8b93a7;
+    --gold: #f4c542;
+    --emerald: #4ade9b;
+    --red: #ff6b6b;
+    --accent: #5b8cff;
+    --purple: #b18cff;
+    --cyan: #43d9e0;
+
+    /* ★追加: データ可視化用の検証済みパレット(dataviz skillのcolor-formula.mdに準拠)
+       カテゴリカル8色は固定順で識別(系列/カテゴリ)専用、ステータス4色は状態専用、
+       シーケンシャル/ダイバージングは大小・極性の表現専用。色の役割を混同しないこと。 */
+    --cat-1: #3987e5; /* blue */
+    --cat-2: #d95926; /* orange */
+    --cat-3: #199e70; /* aqua */
+    --cat-4: #c98500; /* yellow */
+    --cat-5: #d55181; /* magenta */
+    --cat-6: #008300; /* green */
+    --cat-7: #9085e9; /* violet */
+    --cat-8: #e66767; /* red */
+    --status-good: #0ca30c;
+    --status-warning: #fab219;
+    --status-serious: #ec835a;
+    --status-critical: #d03b3b;
+    --seq-100: #cde2fb;
+    --seq-400: #3987e5;
+    --seq-700: #0d366b;
+    --div-neg: #3987e5;  /* 基準値より安い(マイナス側の極) */
+    --div-pos: #e66767;  /* 基準値より高い(プラス側の極) */
+    --div-mid: #383835;  /* 中立(基準値と同水準) */
+  }
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    background:
+      radial-gradient(circle at 15% -10%, #24304f66 0%, transparent 45%),
+      radial-gradient(circle at 100% 0%, #1a2c2266 0%, transparent 40%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    animation: fadeInUp .4s ease both;
+  }
+  header h1 {
+    font-size: 25px;
+    margin: 0 0 6px;
+    letter-spacing: 0.3px;
+  }
+  header h1 span { color: var(--gold); }
+  .sub-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .event-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #1c2440;
+    border: 1px solid var(--panel-border);
+    color: var(--cyan);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .event-badge::before { content: '●'; font-size: 8px; color: var(--cyan); }
+  #updated {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: right;
+  }
+  #updated b { color: var(--emerald); }
+  #countdown { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .stat-card {
+    background: linear-gradient(160deg, var(--panel), var(--panel-alt));
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    animation: fadeInUp .45s ease both;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: #34406a; }
+  .stat-card .label {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    white-space: nowrap;
+  }
+  .stat-card .value {
+    font-size: 23px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-card.gold .value { color: var(--gold); }
+  .stat-card.emerald .value { color: var(--emerald); }
+  .stat-card.accent .value { color: var(--accent); }
+  .stat-card.red .value { color: var(--red); }
+  .stat-card.purple .value { color: var(--purple); }
+  .stat-card.cyan .value { color: var(--cyan); }
+  .stat-card.status-good .value { color: var(--status-good); }
+  .stat-card.status-warning .value { color: var(--status-warning); }
+  .stat-card.status-critical .value { color: var(--status-critical); }
+
+  /* ★追加: 「マーケット概況」「やること概況」向けの新規コンポーネント */
+  .subpanel {
+    background: var(--panel-alt);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .subpanel h3 {
+    font-size: 12.5px;
+    margin: 0 0 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .rank-list { display: flex; flex-direction: column; gap: 9px; }
+  .rank-list-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .rank-list-name { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .rank-list-meta { margin-left: auto; color: var(--text-dim); font-size: 11.5px; text-align: right; white-space: nowrap; }
+  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }
+  .badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+  .badge .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .badge-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .badge-trend { font-variant-numeric: tabular-nums; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+  .mini-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; }
+  .mini-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  .merchant-refresh { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }
+  .merchant-refresh b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .deal-grid { display: flex; flex-direction: column; gap: 10px; }
+  .deal-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; }
+  .deal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+  .deal-name { font-weight: 600; font-size: 13px; }
+  .deal-discount { color: var(--emerald); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .meter-track { height: 7px; border-radius: 4px; background: var(--seq-100); overflow: hidden; }
+  .meter-fill { height: 100%; background: var(--seq-400); border-radius: 4px; transition: width .4s ease; }
+  .deal-stock { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }
+  .hero-tile { text-align: center; padding: 4px 0 16px; }
+  .hero-tile .hero-value {
+    font-size: 40px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.15;
+    /* ★重要: 大きな単独の数値は比例数字を使う(等幅のtabular-numsは大きい文字だと間延びして見える) */
+  }
+  .hero-tile .hero-label {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .mini-stats { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--text-dim); }
+  .mini-stats b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 16px;
+    animation: fadeInUp .5s ease both;
+  }
+  .panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .panel h2 {
+    font-size: 14px;
+    margin: 0;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }
+  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+  .chart-box { position: relative; width: 100%; height: 220px; }
+  .chart-box canvas { width: 100%; height: 100%; display: block; }
+  .alert-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7; }
+  .alert-box.ok { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--emerald); }
+  .alert-box.warn { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.4); color: #f87171; }
+  .alert-box ul { margin: 6px 0 0 18px; padding: 0; }
+  .alert-box .alert-time { color: var(--text-dim); font-size: 11px; margin-top: 6px; }
+  .bars-box { position: relative; width: 100%; height: 160px; }
+  .panels-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 820px) {
+    .panels-2col { grid-template-columns: 1fr; }
+  }
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .search-input {
+    background: var(--panel-alt);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font-size: 13px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    outline: none;
+    min-width: 160px;
+  }
+  .search-input:focus { border-color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--panel);
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--panel-border);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { color: var(--text); }
+  thead th .arrow { opacity: .5; margin-left: 3px; font-size: 10px; }
+  tbody td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1c2438;
+    vertical-align: middle;
+  }
+  tbody tr { transition: background .12s ease; }
+  tbody tr:hover { background: #1a2136; }
+  tbody tr:nth-child(even) { background: #121a2b55; }
+  tbody tr:nth-child(even):hover { background: #1a2136; }
+  .rank-cell { width: 34px; font-weight: 700; color: var(--text-dim); }
+  .medal { font-size: 14px; }
+  .name-cell { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-cell { min-width: 90px; }
+  .bar-track { height: 8px; background: #1c2338; border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--emerald)); border-radius: 5px; transition: width .4s ease; }
+  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; white-space: nowrap; }
+  .score-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--cyan); white-space: nowrap; }
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .pagination button {
+    background: var(--panel-alt);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .pagination button:disabled { opacity: .35; cursor: default; }
+  .pagination button:not(:disabled):hover { border-color: var(--accent); }
+  .empty { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }
+  footer {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+</style>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js" defer></script>
+</head>
+<body data-page="home">
+  <div class="wrap">
+    <header class="page-hero">
+      <div>
+        <h1>💰 <span>MinecraftBank</span> 経済ダッシュボード</h1>
+        <div class="sub-row">
+          <div class="event-badge" id="eventBadge">通常</div>
+        </div>
+      </div>
+      <div id="updated">最終更新: <b id="updatedAt">-</b><br><span id="countdown"></span></div>
+    </header>
+
+    <div class="grid" id="statGrid">
+      <div class="stat-card gold">
+        <div class="label">国庫残高</div>
+        <div class="value" id="treasury">-</div>
+      </div>
+      <div class="stat-card red">
+        <div class="label">政府債務合計</div>
+        <div class="value" id="totalGovDebt">-</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="label">今週の取引量</div>
+        <div class="value" id="weeklyTrade">-</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>異常検知</h2>
+      </div>
+      <div class="alert-box ok" id="selfcheckBox">確認中...</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>国庫残高の推移</h2>
+      </div>
+      <div class="chart-box"><canvas id="treasuryChart"></canvas></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>資産ランキング</h2>
+        <div class="toolbar">
+          <input class="search-input" id="lbSearch" type="text" placeholder="プレイヤー名で検索...">
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th data-key="rank">#<span class="arrow"></span></th>
+              <th data-key="name">プレイヤー<span class="arrow"></span></th>
+              <th data-key="credit_score">信用スコア<span class="arrow"></span></th>
+              <th data-key="total_assets">総資産<span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+      </div>
+      <div id="lbEmpty" class="empty" style="display:none">データがありません</div>
+      <div class="pagination">
+        <span id="lbPageInfo"></span>
+        <button id="lbPrev">← 前へ</button>
+        <button id="lbNext">次へ →</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🛒 マーケット概況</h2>
+      </div>
+
+      <div class="grid" id="marketStatGrid"></div>
+
+      <div class="panels-2col" style="margin-top:16px">
+        <div class="subpanel">
+          <h3>📈 世界株式市場 - 保有株数トップ5</h3>
+          <div class="rank-list" id="worldStockTopList"></div>
+        </div>
+        <div class="subpanel">
+          <h3>🧳 巡回商人</h3>
+          <div id="merchantStatus"></div>
+        </div>
+      </div>
+
+      <div class="subpanel" style="margin-top:16px">
+        <h3>⛏ 資源相場ショップ - 基準価格との乖離</h3>
+        <div class="mini-legend">
+          <span><span class="dot" style="background:var(--div-neg)"></span>基準より安い</span>
+          <span><span class="dot" style="background:var(--div-mid)"></span>横ばい</span>
+          <span><span class="dot" style="background:var(--div-pos)"></span>基準より高い</span>
+        </div>
+        <div class="badge-grid" id="resourceBadgeGrid"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🎯 やること概況</h2>
+      </div>
+
+      <div class="grid" id="questStatGrid"></div>
+
+      <div class="panels-2col" style="margin-top:16px">
+        <div class="subpanel">
+          <h3>🎟 宝くじ</h3>
+          <div class="hero-tile">
+            <div class="hero-value" id="lotteryPool">-</div>
+            <div class="hero-label">次回抽選の賞金プール</div>
+          </div>
+          <div class="mini-stats">
+            <div>次回抽選まで: <b id="lotteryCountdown">-</b></div>
+            <div>販売チケット数: <b id="lotteryTickets">-</b></div>
+            <div>前回の当せん: <b id="lotteryLastWinner">-</b></div>
+          </div>
+        </div>
+        <div class="subpanel">
+          <h3>📦 倉庫レンタル / 💳 分割払い / ⛏ 埋蔵金</h3>
+          <div class="grid" id="miscStatGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>10秒ごとに自動更新されます</footer>
+  </div>
+
+  <script>
+    const PAGE_SIZE = 10;
+    let lastData = null;
+    const state = {
+      lb: { sortKey: 'rank', sortDir: 1, page: 1, search: '' }
+    };
+
+    function esc(v) { return String(v).replace(/[&<>'\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }
+    function fmtNum(n) { return Math.round(n).toLocaleString('ja-JP'); }
+    function medal(rank) {
+      if (rank === 1) return '🥇';
+      if (rank === 2) return '🥈';
+      if (rank === 3) return '🥉';
+      return rank;
+    }
+
+    // ★追加: カテゴリカルパレット(固定8色・固定順。系列/カテゴリの識別専用。ステータス色とは混同しないこと)
+    const CAT_COLORS = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];
+
+    // ★追加: ダイバージング配色(青⇔グレー⇔赤)。基準値からの乖離%を±30%でクランプして線形補間する。
+    function divergingColor(pct) {
+      const clamped = Math.max(-30, Math.min(30, pct || 0));
+      const t = clamped / 30; // -1..1
+      const neg = [0x39, 0x87, 0xe5];  // --cat-1 / --div-neg (blue)
+      const mid = [0x38, 0x38, 0x35];  // --div-mid (neutral gray)
+      const pos = [0xe6, 0x67, 0x67];  // --cat-8 / --div-pos (red)
+      const from = t < 0 ? neg : pos;
+      const amt = Math.abs(t);
+      const rgb = mid.map((m, i) => Math.round(m + (from[i] - m) * amt));
+      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+    }
+
+    // ★追加: 資源相場ショップ/巡回商人の素材名 日本語表示(未登録の素材は整形して表示)
+    const MATERIAL_JA = {
+      COAL: '石炭', IRON_INGOT: '鉄インゴット', GOLD_INGOT: '金インゴット', COPPER_INGOT: '銅インゴット',
+      REDSTONE: 'レッドストーン', LAPIS_LAZULI: 'ラピスラズリ', DIAMOND: 'ダイヤモンド', EMERALD: 'エメラルド',
+      NETHERITE_SCRAP: 'ネザライトの欠片', WHEAT: '小麦', CARROT: 'ニンジン', POTATO: 'ジャガイモ',
+      BEETROOT: 'ビートルート', MELON_SLICE: 'スイカ', PUMPKIN: 'カボチャ', SUGAR_CANE: 'サトウキビ',
+      NETHER_WART: 'ネザーウォート', COCOA_BEANS: 'カカオ豆', ROTTEN_FLESH: '腐った肉', BONE: '骨',
+      STRING: '糸', GUNPOWDER: '火薬', SPIDER_EYE: 'クモの目', SLIME_BALL: 'スライムボール',
+      ENDER_PEARL: 'エンダーパール', BLAZE_ROD: 'ブレイズロッド', GHAST_TEAR: 'ガストの涙',
+      OAK_LOG: 'オークの原木', SPRUCE_LOG: 'トウヒの原木', BIRCH_LOG: 'シラカバの原木', JUNGLE_LOG: 'ジャングルの原木',
+      ACACIA_LOG: 'アカシアの原木', DARK_OAK_LOG: 'ダークオークの原木', MANGROVE_LOG: 'マングローブの原木', CHERRY_LOG: 'サクラの原木',
+      ELYTRA: 'エリトラ', TOTEM_OF_UNDYING: '不死のトーテム', NETHERITE_INGOT: 'ネザライトインゴット',
+      NETHERITE_BLOCK: 'ネザライトブロック', ENCHANTED_GOLDEN_APPLE: 'エンチャントされた金のリンゴ',
+      SADDLE: 'サドル', NAME_TAG: '名札', SHULKER_BOX: 'シュルカーボックス', TRIDENT: 'トライデント',
+      NETHER_STAR: 'ネザースター', DRAGON_EGG: 'ドラゴンの卵', BEACON: 'ビーコン', DIAMOND_BLOCK: 'ダイヤモンドブロック',
+      EMERALD_BLOCK: 'エメラルドブロック', MUSIC_DISC_PIGSTEP: 'レコード(Pigstep)', MUSIC_DISC_OTHERSIDE: 'レコード(Otherside)',
+      HEART_OF_THE_SEA: '海の心', CONDUIT: 'コンジット', END_CRYSTAL: 'エンドクリスタル', GOLDEN_CARROT: '金のニンジン'
+    };
+    function materialLabel(name) {
+      if (MATERIAL_JA[name]) return MATERIAL_JA[name];
+      return String(name).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
+    // ★追加: 残りミリ秒を「◯日◯時間」「◯時間◯分」「◯分」形式に整形
+    function fmtDuration(ms) {
+      if (!ms || ms <= 0) return 'まもなく';
+      const totalMin = Math.floor(ms / 60000);
+      const d = Math.floor(totalMin / 1440);
+      const h = Math.floor((totalMin % 1440) / 60);
+      const m = totalMin % 60;
+      if (d > 0) return d + '日' + h + '時間';
+      if (h > 0) return h + '時間' + m + '分';
+      return m + '分';
+    }
+
+    function sortRows(rows, key, dir) {
+      return [...rows].sort((a, b) => {
+        const av = a[key], bv = b[key];
+        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * dir;
+        return ((av ?? 0) - (bv ?? 0)) * dir;
+      });
+    }
+
+    function bindSortableHeaders(tableSelector, sortState, renderFn) {
+      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.getAttribute('data-key');
+          if (sortState.sortKey === key) {
+            sortState.sortDir *= -1;
+          } else {
+            sortState.sortKey = key;
+            sortState.sortDir = 1;
+          }
+          sortState.page = 1;
+          renderFn();
+        });
+      });
+    }
+
+    function updateHeaderArrows(tableSelector, sortState) {
+      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {
+        const arrow = th.querySelector('.arrow');
+        if (th.getAttribute('data-key') === sortState.sortKey) {
+          arrow.textContent = sortState.sortDir === 1 ? '▲' : '▼';
+        } else {
+          arrow.textContent = '';
+        }
+      });
+    }
+
+    function drawLineChart(canvas, series, labels) {
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+
+      const padL = 54, padR = 12, padT = 12, padB = 24;
+      const plotW = w - padL - padR, plotH = h - padT - padB;
+
+      const allVals = series.flatMap(s => s.data);
+      if (allVals.length === 0) {
+        ctx.fillStyle = '#5b6880';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('データが蓄積されるとここに表示されます', padL, h / 2);
+        return;
+      }
+      let min = Math.min(...allVals), max = Math.max(...allVals);
+      if (min === max) { min -= 1; max += 1; }
+      const pad = (max - min) * 0.1;
+      min -= pad; max += pad;
+
+      ctx.strokeStyle = '#e1e6ef';
+      ctx.lineWidth = 1;
+      ctx.font = '10.5px sans-serif';
+      ctx.fillStyle = '#5b6880';
+      const gridLines = 4;
+      for (let i = 0; i <= gridLines; i++) {
+        const y = padT + (plotH / gridLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(w - padR, y);
+        ctx.stroke();
+        const val = max - ((max - min) / gridLines) * i;
+        ctx.fillText(Math.round(val).toLocaleString('ja-JP'), 2, y + 3);
+      }
+
+      const n = Math.max(...series.map(s => s.data.length), 2);
+      series.forEach(s => {
+        if (s.data.length < 2) return;
+        ctx.beginPath();
+        s.data.forEach((v, i) => {
+          const x = padL + (i / (n - 1)) * plotW;
+          const y = padT + plotH - ((v - min) / (max - min)) * plotH;
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      });
+
+      if (labels && labels.length >= 2) {
+        ctx.fillStyle = '#5b6880';
+        const first = new Date(labels[0]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        const last = new Date(labels[labels.length - 1]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        ctx.fillText(first, padL, h - 6);
+        ctx.fillText(last, w - padR - 34, h - 6);
+      }
+    }
+
+    function renderLeaderboard() {
+      if (!lastData) return;
+      let rows = lastData.leaderboard || [];
+      if (state.lb.search) {
+        const q = state.lb.search.toLowerCase();
+        rows = rows.filter(r => r.name.toLowerCase().includes(q));
+      }
+      rows = sortRows(rows, state.lb.sortKey, state.lb.sortDir);
+      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+      state.lb.page = Math.min(state.lb.page, totalPages);
+      const pageRows = rows.slice((state.lb.page - 1) * PAGE_SIZE, state.lb.page * PAGE_SIZE);
+      const maxAsset = Math.max(1, ...rows.map(r => r.total_assets));
+
+      const body = document.getElementById('lbBody');
+      document.getElementById('lbEmpty').style.display = rows.length === 0 ? 'block' : 'none';
+      body.innerHTML = pageRows.map(p => `
+        <tr>
+          <td class="rank-cell"><span class="medal">${medal(p.rank)}</span></td>
+          <td class="name-cell" title="${esc(p.name)}">${esc(p.name)}</td>
+          <td class="score-cell">${p.credit_score}</td>
+          <td class="amount-cell">
+            <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+              <div class="bar-track bar-cell"><div class="bar-fill" style="width:${Math.max(4, p.total_assets / maxAsset * 100)}%"></div></div>
+              <span>${fmtYen(p.total_assets)}</span>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('lbPageInfo').textContent = rows.length === 0 ? '' : `${state.lb.page} / ${totalPages} ページ (全${rows.length}件)`;
+      document.getElementById('lbPrev').disabled = state.lb.page <= 1;
+      document.getElementById('lbNext').disabled = state.lb.page >= totalPages;
+      updateHeaderArrows('#lbBody', state.lb);
+      updateHeaderArrows('table:has(#lbBody)', state.lb);
+    }
+
+    function renderCharts() {
+      if (!lastData) return;
+      const hist = lastData.history || { labels: [], treasury: [] };
+      drawLineChart(document.getElementById('treasuryChart'),
+        [{ label: '国庫残高', color: '#a87a12', data: hist.treasury || [] }], hist.labels);
+    }
+
+    // ★追加: 「🛒 マーケット概況」セクションの描画(世界株式市場/資源相場ショップ/巡回商人/オークション)
+    function renderMarket() {
+      if (!lastData) return;
+      const ws = lastData.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };
+      const merchant = lastData.merchant || { refresh_at: 0, deals: [] };
+      const auction = lastData.auction || { active_listings: 0 };
+      const resources = lastData.resource_shop || [];
+
+      document.getElementById('marketStatGrid').innerHTML = `
+        <div class="stat-card accent"><div class="label">株式投資家数</div><div class="value">${fmtNum(ws.active_investors)}人</div></div>
+        <div class="stat-card cyan"><div class="label">保有銘柄数(種類)</div><div class="value">${fmtNum(ws.distinct_symbols)}</div></div>
+        <div class="stat-card gold"><div class="label">株式評価額合計</div><div class="value">${fmtYen(ws.total_portfolio_value)}</div></div>
+        <div class="stat-card purple"><div class="label">オークション出品中</div><div class="value">${fmtNum(auction.active_listings)}件</div></div>
+      `;
+
+      const topList = document.getElementById('worldStockTopList');
+      const topSymbols = ws.top_symbols || [];
+      topList.innerHTML = topSymbols.length === 0 ? '<div class="empty">保有データがありません</div>' :
+        topSymbols.map((s, i) => `
+          <div class="rank-list-item">
+            <span class="cat-dot" style="background:${CAT_COLORS[i % CAT_COLORS.length]}"></span>
+            <span class="rank-list-name">${s.symbol}</span>
+            <span class="rank-list-meta">${fmtNum(s.holders)}人保有 ・ ${fmtNum(s.total_shares)}株</span>
+          </div>
+        `).join('');
+
+      const remainMs = Math.max(0, (merchant.refresh_at || 0) - Date.now());
+      const deals = merchant.deals || [];
+      const dealsHtml = deals.length === 0 ? '<div class="empty">現在の品揃えはありません</div>' :
+        deals.map(d => {
+          const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;
+          return `
+            <div class="deal-card">
+              <div class="deal-card-head">
+                <span class="deal-name">${materialLabel(d.material)}</span>
+                <span class="deal-discount">-${Math.round(d.discount_percent)}%</span>
+              </div>
+              <div class="meter-track"><div class="meter-fill" style="width:${(ratio * 100).toFixed(0)}%"></div></div>
+              <div class="deal-stock">残り ${fmtNum(d.stock_remaining)} / ${fmtNum(d.stock_total)}</div>
+            </div>
+          `;
+        }).join('');
+      document.getElementById('merchantStatus').innerHTML = `
+        <div class="merchant-refresh">次回入荷まで: <b>${fmtDuration(remainMs)}</b></div>
+        <div class="deal-grid">${dealsHtml}</div>
+      `;
+
+      document.getElementById('resourceBadgeGrid').innerHTML = resources.map(r => {
+        const color = divergingColor(r.trend_percent);
+        const sign = r.trend_percent > 0 ? '+' : '';
+        return `
+          <div class="badge" title="基準価格 ${fmtNum(r.base_price)}円/個">
+            <span class="dot" style="background:${color}"></span>
+            <span class="badge-name">${materialLabel(r.material)}</span>
+            <span class="badge-trend">${sign}${r.trend_percent.toFixed(1)}%</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ★追加: 「🎯 やること概況」セクションの描画(依頼ボード/宝くじ/倉庫レンタル/分割払い/埋蔵金)
+    function renderQuestsPanel() {
+      if (!lastData) return;
+      const q = lastData.quests || { available: 0, in_progress: 0, cooldown: 0, system_posted: 0, player_posted: 0 };
+      document.getElementById('questStatGrid').innerHTML = `
+        <div class="stat-card status-good"><div class="label">募集中</div><div class="value">${fmtNum(q.available)}件</div></div>
+        <div class="stat-card accent"><div class="label">受注中</div><div class="value">${fmtNum(q.in_progress)}件</div></div>
+        <div class="stat-card status-warning"><div class="label">クールダウン中</div><div class="value">${fmtNum(q.cooldown)}件</div></div>
+        <div class="stat-card"><div class="label">運営投稿</div><div class="value">${fmtNum(q.system_posted)}件</div></div>
+        <div class="stat-card"><div class="label">プレイヤー投稿</div><div class="value">${fmtNum(q.player_posted)}件</div></div>
+      `;
+
+      const lottery = lastData.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };
+      document.getElementById('lotteryPool').textContent = fmtYen(lottery.pool);
+      document.getElementById('lotteryCountdown').textContent = fmtDuration((lottery.draw_at || 0) - Date.now());
+      document.getElementById('lotteryTickets').textContent = fmtNum(lottery.total_tickets_sold) + '枚';
+      document.getElementById('lotteryLastWinner').textContent = lottery.last_winner_name +
+        (lottery.last_winner_amount > 0 ? ` (${fmtYen(lottery.last_winner_amount)})` : '');
+
+      const treasure = lastData.treasure || { active: false, reward: 0 };
+      const storage = lastData.storage || { active_renters: 0 };
+      const installments = lastData.installments || { active_plans: 0, total_outstanding: 0 };
+      document.getElementById('miscStatGrid').innerHTML = `
+        <div class="stat-card ${treasure.active ? 'status-good' : ''}">
+          <div class="label">埋蔵金イベント</div>
+          <div class="value">${treasure.active ? ('発生中 (' + fmtYen(treasure.reward) + ')') : '待機中'}</div>
+        </div>
+        <div class="stat-card"><div class="label">倉庫レンタル契約数</div><div class="value">${fmtNum(storage.active_renters)}件</div></div>
+        <div class="stat-card"><div class="label">分割払いプラン数</div><div class="value">${fmtNum(installments.active_plans)}件</div></div>
+        <div class="stat-card gold"><div class="label">分割払い未払い合計</div><div class="value">${fmtYen(installments.total_outstanding)}</div></div>
+      `;
+    }
+
+    function renderSelfCheck() {
+      const sc = (lastData && lastData.selfcheck) || { checked_at: 0, issues: [] };
+      const box = document.getElementById('selfcheckBox');
+      const issues = sc.issues || [];
+      const timeStr = sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '未実行';
+      if (issues.length === 0) {
+        box.className = 'alert-box ok';
+        box.innerHTML = '✅ 異常は検出されていません。<div class="alert-time">最終チェック: ' + timeStr + '</div>';
+      } else {
+        box.className = 'alert-box warn';
+        const items = issues.map(i => '<li>' + String(i).replace(/</g, '&lt;') + '</li>').join('');
+        box.innerHTML = '⚠️ ' + issues.length + ' 件の不整合を検出し、自動修復しました。<ul>' + items + '</ul><div class="alert-time">最終チェック: ' + timeStr + '</div>';
+      }
+    }
+
+    function renderAll() {
+      renderLeaderboard();
+      renderCharts();
+      renderMarket();
+      renderQuestsPanel();
+      renderSelfCheck();
+    }
+
+    let nextRefreshAt = Date.now() + 10000;
+    async function refresh() {
+      try {
+        const res = await fetch('/dashboard.json', { cache: 'no-store' });
+        const data = await res.json();
+        lastData = data;
+        document.getElementById('treasury').textContent = fmtYen(data.treasury || 0);
+        document.getElementById('totalGovDebt').textContent = fmtYen(data.total_gov_debt || 0);
+        const weekly = data.weekly || {};
+        document.getElementById('weeklyTrade').textContent = fmtYen(weekly.trade_volume || 0);
+        document.getElementById('eventBadge').textContent = data.active_event || '通常';
+        document.getElementById('updatedAt').textContent = new Date(data.generated_at || Date.now()).toLocaleString('ja-JP');
+        renderAll();
+        nextRefreshAt = Date.now() + 10000;
+      } catch (e) {
+        document.getElementById('updatedAt').textContent = '取得エラー';
+      }
+    }
+
+    document.getElementById('lbSearch').addEventListener('input', e => { state.lb.search = e.target.value; state.lb.page = 1; renderLeaderboard(); });
+    document.getElementById('lbPrev').addEventListener('click', () => { state.lb.page--; renderLeaderboard(); });
+    document.getElementById('lbNext').addEventListener('click', () => { state.lb.page++; renderLeaderboard(); });
+    bindSortableHeaders('table:has(#lbBody)', state.lb, renderLeaderboard);
+
+    window.addEventListener('resize', renderCharts);
+    setInterval(() => {
+      const secLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));
+      document.getElementById('countdown').textContent = secLeft + '秒後に更新';
+    }, 1000);
+
+    refresh();
+    setInterval(refresh, 10000);
+  </script>
+</body>
+</html>

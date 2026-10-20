@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>個人ページ | MinecraftBank</title>
+<style>
+  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }
+  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }
+  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }
+  .card .value { font-size:20px; font-weight:700; }
+  .gold .value { color: var(--gold); }
+  .emerald .value { color: var(--emerald); }
+  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }
+  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }
+  th { color:var(--text-dim); font-weight:600; }
+  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }
+  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }
+  .err { color: var(--red); }
+  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }
+  .btn:hover { opacity:.9; }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .btn.gold { background: var(--gold); color:#1a1300; }
+  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }
+  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }
+  .status-msg.ok { color: var(--emerald); }
+  .status-msg.err { color: var(--red); }
+  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }
+  .auction-card:last-child { border-bottom:none; }
+  .auction-card .title { font-weight:600; margin-bottom:4px; }
+  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }
+</style>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js" defer></script>
+</head>
+<body data-page="me">
+  <div class="wrap">
+    <header class="page-hero">
+      <h1>👤 マイページ</h1>
+      <div class="sub" id="playerName">読込中...</div>
+      <div class="sub" id="onlineStatus"></div>
+    </header>
+
+    <div class="panel" id="passwordPanel" hidden>
+      <h2>オフライン操作用パスワード</h2>
+      <div class="empty">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中でも必要です。</div>
+      <div class="row"><input class="input" id="offlinePassword" type="password" placeholder="パスワード" style="width:160px;"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card gold"><div class="label">所持金</div><div class="value" id="pocket">-</div></div>
+      <div class="card gold"><div class="label">銀行残高</div><div class="value" id="bank">-</div></div>
+      <div class="card emerald"><div class="label">信用スコア</div><div class="value" id="credit">-</div></div>
+      <div class="card"><div class="label">実績解除数</div><div class="value" id="achievements">-</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="row" style="justify-content:space-between; margin-top:0;">
+        <h2 style="margin:0;">受取箱</h2>
+        <button class="btn" id="collectBtn">📦 受取箱を確認する</button>
+      </div>
+      <div class="status-msg" id="collectMsg"></div>
+      <div class="empty">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>
+    </div>
+
+    <div class="panel">
+      <h2>保有中の世界株 / 購入</h2>
+      <div id="stocksArea"><div class="empty">読込中...</div></div>
+      <div class="row">
+        <input class="input" id="stockSymbol" type="text" placeholder="銘柄(例: AAPL)" style="width:140px;">
+        <input class="input" id="stockQty" type="number" min="1" value="1" placeholder="株数">
+        <button class="btn" id="stockBuyBtn">購入する</button>
+      </div>
+      <div class="status-msg" id="stockMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>オークション</h2>
+      <div id="auctionArea"><div class="empty">読込中...</div></div>
+      <div class="status-msg" id="auctionMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>レンタル倉庫</h2>
+      <div id="storageArea"><div class="empty">読込中...</div></div>
+      <div class="status-msg" id="storageMsg"></div>
+    </div>
+
+    <div class="panel">
+      <h2>直近の取引履歴</h2>
+      <div id="logsArea"><div class="empty">読込中...</div></div>
+    </div>
+  </div>
+
+  <script>
+    function esc(v) { return String(v).replace(/[&<>'\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }
+    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token') || '';
+
+    async function load() {
+      try {
+        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('playerName').innerHTML = '<span class="err">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';
+          return;
+        }
+        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';
+        document.getElementById('onlineStatus').textContent = data.online ? '🟢 ログイン中' : '⚪ オフライン';
+        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで
+        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。
+        document.getElementById('passwordPanel').hidden = false;
+        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);
+        document.getElementById('bank').textContent = fmtYen(data.bank || 0);
+        document.getElementById('credit').textContent = data.credit_score;
+        document.getElementById('achievements').textContent = data.achievement_count;
+
+        const stocks = data.world_stocks || [];
+        const stocksArea = document.getElementById('stocksArea');
+        stocksArea.innerHTML = stocks.length === 0 ? '<div class="empty">保有中の株はありません。</div>' :
+          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +
+          stocks.map(s => '<tr><td>' + esc(s.symbol) + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +
+          '</tbody></table>';
+
+        const logs = data.logs || [];
+        const logsArea = document.getElementById('logsArea');
+        logsArea.innerHTML = logs.length === 0 ? '<div class="empty">取引履歴はありません。</div>' :
+          logs.map(l => '<div class="log-line">' + l.replace(/</g, '&lt;') + '</div>').join('');
+
+        renderAuctions(data.auctions || []);
+        renderStorage(data.storage || {});
+      } catch (e) {
+        document.getElementById('playerName').innerHTML = '<span class="err">読込に失敗しました。</span>';
+      }
+    }
+
+    function fmtRemain(ms) {
+      if (ms <= 0) return 'まもなく終了';
+      const s = Math.floor(ms / 1000);
+      return Math.floor(s / 60) + '分' + (s % 60) + '秒';
+    }
+
+    function renderAuctions(auctions) {
+      const area = document.getElementById('auctionArea');
+      if (auctions.length === 0) { area.innerHTML = '<div class="empty">出品中のオークションはありません。</div>'; return; }
+      area.innerHTML = auctions.map(a => {
+        const disabled = a.is_own ? 'disabled' : '';
+        const buyoutBtn = a.buyout !== null ? '<button class="btn gold" ' + disabled + ' onclick="bidAuction(\'' + a.id + '\', ' + a.buyout + ')">即決 (' + fmtYen(a.buyout) + ')</button>' : '';
+        return '<div class="auction-card">' +
+          '<div class="title">' + esc(a.item) + (a.is_own ? '(自分の出品)' : '') + '</div>' +
+          '<div class="meta">出品者: ' + esc(a.seller) + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +
+          '<div class="row" style="margin-top:0;">' +
+            '<input class="input" id="bidamt-' + a.id + '" type="number" placeholder="入札額" ' + disabled + '>' +
+            '<button class="btn" ' + disabled + ' onclick="bidAuctionFromInput(\'' + a.id + '\')">入札する</button>' +
+            buyoutBtn +
+          '</div></div>';
+      }).join('');
+    }
+
+    function renderStorage(storage) {
+      const area = document.getElementById('storageArea');
+      if (!storage.rented) {
+        area.innerHTML = '<div class="empty">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +
+          '<div class="row"><button class="btn" onclick="payStorageRent()">契約する</button></div>';
+      } else {
+        area.innerHTML = '<div class="empty">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +
+          '<div class="row"><button class="btn" onclick="payStorageRent()">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';
+      }
+    }
+
+    // ★修正: 連打/複数タブでの二重送信対策として、他の操作(入札・購入・家賃支払い等)が
+    // 処理中の間は新しい操作を受け付けない(サーバー側の重複実行防止の完全な代替ではないが、
+    // 誤操作による二重処理を安価に大きく減らせる)。
+    let actionBusy = false;
+    async function postAction(path, params) {
+      if (actionBusy) return { ok: false, message: '前の操作を処理中です。少し待ってからお試しください。' };
+      actionBusy = true;
+      try {
+        const password = (document.getElementById('offlinePassword') || {}).value || '';
+        const body = new URLSearchParams(Object.assign({ token, password }, params));
+        const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };
+        }
+        return await res.json();
+      } finally {
+        actionBusy = false;
+      }
+    }
+
+    function showStatus(id, ok, text) {
+      const el = document.getElementById(id);
+      el.className = 'status-msg ' + (ok ? 'ok' : 'err');
+      el.textContent = text;
+    }
+
+    document.getElementById('collectBtn').addEventListener('click', async () => {
+      try {
+        const r = await postAction('/me/collect', {});
+        const msg = !r.ok ? (r.message || '失敗しました。')
+          : (r.remaining ? ('インベントリが満杯のため ' + r.remaining + ' 個は受け取れませんでした。空きを作ってからもう一度お試しください。') : '受取箱を確認しました。');
+        showStatus('collectMsg', r.ok && !r.remaining, msg);
+        load();
+      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }
+    });
+
+    document.getElementById('stockBuyBtn').addEventListener('click', async () => {
+      const symbol = document.getElementById('stockSymbol').value.trim();
+      const qty = document.getElementById('stockQty').value;
+      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }
+      try {
+        const r = await postAction('/me/worldstock/buy', { symbol, qty });
+        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));
+        load();
+      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }
+    });
+
+    async function payStorageRent() {
+      try {
+        const r = await postAction('/me/storage/pay-rent', {});
+        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));
+        load();
+      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }
+    }
+
+    async function bidAuction(id, amount) {
+      try {
+        const r = await postAction('/me/auction/bid', { auction_id: id, amount });
+        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));
+        load();
+      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }
+    }
+
+    function bidAuctionFromInput(id) {
+      const val = document.getElementById('bidamt-' + id).value;
+      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }
+      bidAuction(id, val);
+    }
+
+    load();
+  </script>
+</body>
+</html>

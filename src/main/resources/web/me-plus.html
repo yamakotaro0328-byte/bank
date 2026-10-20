@@ -39,13 +39,13 @@
   .scroll { max-height: 360px; overflow: auto; }
   .err { color: var(--div-pos); padding: 40px 16px; text-align: center; }
 </style>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js" defer></script>
 </head>
-<body>
-<header>
+<body data-page="book">
+<header class="page-hero">
   <h1>📒 家計簿</h1>
   <span id="who" style="color:var(--text-dim)"></span>
-  <a id="me-link" href="#">個人ページへ</a>
-  <a href="/economy.html">経済マーケット</a>
 </header>
 <main id="main">
   <div class="tiles" id="tiles"></div>
@@ -61,7 +61,6 @@
 <script>
 const $ = (id) => document.getElementById(id);
 const token = new URLSearchParams(location.search).get('token') || '';
-$('me-link').href = '/me.html?token=' + encodeURIComponent(token);
 const fmtNum = (v) => Number(v).toLocaleString('ja-JP', { maximumFractionDigits: 2 });
 
 function el(tag, attrs = {}, text) {
