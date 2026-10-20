@@ -4,146 +4,110 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>家計簿 | MinecraftBank</title>
-<style>
-  :root {
-    --bg: #0b0f19;
-    --panel: #141b2c;
-    --panel-alt: #101625;
-    --panel-border: #232c42;
-    --text: #eaeefb;
-    --text-dim: #8b93a7;
-    --accent: #5b8cff;
-    --div-pos: #e66767;
-    --div-neg: #3987e5;
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif; }
-  header { padding: 20px 16px 8px; max-width: 1000px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; }
-  header h1 { margin: 0; font-size: 22px; }
-  header a { color: var(--accent); font-size: 14px; }
-  main { max-width: 1000px; margin: 0 auto; padding: 0 16px 40px; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 12px 0 20px; }
-  .tile { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 14px 16px; }
-  .tile .label { color: var(--text-dim); font-size: 12px; }
-  .tile .value { font-size: 20px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
-  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-  section { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 12px; padding: 16px; margin-bottom: 20px; min-width: 0; }
-  section h2 { margin: 0 0 10px; font-size: 16px; }
-  ul { list-style: none; margin: 0; padding: 0; }
-  li { padding: 6px 0; border-bottom: 1px solid var(--panel-border); font-size: 13px; overflow-wrap: anywhere; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--panel-border); }
-  td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .sign { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
-  .empty { color: var(--text-dim); font-size: 13px; }
-  .scroll { max-height: 360px; overflow: auto; }
-  .err { color: var(--div-pos); padding: 40px 16px; text-align: center; }
-</style>
 <link rel="stylesheet" href="/bank.css">
-<script src="/bank.js" defer></script>
+<script src="/bank.js"></script>
 </head>
 <body data-page="book">
-<header class="page-hero">
-  <h1>📒 家計簿</h1>
-  <span id="who" style="color:var(--text-dim)"></span>
-</header>
-<main id="main">
-  <div class="tiles" id="tiles"></div>
-  <div class="cols">
-    <section><h2>📅 期限一覧</h2><ul id="due"></ul></section>
-    <section><h2>🔁 定期送金</h2><div id="standing"></div></section>
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">HOUSEHOLD BOOK</div>
+    <h1 id="title">家計簿</h1>
+    <p class="hero-lead">お金の出入り、期限のある契約、定期送金、税金の見込みをまとめて確認できます。</p>
+    <div class="hero-row" style="margin-top:22px">
+      <div class="hero-figure">
+        <div class="label">総資産（所持金 ＋ 預金）</div>
+        <div class="value num"><span id="wealth" class="skeleton">0,000,000円</span></div>
+      </div>
+      <div class="hero-meta"><span class="pill" id="who">読み込み中…</span></div>
+    </div>
   </div>
-  <div class="cols">
-    <section><h2>💸 振り込み履歴</h2><ul class="scroll" id="transfers"></ul></section>
-    <section><h2>📜 所持金の台帳（最新30件）</h2><div class="scroll" id="ledger"></div></section>
+</section>
+
+<main class="container" id="main">
+  <div class="kpis overlap" id="tiles"></div>
+
+  <div class="cols-2" style="margin-top:20px">
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="badge-icon gold" data-icon="calendar"></span><div>期限一覧<div class="card-sub">返済や家賃など、期限のある契約</div></div></div></div>
+      <ul class="list" id="due" style="margin-top:8px"></ul>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="badge-icon" data-icon="repeat"></span><div>定期送金<div class="card-sub">/meco standing add で登録できます</div></div></div></div>
+      <div class="card-body flush" id="standing"></div>
+    </div>
+  </div>
+
+  <div class="section-title"><h2>お金の記録</h2><p>台帳の最新30件と振り込み履歴</p></div>
+  <div class="cols-main">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="badge-icon" data-icon="receipt"></span><div>所持金の台帳<div class="card-sub" id="ledgerSum">&nbsp;</div></div></div>
+        <div class="legend"><span><i style="background:var(--div-pos)"></i>入金</span><span><i style="background:var(--div-neg)"></i>出金</span></div>
+      </div>
+      <div class="card-body flush" id="ledger"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="badge-icon" data-icon="send"></span>振り込み履歴</div></div>
+      <div id="transfers"></div>
+    </div>
   </div>
 </main>
+
 <script>
-const $ = (id) => document.getElementById(id);
-const token = new URLSearchParams(location.search).get('token') || '';
-const fmtNum = (v) => Number(v).toLocaleString('ja-JP', { maximumFractionDigits: 2 });
+(() => {
+  const { el, icon, fmt, fill, empty } = MB;
+  const $ = (id) => document.getElementById(id);
+  const token = new URLSearchParams(location.search).get('token') || MB.token || '';
+  document.querySelectorAll('[data-icon]').forEach((n) => n.prepend(icon(n.dataset.icon)));
 
-function el(tag, attrs = {}, text) {
-  const e = document.createElement(tag);
-  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
-  if (text !== undefined) e.textContent = text;
-  return e;
-}
-
-function list(id, items, emptyText) {
-  const box = $(id);
-  box.replaceChildren();
-  if (!items.length) { box.append(el('li', { class: 'empty' }, emptyText)); return; }
-  for (const t of items) box.append(el('li', {}, t));
-}
-
-function remain(ms) {
-  if (ms <= 0) return 'まもなく';
-  const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60;
-  return h >= 24 ? `${Math.floor(h / 24)}日${h % 24}時間` : `${h}時間${m}分`;
-}
-
-async function load() {
-  const res = await fetch('/me/extra.json?token=' + encodeURIComponent(token), { cache: 'no-store' });
-  if (!res.ok) {
-    $('main').replaceChildren(el('p', { class: 'err' }, 'リンクが無効です。ゲーム内で /meco webpage を実行して新しいリンクを取得してください。'));
-    return;
+  function tile(iconName, label, value, sub) {
+    return el('div', { class: 'card kpi accent' }, el('div', { class: 'k-label' }, icon(iconName), label), el('div', { class: 'k-value' }, value), sub ? el('div', { class: 'k-sub' }, sub) : null);
   }
-  const d = await res.json();
-  $('who').textContent = d.name + ' さん';
-  const tiles = $('tiles');
-  tiles.replaceChildren();
-  const t = (label, value) => { const x = el('div', { class: 'tile' }); x.append(el('div', { class: 'label' }, label), el('div', { class: 'value' }, value)); tiles.append(x); };
-  t('総資産（手持ち＋預金）', d.wealth_text);
-  t('納税額（累計）', d.tax_paid_text);
-  t('次回の資産税（見込み）', d.wealth_tax_estimate_text);
-  if (d.next_wealth_at > 0) t('次の資産税まで', remain(d.next_wealth_at - Date.now()));
 
-  list('due', d.due, '期限のある契約はありません。');
-  list('transfers', d.transfers, '振り込み履歴はまだありません。');
-
-  const st = $('standing');
-  st.replaceChildren();
-  if (!d.standing.length) {
-    st.append(el('p', { class: 'empty' }, '登録されている定期送金はありません。（/meco standing add で登録）'));
-  } else {
-    const tb = el('table');
-    const hr = el('tr');
-    hr.append(el('th', {}, '送金先'), el('th', { class: 'r' }, '金額'), el('th', { class: 'r' }, '間隔'), el('th', { class: 'r' }, '次回'));
-    tb.append(hr);
-    for (const s of d.standing) {
-      const tr = el('tr');
-      tr.append(el('td', {}, s.to), el('td', { class: 'r' }, s.amount_text), el('td', { class: 'r' }, s.hours + '時間'), el('td', { class: 'r' }, s.next));
-      tb.append(tr);
+  async function load() {
+    const res = await fetch('/me/extra.json?token=' + encodeURIComponent(token), { cache: 'no-store' });
+    if (!res.ok) {
+      $('main').replaceChildren(el('div', { class: 'card error-page', style: { marginTop: '-40px', position: 'relative' } },
+        icon('alert'), el('h2', {}, 'リンクが無効です'), el('p', {}, 'ゲーム内で /meco webpage を実行して、新しいリンクを開いてください。')));
+      return;
     }
-    st.append(tb);
+    const d = await res.json();
+    document.title = d.name + ' 様の家計簿 | MinecraftBank';
+    $('title').textContent = d.name + ' 様の家計簿';
+    $('who').textContent = d.name + ' 様';
+    fill('wealth', d.wealth_text);
+
+    const tiles = [tile('receipt', '納めた税金（累計）', d.tax_paid_text), tile('bank', '次回の資産税（見込み）', d.wealth_tax_estimate_text, '今の資産のままの場合')];
+    if (d.next_wealth_at > 0) tiles.push(tile('clock', '次の資産税まで', fmt.duration(d.next_wealth_at - Date.now()), new Date(d.next_wealth_at).toLocaleString('ja-JP')));
+    const ledger = d.ledger || [];
+    const inSum = ledger.filter((r) => r.delta > 0).reduce((a, r) => a + r.delta, 0);
+    const outSum = ledger.filter((r) => r.delta < 0).reduce((a, r) => a - r.delta, 0);
+    tiles.push(tile('wallet', '最近の収支', (inSum - outSum >= 0 ? '+' : '−') + fmt.yen(Math.abs(inSum - outSum)), `入金 ${fmt.yen(inSum)} ・ 出金 ${fmt.yen(outSum)}`));
+    $('tiles').replaceChildren(...tiles);
+
+    $('due').replaceChildren(...(d.due.length ? d.due.map((t) => el('li', {}, el('span', { class: 'avatar gold' }, icon('clock')), el('div', { class: 'grow title', style: { fontWeight: 600 } }, t)))
+      : [el('li', {}, empty('期限のある契約はありません', 'calendar'))]));
+
+    $('standing').replaceChildren(d.standing.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'data' },
+      el('thead', {}, el('tr', {}, el('th', {}, '送金先'), el('th', { class: 'r' }, '金額'), el('th', { class: 'r' }, '間隔'), el('th', { class: 'r' }, '次回'))),
+      el('tbody', {}, d.standing.map((s) => el('tr', {}, el('td', { class: 'strong' }, s.to), el('td', { class: 'r strong' }, s.amount_text), el('td', { class: 'r' }, s.hours + '時間ごと'), el('td', { class: 'r' }, s.next))))))
+      : empty('登録されている定期送金はありません', 'repeat'));
+
+    $('ledgerSum').textContent = ledger.length ? `${ledger.length}件 ・ ${fmt.dateTime(ledger[ledger.length - 1].ts)} 〜 ${fmt.dateTime(ledger[0].ts)}` : '記録はまだありません';
+    $('ledger').replaceChildren(ledger.length ? el('div', { class: 'table-wrap', style: { maxHeight: '520px', overflow: 'auto' } }, el('table', { class: 'data' },
+      el('thead', {}, el('tr', {}, el('th', {}, '日時'), el('th', {}, '内容'), el('th', { class: 'r' }, '増減'))),
+      el('tbody', {}, ledger.map((r) => el('tr', {},
+        el('td', { style: { whiteSpace: 'nowrap', color: 'var(--ink-2)' } }, fmt.dateTime(r.ts)),
+        el('td', {}, r.source),
+        el('td', { class: 'r strong ' + (r.delta >= 0 ? 'amt-pos' : 'amt-neg') }, (r.delta >= 0 ? '+' : '−') + fmt.dec(Math.abs(r.delta))))))))
+      : empty('記録がありません', 'receipt'));
+
+    $('transfers').replaceChildren(d.transfers.length ? el('ul', { class: 'timeline' }, d.transfers.map((t) => el('li', {}, t))) : empty('振り込み履歴はまだありません', 'send'));
   }
 
-  const lg = $('ledger');
-  lg.replaceChildren();
-  if (!d.ledger.length) {
-    lg.append(el('p', { class: 'empty' }, '記録がありません。'));
-  } else {
-    const tb = el('table');
-    const hr = el('tr');
-    hr.append(el('th', {}, '日時'), el('th', {}, '内容'), el('th', { class: 'r' }, '増減'));
-    tb.append(hr);
-    for (const r of d.ledger) {
-      const tr = el('tr');
-      const dt = new Date(r.ts);
-      const when = `${dt.getMonth() + 1}/${dt.getDate()} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
-      const amt = el('td', { class: 'r' });
-      const sw = el('span', { class: 'sign', 'aria-hidden': 'true' });
-      sw.style.background = r.delta >= 0 ? 'var(--div-pos)' : 'var(--div-neg)';
-      amt.append(sw, document.createTextNode((r.delta >= 0 ? '+' : '−') + fmtNum(Math.abs(r.delta))));
-      tr.append(el('td', {}, when), el('td', {}, r.source), amt);
-      tb.append(tr);
-    }
-    lg.append(tb);
-  }
-}
-load().catch(() => $('main').replaceChildren(el('p', { class: 'err' }, '読み込みに失敗しました。')));
-setInterval(() => load().catch(() => {}), 60000);
+  load().catch(() => $('main').replaceChildren(el('div', { class: 'card error-page', style: { marginTop: '-40px', position: 'relative' } }, icon('alert'), el('h2', {}, '読み込みに失敗しました'))));
+  setInterval(() => load().catch(() => {}), 60000);
+})();
 </script>
 </body>
 </html>
