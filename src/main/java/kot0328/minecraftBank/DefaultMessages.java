@@ -380,6 +380,8 @@ final class DefaultMessages {
       "<gray>家計簿ページ(期限・振り込み・納税・台帳):</gray> <click:open_url:'{url}'><aqua><u>{url}</u></aqua></click>\n<gray>経済マーケット(税収・お金の流れ・全資源チャート):</gray> <click:open_url:'{base}/economy.html'><aqua><u>{base}/economy.html</u></aqua></click>"
    );
    m.put("sounds.on", "<green>メニューの効果音をONにしました。</green>");
+   m.put("sidebar.on", "<green>サイドバーを表示しました。</green>");
+   m.put("sidebar.off", "<gray>サイドバーを非表示にしました。（/meco sidebar で再表示）</gray>");
    m.put("sounds.off", "<gray>メニューの効果音をOFFにしました。（/meco sounds でON）</gray>");
    m.put("insurance.rebuy-cooldown", "<red>保険金を受け取ってから24時間は再加入できません。（あと {time}）</red>");
    m.put("insurance.treasury-empty", "<red>国庫が空のため、保険金を支払えませんでした。</red>");

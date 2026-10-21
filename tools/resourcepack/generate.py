@@ -256,17 +256,6 @@ def icon_chart():
     return c
 
 
-def icon_toggle(on):
-    c = Canvas()
-    body = GREEN if on else hexc("#8a93a3")
-    c.rect(2, 5, 13, 10, body)
-    c.circle(2.5, 8, 2.9, body)
-    c.circle(13.5, 8, 2.9, body)
-    c.circle(11.5 if on else 4.5, 8, 2.6, WHITE)
-    c.outline(GREEN_D if on else GRAY_D)
-    return c
-
-
 def icon_panel():
     c = Canvas()
     base, dot = hexc("#132b57"), hexc("#18356a")
@@ -274,6 +263,15 @@ def icon_panel():
     for y in range(1, 16, 4):
         for x in range(1, 16, 4):
             c.px(x, y, dot)
+    return c
+
+
+def icon_panel_inner():
+    c = Canvas()
+    base, edge = hexc("#1c3a72"), hexc("#16305f")
+    c.rect(0, 0, 15, 15, base)
+    c.rect(0, 15, 15, 15, edge)
+    c.rect(15, 0, 15, 15, edge)
     return c
 
 
@@ -312,9 +310,8 @@ ICONS = {
     "diamond": ("gem", icon_gem),
     "name_tag": ("card", icon_card),
     "map": ("chart", icon_chart),
-    "lime_dye": ("toggle_on", lambda: icon_toggle(True)),
-    "gray_dye": ("toggle_off", lambda: icon_toggle(False)),
     "black_stained_glass_pane": ("panel", icon_panel),
+    "gray_stained_glass_pane": ("panel_inner", icon_panel_inner),
 }
 
 
@@ -434,7 +431,7 @@ def main():
         if icon not in drawn:
             draw().save(os.path.join(ROOT, "assets/minecraftbank/textures/item/%s.png" % icon))
             model = {"parent": "minecraft:item/generated", "textures": {"layer0": "minecraftbank:item/" + icon}}
-            if icon == "panel":
+            if icon in ("panel", "panel_inner"):
                 # fill the whole 18px slot so neighbouring filler panes join into one surface
                 model["display"] = {"gui": {"scale": [1.125, 1.125, 1.125]}}
             write_json("assets/minecraftbank/models/item/%s.json" % icon, model)

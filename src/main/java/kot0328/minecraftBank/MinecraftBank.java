@@ -211,6 +211,31 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private boolean cfgPackRequired = false;
    private String cfgPackPrompt = "<gold>MinecraftBank</gold> の専用アイコンと効果音を使うためのリソースパックです。";
    private boolean cfgPackSounds = true;
+   private boolean cfgFxTitles = true;
+   private boolean cfgFxParticles = true;
+   private boolean cfgFxFireworks = true;
+   private boolean cfgFxBossbar = true;
+   private boolean cfgSidebarEnabled = true;
+   private boolean cfgRanksEnabled = true;
+   private boolean cfgRanksChatPrefix = true;
+   private boolean cfgRanksTabList = true;
+   private boolean cfgRanksNametag = true;
+   private boolean cfgRanksAnnounce = true;
+   private List<String> cfgRankTiers = List.of(
+      "0|見習い|gray", "10000|一般市民|white", "100000|中流層|green", "1000000|富裕層|aqua", "10000000|大富豪|gold", "100000000|財閥|light_purple"
+   );
+   private volatile List<RankTier> cachedRankTiers = List.of();
+   private final NamespacedKey fxFireworkKey = new NamespacedKey(this, "fx_firework");
+   private net.kyori.adventure.bossbar.BossBar eventBar = null;
+   private long eventBarStart = 0L;
+   private long eventBarUntil = 0L;
+   private final Map<UUID, Scoreboard> sidebars = new HashMap<>();
+   private final Map<UUID, List<String>> sidebarLines = new HashMap<>();
+   private final Set<UUID> sidebarOff = new HashSet<>();
+   private final Map<UUID, Integer> rankIndex = new ConcurrentHashMap<>();
+   private final Map<UUID, Integer> wealthPosition = new HashMap<>();
+   private int wealthRankingSize = 0;
+   private long wealthRankingAt = 0L;
    private static final UUID PACK_ID = UUID.nameUUIDFromBytes("MinecraftBank resource pack".getBytes(StandardCharsets.UTF_8));
    private volatile byte[] packZip = null;
    private byte[] packSha1 = null;
@@ -234,9 +259,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       GUI_ICONS.put(Material.DIAMOND, "gem");
       GUI_ICONS.put(Material.NAME_TAG, "card");
       GUI_ICONS.put(Material.MAP, "chart");
-      GUI_ICONS.put(Material.LIME_DYE, "toggle_on");
-      GUI_ICONS.put(Material.GRAY_DYE, "toggle_off");
       GUI_ICONS.put(Material.BLACK_STAINED_GLASS_PANE, "panel");
+      GUI_ICONS.put(Material.GRAY_STAINED_GLASS_PANE, "panel_inner");
    }
    private final Map<UUID, String> dashboardTokens = new ConcurrentHashMap<>();
    private final Map<UUID, String> webPasswordHash = new ConcurrentHashMap<>();
@@ -456,39 +480,55 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private int cfgStorageSize = 27;
    private double cfgStorageRentAmount = 2000.0;
    private int cfgStorageRentIntervalHours = 72;
-   private final Component tMain = this.mm("<bold><gold>【総合金融センタートップ】</gold></bold>");
-   private final Component tPersonal = this.mm("<bold><aqua>【個人口座・預金窓口】</aqua></bold>");
-   private final Component tMarket = this.mm("<bold><green>【融資市場（ローンマーケット）】</green></bold>");
-   private final Component tRepay = this.mm("<bold><yellow>【総合・借金返済窓口】</yellow></bold>");
-   private final Component tEstablish = this.mm("<bold><dark_purple>【銀行設立オフィス】</dark_purple></bold>");
-   private final Component tBanker = this.mm("<bold><red>【頭取コントロールパネル】</red></bold>");
-   private final Component tPlan = this.mm("<bold><dark_red>【融資プラン設計室】</dark_red></bold>");
-   private final Component tGovLoan = this.mm("<bold><aqua>【国営公庫・サーバーローン】</aqua></bold>");
-   private final Component tFixedDepo = this.mm("<bold><gold>【高金利・定期預金窓口】</gold></bold>");
-   private final Component tCredit = this.mm("<bold><green>【個人信用情報センター】</green></bold>");
-   private final Component tQuestBoard = this.mm("<bold><dark_aqua>【依頼ボード・探索依頼】</dark_aqua></bold>");
-   private final Component tWorldStock = this.mm("<bold><blue>【世界株式市場】</blue></bold>");
-   private final Component tWorldStockDetail = this.mm("<bold><blue>【世界株式市場・銘柄詳細】</blue></bold>");
-   private final Component tWorldStockLeaderboard = this.mm("<bold><blue>【世界株式市場・保有株ランキング】</blue></bold>");
-   private final Component tResourceShop = this.mm("<bold><green>【資源相場ショップ】</green></bold>");
-   private final Component tResourceShopList = this.mm("<bold><green>【資源相場ショップ・品目一覧】</green></bold>");
-   private final Component tResourceShopDetail = this.mm("<bold><green>【資源相場ショップ・売買】</green></bold>");
-   private final Component tTravelingMerchant = this.mm("<bold><gold>【巡回商人】</gold></bold>");
-   private final Component tLeaderboard = this.mm("<bold><yellow>【資産ランキング】</yellow></bold>");
-   private final Component tCollateral = this.mm("<bold><dark_purple>【質屋・担保付き融資】</dark_purple></bold>");
-   private final Component tInsurance = this.mm("<bold><blue>【生命保険窓口】</blue></bold>");
-   private final Component tAchievement = this.mm("<bold><gold>【実績・称号コレクション】</gold></bold>");
-   private final Component tAuction = this.mm("<bold><green>【オークションハウス】</green></bold>");
-   private final Component tHub = this.mm("<bold><white>【経済総合メニュー】</white></bold>");
-   private final Component tBankHub = this.mm("<bold><aqua>【銀行窓口】</aqua></bold>");
-   private final Component tMarketHub = this.mm("<bold><green>【マーケット】</green></bold>");
-   private final Component tTodoHub = this.mm("<bold><yellow>【やること】</yellow></bold>");
-   private final Component tMyPage = this.mm("<bold><light_purple>【マイページ】</light_purple></bold>");
-   private final Component tInstallmentList = this.mm("<bold><light_purple>【分割払いの状況】</light_purple></bold>");
-   private final Component tTutorial = this.mm("<bold><gold>【経済初心者ガイド】</gold></bold>");
-   private final Component tAuctionSelect = this.mm("<bold><green>【オークション出品アイテム選択】</green></bold>");
-   private final Component tAuctionCancelConfirm = this.mm("<bold><red>【オークション出品取消の確認】</red></bold>");
-   private final Component tAdminConfirm = this.mm("<bold><red>【管理者操作の確認】</red></bold>");
+   private static final Map<String, String> TITLE_ACCENTS = Map.ofEntries(
+      Map.entry("gold", "#b07d12"),
+      Map.entry("yellow", "#b07d12"),
+      Map.entry("aqua", "#16788a"),
+      Map.entry("dark_aqua", "#0f6b5e"),
+      Map.entry("green", "#2b7a32"),
+      Map.entry("dark_green", "#1d5e24"),
+      Map.entry("blue", "#2350a8"),
+      Map.entry("dark_purple", "#6b2a9a"),
+      Map.entry("light_purple", "#8e3a9e"),
+      Map.entry("red", "#b3261e"),
+      Map.entry("dark_red", "#8b1a1a"),
+      Map.entry("white", "#2350a8"),
+      Map.entry("gray", "#55606e")
+   );
+   private static final java.util.regex.Pattern EMOJI = java.util.regex.Pattern.compile("[\\x{1F000}-\\x{1FAFF}\\x{FE0F}\\x{200D}]+ ?");
+   private final Component tMain = this.guiTitle("総合金融センタートップ", "gold");
+   private final Component tPersonal = this.guiTitle("個人口座・預金窓口", "aqua");
+   private final Component tMarket = this.guiTitle("融資市場（ローンマーケット）", "green");
+   private final Component tRepay = this.guiTitle("総合・借金返済窓口", "yellow");
+   private final Component tEstablish = this.guiTitle("銀行設立オフィス", "dark_purple");
+   private final Component tBanker = this.guiTitle("頭取コントロールパネル", "red");
+   private final Component tPlan = this.guiTitle("融資プラン設計室", "dark_red");
+   private final Component tGovLoan = this.guiTitle("国営公庫・サーバーローン", "aqua");
+   private final Component tFixedDepo = this.guiTitle("高金利・定期預金窓口", "gold");
+   private final Component tCredit = this.guiTitle("個人信用情報センター", "green");
+   private final Component tQuestBoard = this.guiTitle("依頼ボード・探索依頼", "dark_aqua");
+   private final Component tWorldStock = this.guiTitle("世界株式市場", "blue");
+   private final Component tWorldStockDetail = this.guiTitle("世界株式市場・銘柄詳細", "blue");
+   private final Component tWorldStockLeaderboard = this.guiTitle("世界株式市場・保有株ランキング", "blue");
+   private final Component tResourceShop = this.guiTitle("資源相場ショップ", "green");
+   private final Component tResourceShopList = this.guiTitle("資源相場ショップ・品目一覧", "green");
+   private final Component tResourceShopDetail = this.guiTitle("資源相場ショップ・売買", "green");
+   private final Component tTravelingMerchant = this.guiTitle("巡回商人", "gold");
+   private final Component tLeaderboard = this.guiTitle("資産ランキング", "yellow");
+   private final Component tCollateral = this.guiTitle("質屋・担保付き融資", "dark_purple");
+   private final Component tInsurance = this.guiTitle("生命保険窓口", "blue");
+   private final Component tAchievement = this.guiTitle("実績・称号コレクション", "gold");
+   private final Component tAuction = this.guiTitle("オークションハウス", "green");
+   private final Component tHub = this.guiTitle("経済総合メニュー", "white");
+   private final Component tBankHub = this.guiTitle("銀行窓口", "aqua");
+   private final Component tMarketHub = this.guiTitle("マーケット", "green");
+   private final Component tTodoHub = this.guiTitle("やること", "yellow");
+   private final Component tMyPage = this.guiTitle("マイページ", "light_purple");
+   private final Component tInstallmentList = this.guiTitle("分割払いの状況", "light_purple");
+   private final Component tTutorial = this.guiTitle("経済初心者ガイド", "gold");
+   private final Component tAuctionSelect = this.guiTitle("オークション出品アイテム選択", "green");
+   private final Component tAuctionCancelConfirm = this.guiTitle("オークション出品取消の確認", "red");
+   private final Component tAdminConfirm = this.guiTitle("管理者操作の確認", "red");
    private final HashMap<UUID, Double> resourceSoldToday = new HashMap<>();
    private final HashMap<UUID, Long> resourceSoldResetAt = new HashMap<>();
    private double cfgResourceMaxSellPerDay = 50000.0;
@@ -569,29 +609,29 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private final HashMap<Material, LinkedList<Double>> resourcePriceHistory = new HashMap<>();
    private final HashMap<String, List<Double>> stockHistoryCache = new HashMap<>();
    private final HashMap<String, Long> stockHistoryFetchedAt = new HashMap<>();
-   private final Component tAuctionRanking = this.mm("<bold><green>【オークション・落札売上ランキング】</green></bold>");
-   private final Component tCollateralSelect = this.mm("<bold><dark_purple>【担保アイテム選択】</dark_purple></bold>");
-   private final Component tAdminMain = this.mm("<bold><red>【管理者パネル】</red></bold>");
-   private final Component tAdminPlayerList = this.mm("<bold><red>【管理者：プレイヤー一覧】</red></bold>");
-   private final Component tAdminPlayerDetail = this.mm("<bold><red>【管理者：プレイヤー詳細】</red></bold>");
-   private final Component tAdminServer = this.mm("<bold><red>【管理者：サーバー管理】</red></bold>");
-   private final Component tConfigEditor = this.mm("<bold><red>【管理者：config設定】</red></bold>");
-   private final Component tLottery = this.mm("<bold><gold>【定期抽選・宝くじ】</gold></bold>");
-   private final Component tStorageRent = this.mm("<bold><gold>【レンタル倉庫・契約窓口】</gold></bold>");
-   private final Component tStorageLocker = this.mm("<bold><gray>【レンタル倉庫】</gray></bold>");
-   private final Component tTradeSelect = this.mm("<bold><green>【アイテム交換・相手選択】</green></bold>");
-   private final Component tTrade = this.mm("<bold><gold>【安全アイテム交換】</gold></bold>");
-   private final Component tGroupList = this.mm("<bold><gold>【グループ貯金箱】</gold></bold>");
-   private final Component tGroupAccount = this.mm("<bold><gold>【グループ貯金箱・詳細】</gold></bold>");
-   private final Component tGroupMembers = this.mm("<bold><gold>【グループ貯金箱・メンバー管理】</gold></bold>");
-   private final Component tFundList = this.mm("<bold><dark_green>【共同投資ファンド】</dark_green></bold>");
-   private final Component tFundInfo = this.mm("<bold><dark_green>【共同投資ファンド・情報】</dark_green></bold>");
-   private final Component tFundStock = this.mm("<bold><dark_green>【共同投資ファンド・運用】</dark_green></bold>");
-   private final Component tFundStockDetail = this.mm("<bold><dark_green>【共同投資ファンド・銘柄詳細】</dark_green></bold>");
-   private final Component tInvoice = this.mm("<bold><gold>【請求書】</gold></bold>");
+   private final Component tAuctionRanking = this.guiTitle("オークション・落札売上ランキング", "green");
+   private final Component tCollateralSelect = this.guiTitle("担保アイテム選択", "dark_purple");
+   private final Component tAdminMain = this.guiTitle("管理者パネル", "red");
+   private final Component tAdminPlayerList = this.guiTitle("管理者：プレイヤー一覧", "red");
+   private final Component tAdminPlayerDetail = this.guiTitle("管理者：プレイヤー詳細", "red");
+   private final Component tAdminServer = this.guiTitle("管理者：サーバー管理", "red");
+   private final Component tConfigEditor = this.guiTitle("管理者：config設定", "red");
+   private final Component tLottery = this.guiTitle("定期抽選・宝くじ", "gold");
+   private final Component tStorageRent = this.guiTitle("レンタル倉庫・契約窓口", "gold");
+   private final Component tStorageLocker = this.guiTitle("レンタル倉庫", "gray");
+   private final Component tTradeSelect = this.guiTitle("アイテム交換・相手選択", "green");
+   private final Component tTrade = this.guiTitle("安全アイテム交換", "gold");
+   private final Component tGroupList = this.guiTitle("グループ貯金箱", "gold");
+   private final Component tGroupAccount = this.guiTitle("グループ貯金箱・詳細", "gold");
+   private final Component tGroupMembers = this.guiTitle("グループ貯金箱・メンバー管理", "gold");
+   private final Component tFundList = this.guiTitle("共同投資ファンド", "dark_green");
+   private final Component tFundInfo = this.guiTitle("共同投資ファンド・情報", "dark_green");
+   private final Component tFundStock = this.guiTitle("共同投資ファンド・運用", "dark_green");
+   private final Component tFundStockDetail = this.guiTitle("共同投資ファンド・銘柄詳細", "dark_green");
+   private final Component tInvoice = this.guiTitle("請求書", "gold");
    private final LinkedHashMap<String, Invoice> invoices = new LinkedHashMap<>();
    private NamespacedKey invoiceIdKey;
-   private final Component tVipLounge = this.mm("<bold><light_purple>【\ud83d\udc8e VIPラウンジ】</light_purple></bold>");
+   private final Component tVipLounge = this.guiTitle("VIPラウンジ", "light_purple");
    private PluginDataStore db;
    private FileConfiguration messages;
    private File messagesFile;
@@ -669,8 +709,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private static final int DASHBOARD_HISTORY_LIMIT = 60;
    private final ArrayDeque<Long> dashboardHistoryTimestamps = new ArrayDeque<>();
    private final ArrayDeque<Long> dashboardHistoryTreasury = new ArrayDeque<>();
-   private static final String MY_DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>個人ページ | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>\ud83d\udc64 個人ページ</h1>\n    <div class=\"sub\" id=\"playerName\">読込中...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>オフライン操作用パスワード</h2>\n      <div class=\"empty\">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中でも必要です。</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"パスワード\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">所持金</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">銀行残高</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">信用スコア</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">実績解除数</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">受取箱</h2>\n        <button class=\"btn\" id=\"collectBtn\">\ud83d\udce6 受取箱を確認する</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>保有中の世界株 / 購入</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"銘柄(例: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"株数\">\n        <button class=\"btn\" id=\"stockBuyBtn\">購入する</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>オークション</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>レンタル倉庫</h2>\n      <div id=\"storageArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>直近の取引履歴</h2>\n      <div id=\"logsArea\"><div class=\"empty\">読込中...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';\n        document.getElementById('onlineStatus').textContent = data.online ? '\ud83d\udfe2 ログイン中' : '⚪ オフライン';\n        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで\n        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。\n        document.getElementById('passwordPanel').hidden = false;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">保有中の株はありません。</div>' :\n          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + esc(s.symbol) + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">取引履歴はありません。</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">読込に失敗しました。</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return 'まもなく終了';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '分' + (s % 60) + '秒';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">出品中のオークションはありません。</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">即決 (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + esc(a.item) + (a.is_own ? '(自分の出品)' : '') + '</div>' +\n          '<div class=\"meta\">出品者: ' + esc(a.seller) + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"入札額\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">入札する</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">契約する</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    // ★修正: 連打/複数タブでの二重送信対策として、他の操作(入札・購入・家賃支払い等)が\n    // 処理中の間は新しい操作を受け付けない(サーバー側の重複実行防止の完全な代替ではないが、\n    // 誤操作による二重処理を安価に大きく減らせる)。\n    let actionBusy = false;\n    async function postAction(path, params) {\n      if (actionBusy) return { ok: false, message: '前の操作を処理中です。少し待ってからお試しください。' };\n      actionBusy = true;\n      try {\n        const password = (document.getElementById('offlinePassword') || {}).value || '';\n        const body = new URLSearchParams(Object.assign({ token, password }, params));\n        const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n        if (!res.ok) {\n          const err = await res.json().catch(() => ({}));\n          return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };\n        }\n        return await res.json();\n      } finally {\n        actionBusy = false;\n      }\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        const msg = !r.ok ? (r.message || '失敗しました。')\n          : (r.remaining ? ('インベントリが満杯のため ' + r.remaining + ' 個は受け取れませんでした。空きを作ってからもう一度お試しください。') : '受取箱を確認しました。');\n        showStatus('collectMsg', r.ok && !r.remaining, msg);\n        load();\n      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n";
-   private static final String DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>経済ダッシュボード | MinecraftBank</title>\n<style>\n  :root {\n    --bg: #0b0f19;\n    --panel: #141b2c;\n    --panel-alt: #101625;\n    --panel-border: #232c42;\n    --text: #eaeefb;\n    --text-dim: #8b93a7;\n    --gold: #f4c542;\n    --emerald: #4ade9b;\n    --red: #ff6b6b;\n    --accent: #5b8cff;\n    --purple: #b18cff;\n    --cyan: #43d9e0;\n\n    /* ★追加: データ可視化用の検証済みパレット(dataviz skillのcolor-formula.mdに準拠)\n       カテゴリカル8色は固定順で識別(系列/カテゴリ)専用、ステータス4色は状態専用、\n       シーケンシャル/ダイバージングは大小・極性の表現専用。色の役割を混同しないこと。 */\n    --cat-1: #3987e5; /* blue */\n    --cat-2: #d95926; /* orange */\n    --cat-3: #199e70; /* aqua */\n    --cat-4: #c98500; /* yellow */\n    --cat-5: #d55181; /* magenta */\n    --cat-6: #008300; /* green */\n    --cat-7: #9085e9; /* violet */\n    --cat-8: #e66767; /* red */\n    --status-good: #0ca30c;\n    --status-warning: #fab219;\n    --status-serious: #ec835a;\n    --status-critical: #d03b3b;\n    --seq-100: #cde2fb;\n    --seq-400: #3987e5;\n    --seq-700: #0d366b;\n    --div-neg: #3987e5;  /* 基準値より安い(マイナス側の極) */\n    --div-pos: #e66767;  /* 基準値より高い(プラス側の極) */\n    --div-mid: #383835;  /* 中立(基準値と同水準) */\n  }\n  * { box-sizing: border-box; }\n  ::-webkit-scrollbar { width: 10px; height: 10px; }\n  ::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 6px; }\n  ::-webkit-scrollbar-track { background: transparent; }\n  body {\n    margin: 0;\n    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;\n    background:\n      radial-gradient(circle at 15% -10%, #24304f66 0%, transparent 45%),\n      radial-gradient(circle at 100% 0%, #1a2c2266 0%, transparent 40%),\n      var(--bg);\n    color: var(--text);\n    min-height: 100vh;\n    padding: 32px 20px 60px;\n  }\n  .wrap { max-width: 1180px; margin: 0 auto; }\n  @keyframes fadeInUp {\n    from { opacity: 0; transform: translateY(10px); }\n    to { opacity: 1; transform: translateY(0); }\n  }\n  header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 12px;\n    margin-bottom: 24px;\n    animation: fadeInUp .4s ease both;\n  }\n  header h1 {\n    font-size: 25px;\n    margin: 0 0 6px;\n    letter-spacing: 0.3px;\n  }\n  header h1 span { color: var(--gold); }\n  .sub-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n  .event-badge {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    background: #1c2440;\n    border: 1px solid var(--panel-border);\n    color: var(--cyan);\n    font-size: 12px;\n    font-weight: 600;\n    padding: 5px 12px;\n    border-radius: 999px;\n  }\n  .event-badge::before { content: '●'; font-size: 8px; color: var(--cyan); }\n  #updated {\n    font-size: 12px;\n    color: var(--text-dim);\n    text-align: right;\n  }\n  #updated b { color: var(--emerald); }\n  #countdown { color: var(--text-dim); font-variant-numeric: tabular-nums; }\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));\n    gap: 14px;\n    margin-bottom: 18px;\n  }\n  .stat-card {\n    background: linear-gradient(160deg, var(--panel), var(--panel-alt));\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 16px 18px;\n    animation: fadeInUp .45s ease both;\n    transition: transform .15s ease, border-color .15s ease;\n  }\n  .stat-card:hover { transform: translateY(-2px); border-color: #34406a; }\n  .stat-card .label {\n    font-size: 11.5px;\n    color: var(--text-dim);\n    margin-bottom: 6px;\n    white-space: nowrap;\n  }\n  .stat-card .value {\n    font-size: 23px;\n    font-weight: 700;\n    font-variant-numeric: tabular-nums;\n  }\n  .stat-card.gold .value { color: var(--gold); }\n  .stat-card.emerald .value { color: var(--emerald); }\n  .stat-card.accent .value { color: var(--accent); }\n  .stat-card.red .value { color: var(--red); }\n  .stat-card.purple .value { color: var(--purple); }\n  .stat-card.cyan .value { color: var(--cyan); }\n  .stat-card.status-good .value { color: var(--status-good); }\n  .stat-card.status-warning .value { color: var(--status-warning); }\n  .stat-card.status-critical .value { color: var(--status-critical); }\n\n  /* ★追加: 「マーケット概況」「やること概況」向けの新規コンポーネント */\n  .subpanel {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    border-radius: 12px;\n    padding: 14px 16px;\n  }\n  .subpanel h3 {\n    font-size: 12.5px;\n    margin: 0 0 12px;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .rank-list { display: flex; flex-direction: column; gap: 9px; }\n  .rank-list-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }\n  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }\n  .rank-list-name { font-weight: 600; font-variant-numeric: tabular-nums; }\n  .rank-list-meta { margin-left: auto; color: var(--text-dim); font-size: 11.5px; text-align: right; white-space: nowrap; }\n  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }\n  .badge {\n    display: flex;\n    align-items: center;\n    gap: 7px;\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 8px;\n    padding: 7px 10px;\n    font-size: 12px;\n  }\n  .badge .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }\n  .badge-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }\n  .badge-trend { font-variant-numeric: tabular-nums; color: var(--text-dim); font-weight: 600; white-space: nowrap; }\n  .mini-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; }\n  .mini-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .merchant-refresh { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }\n  .merchant-refresh b { color: var(--text); font-variant-numeric: tabular-nums; }\n  .deal-grid { display: flex; flex-direction: column; gap: 10px; }\n  .deal-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; }\n  .deal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }\n  .deal-name { font-weight: 600; font-size: 13px; }\n  .deal-discount { color: var(--emerald); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n  .meter-track { height: 7px; border-radius: 4px; background: var(--seq-100); overflow: hidden; }\n  .meter-fill { height: 100%; background: var(--seq-400); border-radius: 4px; transition: width .4s ease; }\n  .deal-stock { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }\n  .hero-tile { text-align: center; padding: 4px 0 16px; }\n  .hero-tile .hero-value {\n    font-size: 40px;\n    font-weight: 700;\n    color: var(--gold);\n    line-height: 1.15;\n    /* ★重要: 大きな単独の数値は比例数字を使う(等幅のtabular-numsは大きい文字だと間延びして見える) */\n  }\n  .hero-tile .hero-label {\n    font-size: 12px;\n    color: var(--text-dim);\n    margin-top: 6px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .mini-stats { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--text-dim); }\n  .mini-stats b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }\n  .panel {\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 20px 22px;\n    margin-bottom: 16px;\n    animation: fadeInUp .5s ease both;\n  }\n  .panel-head {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 10px;\n    margin-bottom: 14px;\n  }\n  .panel h2 {\n    font-size: 14px;\n    margin: 0;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: 1px;\n  }\n  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }\n  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .chart-box { position: relative; width: 100%; height: 220px; }\n  .chart-box canvas { width: 100%; height: 100%; display: block; }\n  .alert-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7; }\n  .alert-box.ok { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--emerald); }\n  .alert-box.warn { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.4); color: #f87171; }\n  .alert-box ul { margin: 6px 0 0 18px; padding: 0; }\n  .alert-box .alert-time { color: var(--text-dim); font-size: 11px; margin-top: 6px; }\n  .bars-box { position: relative; width: 100%; height: 160px; }\n  .panels-2col {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 16px;\n  }\n  @media (max-width: 820px) {\n    .panels-2col { grid-template-columns: 1fr; }\n  }\n  .toolbar {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    flex-wrap: wrap;\n  }\n  .search-input {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    font-size: 13px;\n    padding: 7px 12px;\n    border-radius: 8px;\n    outline: none;\n    min-width: 160px;\n  }\n  .search-input:focus { border-color: var(--accent); }\n  table { width: 100%; border-collapse: collapse; font-size: 13px; }\n  thead th {\n    position: sticky;\n    top: 0;\n    background: var(--panel);\n    text-align: left;\n    color: var(--text-dim);\n    font-weight: 600;\n    font-size: 11.5px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n    padding: 8px 10px;\n    border-bottom: 1px solid var(--panel-border);\n    cursor: pointer;\n    user-select: none;\n    white-space: nowrap;\n  }\n  thead th:hover { color: var(--text); }\n  thead th .arrow { opacity: .5; margin-left: 3px; font-size: 10px; }\n  tbody td {\n    padding: 8px 10px;\n    border-bottom: 1px solid #1c2438;\n    vertical-align: middle;\n  }\n  tbody tr { transition: background .12s ease; }\n  tbody tr:hover { background: #1a2136; }\n  tbody tr:nth-child(even) { background: #121a2b55; }\n  tbody tr:nth-child(even):hover { background: #1a2136; }\n  .rank-cell { width: 34px; font-weight: 700; color: var(--text-dim); }\n  .medal { font-size: 14px; }\n  .name-cell { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .bar-cell { min-width: 90px; }\n  .bar-track { height: 8px; background: #1c2338; border-radius: 5px; overflow: hidden; }\n  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--emerald)); border-radius: 5px; transition: width .4s ease; }\n  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; white-space: nowrap; }\n  .score-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--cyan); white-space: nowrap; }\n  .pagination {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    margin-top: 12px;\n    font-size: 12px;\n    color: var(--text-dim);\n  }\n  .pagination button {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    padding: 5px 12px;\n    border-radius: 7px;\n    cursor: pointer;\n    font-size: 12px;\n  }\n  .pagination button:disabled { opacity: .35; cursor: default; }\n  .pagination button:not(:disabled):hover { border-color: var(--accent); }\n  .empty { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }\n  footer {\n    text-align: center;\n    color: var(--text-dim);\n    font-size: 12px;\n    margin-top: 8px;\n  }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <header>\n      <div>\n        <h1>\ud83d\udcb0 <span>MinecraftBank</span> 経済ダッシュボード</h1><a href=\"/economy.html\" style=\"color:#5b8cff;margin-left:12px;font-size:14px\">\ud83d\udcc8 経済マーケット(税・お金の流れ・全資源チャート) →</a>\n        <div class=\"sub-row\">\n          <div class=\"event-badge\" id=\"eventBadge\">通常</div>\n        </div>\n      </div>\n      <div id=\"updated\">最終更新: <b id=\"updatedAt\">-</b><br><span id=\"countdown\"></span></div>\n    </header>\n\n    <div class=\"grid\" id=\"statGrid\">\n      <div class=\"stat-card gold\">\n        <div class=\"label\">国庫残高</div>\n        <div class=\"value\" id=\"treasury\">-</div>\n      </div>\n      <div class=\"stat-card red\">\n        <div class=\"label\">政府債務合計</div>\n        <div class=\"value\" id=\"totalGovDebt\">-</div>\n      </div>\n      <div class=\"stat-card gold\">\n        <div class=\"label\">今週の取引量</div>\n        <div class=\"value\" id=\"weeklyTrade\">-</div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>異常検知</h2>\n      </div>\n      <div class=\"alert-box ok\" id=\"selfcheckBox\">確認中...</div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>国庫残高の推移</h2>\n      </div>\n      <div class=\"chart-box\"><canvas id=\"treasuryChart\"></canvas></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>資産ランキング</h2>\n        <div class=\"toolbar\">\n          <input class=\"search-input\" id=\"lbSearch\" type=\"text\" placeholder=\"プレイヤー名で検索...\">\n        </div>\n      </div>\n      <div style=\"overflow-x:auto\">\n        <table>\n          <thead>\n            <tr>\n              <th data-key=\"rank\">#<span class=\"arrow\"></span></th>\n              <th data-key=\"name\">プレイヤー<span class=\"arrow\"></span></th>\n              <th data-key=\"credit_score\">信用スコア<span class=\"arrow\"></span></th>\n              <th data-key=\"total_assets\">総資産<span class=\"arrow\"></span></th>\n            </tr>\n          </thead>\n          <tbody id=\"lbBody\"></tbody>\n        </table>\n      </div>\n      <div id=\"lbEmpty\" class=\"empty\" style=\"display:none\">データがありません</div>\n      <div class=\"pagination\">\n        <span id=\"lbPageInfo\"></span>\n        <button id=\"lbPrev\">← 前へ</button>\n        <button id=\"lbNext\">次へ →</button>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83d\uded2 マーケット概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"marketStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83d\udcc8 世界株式市場 - 保有株数トップ5</h3>\n          <div class=\"rank-list\" id=\"worldStockTopList\"></div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83e\uddf3 巡回商人</h3>\n          <div id=\"merchantStatus\"></div>\n        </div>\n      </div>\n\n      <div class=\"subpanel\" style=\"margin-top:16px\">\n        <h3>⛏ 資源相場ショップ - 基準価格との乖離</h3>\n        <div class=\"mini-legend\">\n          <span><span class=\"dot\" style=\"background:var(--div-neg)\"></span>基準より安い</span>\n          <span><span class=\"dot\" style=\"background:var(--div-mid)\"></span>横ばい</span>\n          <span><span class=\"dot\" style=\"background:var(--div-pos)\"></span>基準より高い</span>\n        </div>\n        <div class=\"badge-grid\" id=\"resourceBadgeGrid\"></div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83c\udfaf やること概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"questStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83c\udf9f 宝くじ</h3>\n          <div class=\"hero-tile\">\n            <div class=\"hero-value\" id=\"lotteryPool\">-</div>\n            <div class=\"hero-label\">次回抽選の賞金プール</div>\n          </div>\n          <div class=\"mini-stats\">\n            <div>次回抽選まで: <b id=\"lotteryCountdown\">-</b></div>\n            <div>販売チケット数: <b id=\"lotteryTickets\">-</b></div>\n            <div>前回の当せん: <b id=\"lotteryLastWinner\">-</b></div>\n          </div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83d\udce6 倉庫レンタル / \ud83d\udcb3 分割払い / ⛏ 埋蔵金</h3>\n          <div class=\"grid\" id=\"miscStatGrid\"></div>\n        </div>\n      </div>\n    </div>\n\n    <footer>10秒ごとに自動更新されます</footer>\n  </div>\n\n  <script>\n    const PAGE_SIZE = 10;\n    let lastData = null;\n    const state = {\n      lb: { sortKey: 'rank', sortDir: 1, page: 1, search: '' }\n    };\n\n    function esc(v) { return String(v).replace(/[&<>'\\x22]/g, function (c) { return '&#' + c.charCodeAt(0) + ';'; }); }\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    function fmtNum(n) { return Math.round(n).toLocaleString('ja-JP'); }\n    function medal(rank) {\n      if (rank === 1) return '\ud83e\udd47';\n      if (rank === 2) return '\ud83e\udd48';\n      if (rank === 3) return '\ud83e\udd49';\n      return rank;\n    }\n\n    // ★追加: カテゴリカルパレット(固定8色・固定順。系列/カテゴリの識別専用。ステータス色とは混同しないこと)\n    const CAT_COLORS = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];\n\n    // ★追加: ダイバージング配色(青⇔グレー⇔赤)。基準値からの乖離%を±30%でクランプして線形補間する。\n    function divergingColor(pct) {\n      const clamped = Math.max(-30, Math.min(30, pct || 0));\n      const t = clamped / 30; // -1..1\n      const neg = [0x39, 0x87, 0xe5];  // --cat-1 / --div-neg (blue)\n      const mid = [0x38, 0x38, 0x35];  // --div-mid (neutral gray)\n      const pos = [0xe6, 0x67, 0x67];  // --cat-8 / --div-pos (red)\n      const from = t < 0 ? neg : pos;\n      const amt = Math.abs(t);\n      const rgb = mid.map((m, i) => Math.round(m + (from[i] - m) * amt));\n      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;\n    }\n\n    // ★追加: 資源相場ショップ/巡回商人の素材名 日本語表示(未登録の素材は整形して表示)\n    const MATERIAL_JA = {\n      COAL: '石炭', IRON_INGOT: '鉄インゴット', GOLD_INGOT: '金インゴット', COPPER_INGOT: '銅インゴット',\n      REDSTONE: 'レッドストーン', LAPIS_LAZULI: 'ラピスラズリ', DIAMOND: 'ダイヤモンド', EMERALD: 'エメラルド',\n      NETHERITE_SCRAP: 'ネザライトの欠片', WHEAT: '小麦', CARROT: 'ニンジン', POTATO: 'ジャガイモ',\n      BEETROOT: 'ビートルート', MELON_SLICE: 'スイカ', PUMPKIN: 'カボチャ', SUGAR_CANE: 'サトウキビ',\n      NETHER_WART: 'ネザーウォート', COCOA_BEANS: 'カカオ豆', ROTTEN_FLESH: '腐った肉', BONE: '骨',\n      STRING: '糸', GUNPOWDER: '火薬', SPIDER_EYE: 'クモの目', SLIME_BALL: 'スライムボール',\n      ENDER_PEARL: 'エンダーパール', BLAZE_ROD: 'ブレイズロッド', GHAST_TEAR: 'ガストの涙',\n      OAK_LOG: 'オークの原木', SPRUCE_LOG: 'トウヒの原木', BIRCH_LOG: 'シラカバの原木', JUNGLE_LOG: 'ジャングルの原木',\n      ACACIA_LOG: 'アカシアの原木', DARK_OAK_LOG: 'ダークオークの原木', MANGROVE_LOG: 'マングローブの原木', CHERRY_LOG: 'サクラの原木',\n      ELYTRA: 'エリトラ', TOTEM_OF_UNDYING: '不死のトーテム', NETHERITE_INGOT: 'ネザライトインゴット',\n      NETHERITE_BLOCK: 'ネザライトブロック', ENCHANTED_GOLDEN_APPLE: 'エンチャントされた金のリンゴ',\n      SADDLE: 'サドル', NAME_TAG: '名札', SHULKER_BOX: 'シュルカーボックス', TRIDENT: 'トライデント',\n      NETHER_STAR: 'ネザースター', DRAGON_EGG: 'ドラゴンの卵', BEACON: 'ビーコン', DIAMOND_BLOCK: 'ダイヤモンドブロック',\n      EMERALD_BLOCK: 'エメラルドブロック', MUSIC_DISC_PIGSTEP: 'レコード(Pigstep)', MUSIC_DISC_OTHERSIDE: 'レコード(Otherside)',\n      HEART_OF_THE_SEA: '海の心', CONDUIT: 'コンジット', END_CRYSTAL: 'エンドクリスタル', GOLDEN_CARROT: '金のニンジン'\n    };\n    function materialLabel(name) {\n      if (MATERIAL_JA[name]) return MATERIAL_JA[name];\n      return String(name).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n    }\n\n    // ★追加: 残りミリ秒を「◯日◯時間」「◯時間◯分」「◯分」形式に整形\n    function fmtDuration(ms) {\n      if (!ms || ms <= 0) return 'まもなく';\n      const totalMin = Math.floor(ms / 60000);\n      const d = Math.floor(totalMin / 1440);\n      const h = Math.floor((totalMin % 1440) / 60);\n      const m = totalMin % 60;\n      if (d > 0) return d + '日' + h + '時間';\n      if (h > 0) return h + '時間' + m + '分';\n      return m + '分';\n    }\n\n    function sortRows(rows, key, dir) {\n      return [...rows].sort((a, b) => {\n        const av = a[key], bv = b[key];\n        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * dir;\n        return ((av ?? 0) - (bv ?? 0)) * dir;\n      });\n    }\n\n    function bindSortableHeaders(tableSelector, sortState, renderFn) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        th.addEventListener('click', () => {\n          const key = th.getAttribute('data-key');\n          if (sortState.sortKey === key) {\n            sortState.sortDir *= -1;\n          } else {\n            sortState.sortKey = key;\n            sortState.sortDir = 1;\n          }\n          sortState.page = 1;\n          renderFn();\n        });\n      });\n    }\n\n    function updateHeaderArrows(tableSelector, sortState) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        const arrow = th.querySelector('.arrow');\n        if (th.getAttribute('data-key') === sortState.sortKey) {\n          arrow.textContent = sortState.sortDir === 1 ? '▲' : '▼';\n        } else {\n          arrow.textContent = '';\n        }\n      });\n    }\n\n    function drawLineChart(canvas, series, labels) {\n      if (!canvas) return;\n      const dpr = window.devicePixelRatio || 1;\n      const rect = canvas.parentElement.getBoundingClientRect();\n      const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);\n      canvas.width = w * dpr; canvas.height = h * dpr;\n      const ctx = canvas.getContext('2d');\n      ctx.scale(dpr, dpr);\n      ctx.clearRect(0, 0, w, h);\n\n      const padL = 54, padR = 12, padT = 12, padB = 24;\n      const plotW = w - padL - padR, plotH = h - padT - padB;\n\n      const allVals = series.flatMap(s => s.data);\n      if (allVals.length === 0) {\n        ctx.fillStyle = '#8b93a7';\n        ctx.font = '12px sans-serif';\n        ctx.fillText('データが蓄積されるとここに表示されます', padL, h / 2);\n        return;\n      }\n      let min = Math.min(...allVals), max = Math.max(...allVals);\n      if (min === max) { min -= 1; max += 1; }\n      const pad = (max - min) * 0.1;\n      min -= pad; max += pad;\n\n      ctx.strokeStyle = '#1f2740';\n      ctx.lineWidth = 1;\n      ctx.font = '10.5px sans-serif';\n      ctx.fillStyle = '#8b93a7';\n      const gridLines = 4;\n      for (let i = 0; i <= gridLines; i++) {\n        const y = padT + (plotH / gridLines) * i;\n        ctx.beginPath();\n        ctx.moveTo(padL, y);\n        ctx.lineTo(w - padR, y);\n        ctx.stroke();\n        const val = max - ((max - min) / gridLines) * i;\n        ctx.fillText(Math.round(val).toLocaleString('ja-JP'), 2, y + 3);\n      }\n\n      const n = Math.max(...series.map(s => s.data.length), 2);\n      series.forEach(s => {\n        if (s.data.length < 2) return;\n        ctx.beginPath();\n        s.data.forEach((v, i) => {\n          const x = padL + (i / (n - 1)) * plotW;\n          const y = padT + plotH - ((v - min) / (max - min)) * plotH;\n          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);\n        });\n        ctx.strokeStyle = s.color;\n        ctx.lineWidth = 2;\n        ctx.lineJoin = 'round';\n        ctx.stroke();\n      });\n\n      if (labels && labels.length >= 2) {\n        ctx.fillStyle = '#8b93a7';\n        const first = new Date(labels[0]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        const last = new Date(labels[labels.length - 1]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        ctx.fillText(first, padL, h - 6);\n        ctx.fillText(last, w - padR - 34, h - 6);\n      }\n    }\n\n    function renderLeaderboard() {\n      if (!lastData) return;\n      let rows = lastData.leaderboard || [];\n      if (state.lb.search) {\n        const q = state.lb.search.toLowerCase();\n        rows = rows.filter(r => r.name.toLowerCase().includes(q));\n      }\n      rows = sortRows(rows, state.lb.sortKey, state.lb.sortDir);\n      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));\n      state.lb.page = Math.min(state.lb.page, totalPages);\n      const pageRows = rows.slice((state.lb.page - 1) * PAGE_SIZE, state.lb.page * PAGE_SIZE);\n      const maxAsset = Math.max(1, ...rows.map(r => r.total_assets));\n\n      const body = document.getElementById('lbBody');\n      document.getElementById('lbEmpty').style.display = rows.length === 0 ? 'block' : 'none';\n      body.innerHTML = pageRows.map(p => `\n        <tr>\n          <td class=\"rank-cell\"><span class=\"medal\">${medal(p.rank)}</span></td>\n          <td class=\"name-cell\" title=\"${esc(p.name)}\">${esc(p.name)}</td>\n          <td class=\"score-cell\">${p.credit_score}</td>\n          <td class=\"amount-cell\">\n            <div style=\"display:flex;align-items:center;gap:8px;justify-content:flex-end\">\n              <div class=\"bar-track bar-cell\"><div class=\"bar-fill\" style=\"width:${Math.max(4, p.total_assets / maxAsset * 100)}%\"></div></div>\n              <span>${fmtYen(p.total_assets)}</span>\n            </div>\n          </td>\n        </tr>\n      `).join('');\n\n      document.getElementById('lbPageInfo').textContent = rows.length === 0 ? '' : `${state.lb.page} / ${totalPages} ページ (全${rows.length}件)`;\n      document.getElementById('lbPrev').disabled = state.lb.page <= 1;\n      document.getElementById('lbNext').disabled = state.lb.page >= totalPages;\n      updateHeaderArrows('#lbBody', state.lb);\n      updateHeaderArrows('table:has(#lbBody)', state.lb);\n    }\n\n    function renderCharts() {\n      if (!lastData) return;\n      const hist = lastData.history || { labels: [], treasury: [] };\n      drawLineChart(document.getElementById('treasuryChart'),\n        [{ label: '国庫残高', color: '#f4c542', data: hist.treasury || [] }], hist.labels);\n    }\n\n    // ★追加: 「\ud83d\uded2 マーケット概況」セクションの描画(世界株式市場/資源相場ショップ/巡回商人/オークション)\n    function renderMarket() {\n      if (!lastData) return;\n      const ws = lastData.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };\n      const merchant = lastData.merchant || { refresh_at: 0, deals: [] };\n      const auction = lastData.auction || { active_listings: 0 };\n      const resources = lastData.resource_shop || [];\n\n      document.getElementById('marketStatGrid').innerHTML = `\n        <div class=\"stat-card accent\"><div class=\"label\">株式投資家数</div><div class=\"value\">${fmtNum(ws.active_investors)}人</div></div>\n        <div class=\"stat-card cyan\"><div class=\"label\">保有銘柄数(種類)</div><div class=\"value\">${fmtNum(ws.distinct_symbols)}</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">株式評価額合計</div><div class=\"value\">${fmtYen(ws.total_portfolio_value)}</div></div>\n        <div class=\"stat-card purple\"><div class=\"label\">オークション出品中</div><div class=\"value\">${fmtNum(auction.active_listings)}件</div></div>\n      `;\n\n      const topList = document.getElementById('worldStockTopList');\n      const topSymbols = ws.top_symbols || [];\n      topList.innerHTML = topSymbols.length === 0 ? '<div class=\"empty\">保有データがありません</div>' :\n        topSymbols.map((s, i) => `\n          <div class=\"rank-list-item\">\n            <span class=\"cat-dot\" style=\"background:${CAT_COLORS[i % CAT_COLORS.length]}\"></span>\n            <span class=\"rank-list-name\">${s.symbol}</span>\n            <span class=\"rank-list-meta\">${fmtNum(s.holders)}人保有 ・ ${fmtNum(s.total_shares)}株</span>\n          </div>\n        `).join('');\n\n      const remainMs = Math.max(0, (merchant.refresh_at || 0) - Date.now());\n      const deals = merchant.deals || [];\n      const dealsHtml = deals.length === 0 ? '<div class=\"empty\">現在の品揃えはありません</div>' :\n        deals.map(d => {\n          const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;\n          return `\n            <div class=\"deal-card\">\n              <div class=\"deal-card-head\">\n                <span class=\"deal-name\">${materialLabel(d.material)}</span>\n                <span class=\"deal-discount\">-${Math.round(d.discount_percent)}%</span>\n              </div>\n              <div class=\"meter-track\"><div class=\"meter-fill\" style=\"width:${(ratio * 100).toFixed(0)}%\"></div></div>\n              <div class=\"deal-stock\">残り ${fmtNum(d.stock_remaining)} / ${fmtNum(d.stock_total)}</div>\n            </div>\n          `;\n        }).join('');\n      document.getElementById('merchantStatus').innerHTML = `\n        <div class=\"merchant-refresh\">次回入荷まで: <b>${fmtDuration(remainMs)}</b></div>\n        <div class=\"deal-grid\">${dealsHtml}</div>\n      `;\n\n      document.getElementById('resourceBadgeGrid').innerHTML = resources.map(r => {\n        const color = divergingColor(r.trend_percent);\n        const sign = r.trend_percent > 0 ? '+' : '';\n        return `\n          <div class=\"badge\" title=\"基準価格 ${fmtNum(r.base_price)}円/個\">\n            <span class=\"dot\" style=\"background:${color}\"></span>\n            <span class=\"badge-name\">${materialLabel(r.material)}</span>\n            <span class=\"badge-trend\">${sign}${r.trend_percent.toFixed(1)}%</span>\n          </div>\n        `;\n      }).join('');\n    }\n\n    // ★追加: 「\ud83c\udfaf やること概況」セクションの描画(依頼ボード/宝くじ/倉庫レンタル/分割払い/埋蔵金)\n    function renderQuestsPanel() {\n      if (!lastData) return;\n      const q = lastData.quests || { available: 0, in_progress: 0, cooldown: 0, system_posted: 0, player_posted: 0 };\n      document.getElementById('questStatGrid').innerHTML = `\n        <div class=\"stat-card status-good\"><div class=\"label\">募集中</div><div class=\"value\">${fmtNum(q.available)}件</div></div>\n        <div class=\"stat-card accent\"><div class=\"label\">受注中</div><div class=\"value\">${fmtNum(q.in_progress)}件</div></div>\n        <div class=\"stat-card status-warning\"><div class=\"label\">クールダウン中</div><div class=\"value\">${fmtNum(q.cooldown)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">運営投稿</div><div class=\"value\">${fmtNum(q.system_posted)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">プレイヤー投稿</div><div class=\"value\">${fmtNum(q.player_posted)}件</div></div>\n      `;\n\n      const lottery = lastData.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };\n      document.getElementById('lotteryPool').textContent = fmtYen(lottery.pool);\n      document.getElementById('lotteryCountdown').textContent = fmtDuration((lottery.draw_at || 0) - Date.now());\n      document.getElementById('lotteryTickets').textContent = fmtNum(lottery.total_tickets_sold) + '枚';\n      document.getElementById('lotteryLastWinner').textContent = lottery.last_winner_name +\n        (lottery.last_winner_amount > 0 ? ` (${fmtYen(lottery.last_winner_amount)})` : '');\n\n      const treasure = lastData.treasure || { active: false, reward: 0 };\n      const storage = lastData.storage || { active_renters: 0 };\n      const installments = lastData.installments || { active_plans: 0, total_outstanding: 0 };\n      document.getElementById('miscStatGrid').innerHTML = `\n        <div class=\"stat-card ${treasure.active ? 'status-good' : ''}\">\n          <div class=\"label\">埋蔵金イベント</div>\n          <div class=\"value\">${treasure.active ? ('発生中 (' + fmtYen(treasure.reward) + ')') : '待機中'}</div>\n        </div>\n        <div class=\"stat-card\"><div class=\"label\">倉庫レンタル契約数</div><div class=\"value\">${fmtNum(storage.active_renters)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">分割払いプラン数</div><div class=\"value\">${fmtNum(installments.active_plans)}件</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">分割払い未払い合計</div><div class=\"value\">${fmtYen(installments.total_outstanding)}</div></div>\n      `;\n    }\n\n    function renderSelfCheck() {\n      const sc = (lastData && lastData.selfcheck) || { checked_at: 0, issues: [] };\n      const box = document.getElementById('selfcheckBox');\n      const issues = sc.issues || [];\n      const timeStr = sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '未実行';\n      if (issues.length === 0) {\n        box.className = 'alert-box ok';\n        box.innerHTML = '✅ 異常は検出されていません。<div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      } else {\n        box.className = 'alert-box warn';\n        const items = issues.map(i => '<li>' + String(i).replace(/</g, '&lt;') + '</li>').join('');\n        box.innerHTML = '⚠️ ' + issues.length + ' 件の不整合を検出し、自動修復しました。<ul>' + items + '</ul><div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      }\n    }\n\n    function renderAll() {\n      renderLeaderboard();\n      renderCharts();\n      renderMarket();\n      renderQuestsPanel();\n      renderSelfCheck();\n    }\n\n    let nextRefreshAt = Date.now() + 10000;\n    async function refresh() {\n      try {\n        const res = await fetch('/dashboard.json', { cache: 'no-store' });\n        const data = await res.json();\n        lastData = data;\n        document.getElementById('treasury').textContent = fmtYen(data.treasury || 0);\n        document.getElementById('totalGovDebt').textContent = fmtYen(data.total_gov_debt || 0);\n        const weekly = data.weekly || {};\n        document.getElementById('weeklyTrade').textContent = fmtYen(weekly.trade_volume || 0);\n        document.getElementById('eventBadge').textContent = data.active_event || '通常';\n        document.getElementById('updatedAt').textContent = new Date(data.generated_at || Date.now()).toLocaleString('ja-JP');\n        renderAll();\n        nextRefreshAt = Date.now() + 10000;\n      } catch (e) {\n        document.getElementById('updatedAt').textContent = '取得エラー';\n      }\n    }\n\n    document.getElementById('lbSearch').addEventListener('input', e => { state.lb.search = e.target.value; state.lb.page = 1; renderLeaderboard(); });\n    document.getElementById('lbPrev').addEventListener('click', () => { state.lb.page--; renderLeaderboard(); });\n    document.getElementById('lbNext').addEventListener('click', () => { state.lb.page++; renderLeaderboard(); });\n    bindSortableHeaders('table:has(#lbBody)', state.lb, renderLeaderboard);\n\n    window.addEventListener('resize', renderCharts);\n    setInterval(() => {\n      const secLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));\n      document.getElementById('countdown').textContent = secLeft + '秒後に更新';\n    }, 1000);\n\n    refresh();\n    setInterval(refresh, 10000);\n  </script>\n</body>\n</html>\n";
    private static final int RESOURCE_MAX_TRADE_QTY = 2304;
    private static final LinkedHashMap<String, String> DEFAULT_MESSAGES = new LinkedHashMap<>();
    // String.hashCode() of message defaults shipped before defaults-snapshot.yml existed, so untouched
@@ -764,9 +802,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          set.add(id);
          Player online = Bukkit.getPlayer(u);
          if (online != null && online.isOnline()) {
-            online.showTitle(Title.title(this.mm("<gold><bold>実績解放！</bold></gold>"), this.mm("<yellow>" + displayName + "</yellow>")));
+            this.fxTitle(online, "<gradient:#ffe08a:#e0a93a><bold>★ 実績解除 ★</bold></gradient>", "<yellow>" + displayName + "</yellow>");
             this.msgKey(online, "achievement.unlocked", "title", displayName);
             this.playUiSound(online, "achievement");
+            this.fxSparkle(online, true);
+            this.fxFirework(online.getLocation(), false);
          }
 
          this.addLog(u, "実績解放: " + displayName);
@@ -889,6 +929,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          this.buildResourcePack();
          this.getServer().getPluginManager().registerEvents(this, this);
+         Bukkit.getScheduler().runTaskTimer(this, this::refreshPresentation, 60L, 40L);
+         Bukkit.getScheduler().runTaskTimer(this, this::tickEventBar, 20L, 20L);
          long autosaveTicks = Math.max(1, this.cfgAutosaveIntervalMinutes) * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (this.dataLoaded) {
@@ -931,7 +973,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::checkAuctionEnd), 1200L, 1200L);
          long eventTicks = Math.max(1, this.cfgRandomEventIntervalMinutes) * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::tryRandomEconomyEvent), eventTicks, eventTicks);
-         Bukkit.getScheduler().runTaskTimer(this, this::updateAllScoreboards, 20L, 40L);
          Bukkit.getScheduler().runTaskTimer(this, this::checkWorldStockAlerts, 2400L, 2400L);
          long dividendTicks = Math.max(1, this.cfgWorldStockDividendIntervalHours) * 60L * 60L * 20L;
          Bukkit.getScheduler().runTaskTimer(this, this.leaderOnly(this::payWorldStockDividends), dividendTicks, dividendTicks);
@@ -1099,6 +1140,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("resource-pack.required", this.cfgPackRequired);
       c.addDefault("resource-pack.prompt", this.cfgPackPrompt);
       c.addDefault("resource-pack.custom-sounds", this.cfgPackSounds);
+      c.addDefault("effects.titles", this.cfgFxTitles);
+      c.addDefault("effects.particles", this.cfgFxParticles);
+      c.addDefault("effects.fireworks", this.cfgFxFireworks);
+      c.addDefault("effects.event-bossbar", this.cfgFxBossbar);
+      c.addDefault("sidebar.enabled", this.cfgSidebarEnabled);
+      c.addDefault("ranks.enabled", this.cfgRanksEnabled);
+      c.addDefault("ranks.chat-prefix", this.cfgRanksChatPrefix);
+      c.addDefault("ranks.tab-list", this.cfgRanksTabList);
+      c.addDefault("ranks.nametag", this.cfgRanksNametag);
+      c.addDefault("ranks.announce", this.cfgRanksAnnounce);
+      c.addDefault("ranks.tiers", this.cfgRankTiers);
       c.addDefault("economy.auction-min-increment", this.cfgAuctionMinIncrement);
       c.addDefault("economy.auction-fee-rate", this.cfgAuctionFeeRate);
       c.addDefault("economy.auction-duration-minutes", this.cfgAuctionDurationMs / 60000L);
@@ -1350,6 +1402,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.cfgPackRequired = c.getBoolean("resource-pack.required", this.cfgPackRequired);
       this.cfgPackPrompt = c.getString("resource-pack.prompt", this.cfgPackPrompt);
       this.cfgPackSounds = c.getBoolean("resource-pack.custom-sounds", this.cfgPackSounds);
+      this.cfgFxTitles = c.getBoolean("effects.titles", this.cfgFxTitles);
+      this.cfgFxParticles = c.getBoolean("effects.particles", this.cfgFxParticles);
+      this.cfgFxFireworks = c.getBoolean("effects.fireworks", this.cfgFxFireworks);
+      this.cfgFxBossbar = c.getBoolean("effects.event-bossbar", this.cfgFxBossbar);
+      this.cfgSidebarEnabled = c.getBoolean("sidebar.enabled", this.cfgSidebarEnabled);
+      this.cfgRanksEnabled = c.getBoolean("ranks.enabled", this.cfgRanksEnabled);
+      this.cfgRanksChatPrefix = c.getBoolean("ranks.chat-prefix", this.cfgRanksChatPrefix);
+      this.cfgRanksTabList = c.getBoolean("ranks.tab-list", this.cfgRanksTabList);
+      this.cfgRanksNametag = c.getBoolean("ranks.nametag", this.cfgRanksNametag);
+      this.cfgRanksAnnounce = c.getBoolean("ranks.announce", this.cfgRanksAnnounce);
+      if (c.isList("ranks.tiers")) {
+         this.cfgRankTiers = c.getStringList("ranks.tiers");
+      }
+
+      this.cachedRankTiers = this.rankTiers();
       this.cfgAuctionMinIncrement = c.getDouble("economy.auction-min-increment", this.cfgAuctionMinIncrement);
       this.cfgAuctionMinIncrement = Math.max(1.0, this.cfgAuctionMinIncrement);
       this.cfgAuctionFeeRate = c.getDouble("economy.auction-fee-rate", this.cfgAuctionFeeRate);
@@ -1883,6 +1950,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.activeEconomyEvent = type;
       this.activeEconomyEventUntil = System.currentTimeMillis() + duration;
+      this.startEventBar(type, this.activeEconomyEventUntil);
 
       String text = switch (type) {
          case "需要急増" -> this.getMsg("event.boom");
@@ -1919,41 +1987,398 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void updateAllScoreboards() {
-      for (Player p : Bukkit.getOnlinePlayers()) {
-         this.updateScoreboard(p);
+   record RankTier(double min, String name, String color) {
+   }
+
+   private List<RankTier> rankTiers() {
+      List<RankTier> tiers = new ArrayList<>();
+
+      for (String raw : this.cfgRankTiers) {
+         String[] parts = raw.split("\\|");
+         if (parts.length >= 3) {
+            try {
+               tiers.add(new RankTier(BankUtil.parseFiniteDouble(parts[0]), parts[1].trim(), parts[2].trim()));
+            } catch (NumberFormatException ignored) {
+            }
+         }
+      }
+
+      tiers.sort(Comparator.comparingDouble(RankTier::min));
+      return tiers;
+   }
+
+   private double totalWealth(UUID u) {
+      OfflinePlayer op = Bukkit.getOfflinePlayer(u);
+      double pocket = 0.0;
+      if (op.isOnline() && op.getPlayer() != null) {
+         pocket = econ.getBalance(op.getPlayer());
+      } else if (econ.hasAccount(op)) {
+         pocket = econ.getBalance(op);
+      }
+
+      return pocket
+         + this.personalBank.getOrDefault(u, 0.0)
+         + this.fixedDeposit.getOrDefault(u, 0.0)
+         + this.fixedDeposit2.getOrDefault(u, 0.0)
+         + this.fixedDeposit3.getOrDefault(u, 0.0);
+   }
+
+   private int tierIndex(List<RankTier> tiers, double wealth) {
+      int idx = 0;
+
+      for (int i = 0; i < tiers.size(); i++) {
+         if (wealth >= tiers.get(i).min()) {
+            idx = i;
+         }
+      }
+
+      return idx;
+   }
+
+   private String rankBadge(RankTier tier) {
+      return "<dark_gray>[</dark_gray><" + tier.color() + ">" + tier.name() + "</" + tier.color() + "><dark_gray>]</dark_gray>";
+   }
+
+   /** Sidebar, rank tags (tab list, name tags, chat) and rank-up celebrations, refreshed on a timer. */
+   private void refreshPresentation() {
+      if (!this.dataLoaded || econ == null) {
+         return;
+      }
+
+      long now = System.currentTimeMillis();
+      boolean someoneUnranked = Bukkit.getOnlinePlayers().stream().anyMatch(online -> !this.wealthPosition.containsKey(online.getUniqueId()));
+      if (now - this.wealthRankingAt > 15000L || someoneUnranked && now - this.wealthRankingAt > 2000L) {
+         this.wealthRankingAt = now;
+         Set<UUID> known = new HashSet<>(this.personalBank.keySet());
+
+         for (Player online : Bukkit.getOnlinePlayers()) {
+            known.add(online.getUniqueId());
+         }
+
+         List<Entry<UUID, Double>> ranking = new ArrayList<>();
+
+         for (UUID id : known) {
+            ranking.add(Map.entry(id, this.totalWealth(id)));
+         }
+
+         ranking.sort((a, b) -> Double.compare(b.getValue(), a.getValue()));
+         this.wealthPosition.clear();
+
+         for (int i = 0; i < ranking.size(); i++) {
+            this.wealthPosition.put(ranking.get(i).getKey(), i + 1);
+         }
+
+         this.wealthRankingSize = ranking.size();
+      }
+
+      List<RankTier> tiers = this.rankTiers();
+      Map<UUID, Double> wealthNow = new HashMap<>();
+
+      for (Player online : Bukkit.getOnlinePlayers()) {
+         UUID u = online.getUniqueId();
+         double wealth = this.totalWealth(u);
+         wealthNow.put(u, wealth);
+         if (this.cfgRanksEnabled && !tiers.isEmpty()) {
+            int idx = this.tierIndex(tiers, wealth);
+            Integer before = this.rankIndex.put(u, idx);
+            if (before != null && idx > before && this.cfgRanksAnnounce) {
+               RankTier tier = tiers.get(idx);
+               this.fxTitle(online, "<gradient:#ffe08a:#e0a93a><bold>ランクアップ！</bold></gradient>", this.rankBadge(tier));
+               this.playUiSound(online, "achievement");
+               this.fxSparkle(online, true);
+               this.fxFirework(online.getLocation(), true);
+               this.broadcastNews("<gold>【ランクアップ】</gold> <yellow>" + online.getName() + "</yellow> さんが " + this.rankBadge(tier) + " <white>になりました！</white>");
+            }
+
+            if (this.cfgRanksTabList) {
+               online.playerListName(this.mm(this.rankBadge(tiers.get(idx)) + " <white>" + online.getName() + "</white>"));
+            }
+         } else {
+            this.rankIndex.remove(u);
+         }
+      }
+
+      for (Player online : Bukkit.getOnlinePlayers()) {
+         this.renderSidebar(online, tiers, wealthNow);
       }
    }
 
-   private void updateScoreboard(Player p) {
+   private void renderSidebar(Player p, List<RankTier> tiers, Map<UUID, Double> wealthNow) {
+      UUID u = p.getUniqueId();
       ScoreboardManager sm = Bukkit.getScoreboardManager();
-      if (sm != null) {
-         Scoreboard board = sm.getNewScoreboard();
-         Objective obj = board.registerNewObjective("keizai", Criteria.DUMMY, this.mm("<gold><bold>経済ステータス</bold></gold>"));
-         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-         UUID u = p.getUniqueId();
-         String[] lines = new String[]{
-            "§7────────────",
-            "§e所持金 §f" + this.fmtCur(econ.getBalance(p)),
-            "§b口座 §f" + this.fmtCur(this.personalBank.getOrDefault(u, 0.0)),
-            "§d信用 §f" + this.getScore(u),
-            "§6国庫 §f" + this.fmtCur(this.treasury),
-            "§7────────────"
-         };
-         int score = lines.length;
+      Scoreboard board = this.sidebars.get(u);
+      if (sm == null) {
+         return;
+      }
 
-         for (String line : lines) {
-            obj.getScore(line).setScore(score--);
+      if (!this.cfgSidebarEnabled || this.sidebarOff.contains(u)) {
+         if (board != null) {
+            if (p.getScoreboard() == board) {
+               p.setScoreboard(sm.getMainScoreboard());
+            }
+
+            this.sidebars.remove(u);
+            this.sidebarLines.remove(u);
          }
 
+         return;
+      }
+
+      if (board == null) {
+         // never take the scoreboard away from another plugin
+         if (p.getScoreboard() != sm.getMainScoreboard()) {
+            return;
+         }
+
+         board = sm.getNewScoreboard();
+         Objective obj = board.registerNewObjective("mb_side", Criteria.DUMMY, this.mm("<gradient:#ffe08a:#e0a93a><bold> MinecraftBank </bold></gradient>"));
+         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
+         obj.numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat.blank());
+         this.sidebars.put(u, board);
+         this.sidebarLines.remove(u);
          p.setScoreboard(board);
+      } else if (p.getScoreboard() != board) {
+         this.sidebars.remove(u);
+         this.sidebarLines.remove(u);
+         return;
+      }
+
+      Objective obj = board.getObjective("mb_side");
+      if (obj == null) {
+         return;
+      }
+
+      double pocket = econ.getBalance(p);
+      double bank = this.personalBank.getOrDefault(u, 0.0);
+      List<String> lines = new ArrayList<>();
+      lines.add("");
+      if (this.cfgRanksEnabled && !tiers.isEmpty()) {
+         int idx = this.rankIndex.getOrDefault(u, 0);
+         lines.add("<gray>ランク</gray>  <bold>" + this.rankBadge(tiers.get(idx)) + "</bold>");
+         if (idx + 1 < tiers.size()) {
+            double need = tiers.get(idx + 1).min() - wealthNow.getOrDefault(u, 0.0);
+            lines.add("<dark_gray>次まで</dark_gray> <green>" + this.fmtCur(Math.max(0.0, need)) + "</green>");
+         }
+
+         lines.add("");
+      }
+
+      lines.add("<gray>所持金</gray>");
+      lines.add(" <white><bold>" + this.fmtCur(pocket) + "</bold></white>");
+      lines.add("<gray>銀行預金</gray>");
+      lines.add(" <aqua><bold>" + this.fmtCur(bank) + "</bold></aqua>");
+      lines.add("");
+      Integer pos = this.wealthPosition.get(u);
+      lines.add("<gray>資産ランキング</gray> <gold>" + (pos != null ? pos + "位" : "-") + "</gold><dark_gray>/" + this.wealthRankingSize + "人</dark_gray>");
+      lines.add("<gray>信用スコア</gray> <light_purple>" + this.getScore(u) + "</light_purple>");
+      if (this.activeEconomyEvent != null && System.currentTimeMillis() < this.activeEconomyEventUntil) {
+         long left = this.activeEconomyEventUntil - System.currentTimeMillis();
+         lines.add("");
+         lines.add("<yellow>⚡ " + this.activeEconomyEvent + "</yellow> <gray>" + left / 60000L + ":" + String.format("%02d", left / 1000L % 60L) + "</gray>");
+      }
+
+      lines.add("");
+      lines.add("<dark_gray>/meco でメニュー</dark_gray>");
+
+      // only resend lines that changed, so a quiet sidebar costs no packets
+      List<String> shown = this.sidebarLines.get(u);
+      if (!lines.equals(shown)) {
+         for (int i = 0; i < lines.size(); i++) {
+            if (shown == null || shown.size() != lines.size() || !lines.get(i).equals(shown.get(i))) {
+               org.bukkit.scoreboard.Score score = obj.getScore("mb" + i);
+               score.setScore(lines.size() - i);
+               score.customName(this.mm(lines.get(i)));
+            }
+         }
+
+         for (int i = lines.size(); i < 20; i++) {
+            board.resetScores("mb" + i);
+         }
+
+         this.sidebarLines.put(u, lines);
+      }
+
+      if (this.cfgRanksEnabled && this.cfgRanksNametag && !tiers.isEmpty()) {
+         for (int t = 0; t < tiers.size(); t++) {
+            String teamName = "mbrank" + t;
+            org.bukkit.scoreboard.Team team = board.getTeam(teamName);
+            if (team == null) {
+               team = board.registerNewTeam(teamName);
+            }
+
+            team.prefix(this.mm(this.rankBadge(tiers.get(t)) + " "));
+         }
+
+         for (Player other : Bukkit.getOnlinePlayers()) {
+            org.bukkit.scoreboard.Team team = board.getTeam("mbrank" + this.rankIndex.getOrDefault(other.getUniqueId(), 0));
+            if (team != null && !team.hasEntry(other.getName())) {
+               team.addEntry(other.getName());
+            }
+         }
+      }
+   }
+
+   @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+   public void onRankChat(io.papermc.paper.event.player.AsyncChatEvent e) {
+      if (this.cfgRanksEnabled && this.cfgRanksChatPrefix) {
+         Integer idx = this.rankIndex.get(e.getPlayer().getUniqueId());
+         List<RankTier> tiers = this.cachedRankTiers;
+         if (idx != null && idx < tiers.size()) {
+            Component badge = this.mm(this.rankBadge(tiers.get(idx)) + " ");
+            io.papermc.paper.chat.ChatRenderer original = e.renderer();
+            e.renderer((source, displayName, message, viewer) -> badge.append(original.render(source, displayName, message, viewer)));
+         }
       }
    }
 
    private void sendToast(Player p, String title, String message) {
       if (p != null && p.isOnline()) {
-         p.sendActionBar(this.mm("<gold><bold>" + title + "</bold></gold> <gray>»</gray> <white>" + message + "</white>"));
-         this.playUiSound(p, "achievement");
+         if (MINOR_TOASTS.contains(title)) {
+            p.sendActionBar(this.mm("<gold><bold>" + title + "</bold></gold> <gray>»</gray> <white>" + message + "</white>"));
+            this.playUiSound(p, "notify");
+         } else {
+            this.fxTitle(p, "<gradient:#ffe08a:#e0a93a><bold>" + title + "</bold></gradient>", "<white>" + message + "</white>");
+            this.fxSparkle(p, true);
+            this.playUiSound(p, "achievement");
+         }
+      }
+   }
+
+   private static final Set<String> MINOR_TOASTS = Set.of("入札成功", "入札更新");
+
+   private void fxTitle(Player p, String title, String subtitle) {
+      if (this.cfgFxTitles && p != null && p.isOnline()) {
+         p.showTitle(Title.title(this.mm(title), this.mm(subtitle),
+            Title.Times.times(java.time.Duration.ofMillis(250L), java.time.Duration.ofMillis(2400L), java.time.Duration.ofMillis(700L))));
+      }
+   }
+
+   private void fxSparkle(Player p, boolean big) {
+      if (this.cfgFxParticles && p != null && p.isOnline()) {
+         Location at = p.getLocation().add(0.0, 1.1, 0.0);
+         if (big) {
+            p.getWorld().spawnParticle(org.bukkit.Particle.TOTEM_OF_UNDYING, at, 45, 0.5, 0.7, 0.5, 0.25);
+         } else {
+            p.getWorld().spawnParticle(org.bukkit.Particle.WAX_ON, at, 14, 0.45, 0.5, 0.45, 0.6);
+         }
+      }
+   }
+
+   /** A harmless firework burst; the damage listener ignores fireworks carrying fxFireworkKey. */
+   private void fxFirework(Location at, boolean large) {
+      if (this.cfgFxFireworks && at != null && at.getWorld() != null) {
+         org.bukkit.entity.Firework fw = at.getWorld().spawn(at.clone().add(0.0, 1.5, 0.0), org.bukkit.entity.Firework.class, f -> {
+            org.bukkit.inventory.meta.FireworkMeta meta = f.getFireworkMeta();
+            meta.addEffect(org.bukkit.FireworkEffect.builder()
+               .with(large ? org.bukkit.FireworkEffect.Type.BALL_LARGE : org.bukkit.FireworkEffect.Type.STAR)
+               .withColor(org.bukkit.Color.fromRGB(0xE3B341), org.bukkit.Color.fromRGB(0xFFF1B8), org.bukkit.Color.fromRGB(0x3D7BE0))
+               .withFade(org.bukkit.Color.WHITE)
+               .withTrail()
+               .withFlicker()
+               .build());
+            meta.setPower(0);
+            f.setFireworkMeta(meta);
+            f.getPersistentDataContainer().set(this.fxFireworkKey, PersistentDataType.BYTE, (byte)1);
+         });
+         Bukkit.getScheduler().runTaskLater(this, fw::detonate, 2L);
+      }
+   }
+
+   @EventHandler(ignoreCancelled = true)
+   public void onFxFireworkDamage(org.bukkit.event.entity.EntityDamageByEntityEvent e) {
+      if (e.getDamager() instanceof org.bukkit.entity.Firework fw && fw.getPersistentDataContainer().has(this.fxFireworkKey, PersistentDataType.BYTE)) {
+         e.setCancelled(true);
+      }
+   }
+
+   private static String kvValue(String[] kv, String name) {
+      for (int i = 0; i + 1 < kv.length; i += 2) {
+         if (kv[i].equals(name)) {
+            return MiniMessage.miniMessage().escapeTags(kv[i + 1]);
+         }
+      }
+
+      return "";
+   }
+
+   /** Extra on-screen effects for messages that mark a moment worth celebrating. */
+   private void fxForMessage(Player p, String key, String[] kv) {
+      switch (key) {
+         case "treasure.found" -> {
+            this.fxTitle(p, "<gradient:#ffe08a:#e0a93a><bold>埋蔵金発見！</bold></gradient>", "<yellow>" + kvValue(kv, "amount") + "</yellow> <white>を手に入れました</white>");
+            this.fxSparkle(p, true);
+            this.fxFirework(p.getLocation(), true);
+         }
+         case "donate.player-received", "standing.received" -> {
+            this.fxTitle(p, "<gold><bold>入金のお知らせ</bold></gold>", "<white>" + kvValue(kv, "player") + " さんから</white> <yellow>" + kvValue(kv, "amount") + "</yellow>");
+            this.fxSparkle(p, false);
+            this.playUiSound(p, "coin");
+         }
+         case "fixed-deposit.matured" -> {
+            this.fxTitle(p, "<aqua><bold>定期預金が満期になりました</bold></aqua>", "<yellow>" + kvValue(kv, "amount") + "</yellow> <white>を受け取りました</white>");
+            this.fxSparkle(p, false);
+         }
+         case "personal.deposit-step", "personal.deposit-full", "personal.deposit-custom", "personal.withdraw-step", "personal.withdraw-full",
+            "personal.withdraw-custom", "worldstock.sold", "resourceshop.sold", "group.deposited", "group.withdrawn" -> this.fxSparkle(p, false);
+         default -> {
+         }
+      }
+   }
+
+   private void startEventBar(String type, long until) {
+      this.stopEventBar();
+      net.kyori.adventure.bossbar.BossBar.Color color = switch (type) {
+         case "需要急増" -> net.kyori.adventure.bossbar.BossBar.Color.GREEN;
+         case "手数料高騰" -> net.kyori.adventure.bossbar.BossBar.Color.RED;
+         case "ボーナス支給デー" -> net.kyori.adventure.bossbar.BossBar.Color.YELLOW;
+         default -> net.kyori.adventure.bossbar.BossBar.Color.PURPLE;
+      };
+      this.eventBarStart = System.currentTimeMillis();
+      this.eventBarUntil = until;
+      this.eventBar = net.kyori.adventure.bossbar.BossBar.bossBar(Component.empty(), 1.0F, color, net.kyori.adventure.bossbar.BossBar.Overlay.NOTCHED_10);
+      this.tickEventBar();
+
+      for (Player online : Bukkit.getOnlinePlayers()) {
+         if (this.cfgFxBossbar && !this.newsBroadcastOff.contains(online.getUniqueId())) {
+            online.showBossBar(this.eventBar);
+            this.fxTitle(online, "<gold><bold>経済イベント発生</bold></gold>", "<white>" + type + "</white>");
+            this.playUiSound(online, "notify");
+         }
+      }
+   }
+
+   private void stopEventBar() {
+      if (this.eventBar != null) {
+         for (Player online : Bukkit.getOnlinePlayers()) {
+            online.hideBossBar(this.eventBar);
+         }
+
+         this.eventBar = null;
+      }
+   }
+
+   private void tickEventBar() {
+      if (this.eventBar == null && this.activeEconomyEvent != null && System.currentTimeMillis() < this.activeEconomyEventUntil && this.cfgFxBossbar) {
+         this.eventBarStart = Math.min(System.currentTimeMillis(), this.activeEconomyEventUntil - 600000L);
+         this.eventBarUntil = this.activeEconomyEventUntil;
+         this.eventBar = net.kyori.adventure.bossbar.BossBar.bossBar(Component.empty(), 1.0F, net.kyori.adventure.bossbar.BossBar.Color.YELLOW, net.kyori.adventure.bossbar.BossBar.Overlay.NOTCHED_10);
+
+         for (Player online : Bukkit.getOnlinePlayers()) {
+            if (!this.newsBroadcastOff.contains(online.getUniqueId())) {
+               online.showBossBar(this.eventBar);
+            }
+         }
+      }
+
+      if (this.eventBar != null) {
+         long now = System.currentTimeMillis();
+         if (now >= this.eventBarUntil || this.activeEconomyEvent == null) {
+            this.stopEventBar();
+         } else {
+            long left = this.eventBarUntil - now;
+            this.eventBar.name(this.mm("<gold><bold>経済イベント</bold></gold> <white>" + this.activeEconomyEvent + "</white> <gray>残り " + left / 60000L + ":" + String.format("%02d", left / 1000L % 60L) + "</gray>"));
+            this.eventBar.progress(Math.max(0.0F, Math.min(1.0F, (float)left / Math.max(1L, this.eventBarUntil - this.eventBarStart))));
+         }
       }
    }
 
@@ -2135,6 +2560,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.adminPendingAction.remove(u);
       this.adminPendingActionAt.remove(u);
       this.packLoaded.remove(u);
+      this.sidebars.remove(u);
+      this.sidebarLines.remove(u);
+      this.rankIndex.remove(u);
+      if (this.eventBar != null) {
+         p.hideBossBar(this.eventBar);
+      }
       if (this.db != null && this.db.isSyncEnabled()) {
          this.runSyncTick();
          this.runKeyedSync(false);
@@ -4739,6 +5170,20 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.lastLotteryWinnerName = winnerName != null ? winnerName : "unknown";
             this.lastLotteryWinnerAmount = payout;
             this.broadcastNews("<gold><bold>【宝くじ抽選】</bold> <yellow>" + this.lastLotteryWinnerName + "</yellow> さんが賞金 " + this.fmtCur(payout) + " を獲得しました！</gold>");
+            Player lotteryWinner = Bukkit.getPlayer(winnerUuid);
+            if (lotteryWinner != null) {
+               this.fxTitle(lotteryWinner, "<gradient:#ffe08a:#e0a93a><bold>宝くじ 当せん！</bold></gradient>", "<yellow>" + this.fmtCur(payout) + "</yellow> <white>を獲得しました</white>");
+               this.playUiSound(lotteryWinner, "achievement");
+               this.fxSparkle(lotteryWinner, true);
+
+               for (int burst = 0; burst < 3; burst++) {
+                  Bukkit.getScheduler().runTaskLater(this, () -> {
+                     if (lotteryWinner.isOnline()) {
+                        this.fxFirework(lotteryWinner.getLocation(), true);
+                     }
+                  }, burst * 12L);
+               }
+            }
             if (jackpotBoosted) {
                this.broadcastNews("<gold>（今回の賞金には国庫からの特別上乗せ " + this.fmtCur(this.cfgLotteryJackpotBoostAmount) + " が含まれています）</gold>");
             }
@@ -5572,6 +6017,17 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               }
                            }
                         }
+                     } else if (sub.equals("sidebar")) {
+                        if (this.sidebarOff.remove(u)) {
+                           this.msgKey(p, "sidebar.on");
+                        } else {
+                           this.sidebarOff.add(u);
+                           this.msgKey(p, "sidebar.off");
+                        }
+
+                        this.refreshPresentation();
+                        this.clickSound(p);
+                        return true;
                      } else if (sub.equals("sounds")) {
                         if (this.soundsOff.remove(u)) {
                            this.msgKey(p, "sounds.on");
@@ -6140,7 +6596,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                "invoices",
                "tax",
                "chart",
-               "sounds"
+               "sounds",
+               "sidebar"
             )
          );
          if (sender.hasPermission("bank.admin")) {
@@ -6319,19 +6776,30 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void fillGlass(Inventory inv) {
-      ItemStack glass = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
+   private ItemStack fillerPane(Material mat) {
+      ItemStack glass = new ItemStack(mat);
       ItemMeta meta = glass.getItemMeta();
       if (meta != null) {
          meta.displayName(Component.empty());
          meta.setHideTooltip(true);
-         this.applyGuiIcon(meta, Material.BLACK_STAINED_GLASS_PANE);
+         this.applyGuiIcon(meta, mat);
          glass.setItemMeta(meta);
       }
 
+      return glass;
+   }
+
+   /** Dark frame around the edge, lighter panes inside, so every menu reads as one framed panel. */
+   private void fillGlass(Inventory inv) {
+      ItemStack border = this.fillerPane(Material.BLACK_STAINED_GLASS_PANE);
+      ItemStack inner = this.fillerPane(Material.GRAY_STAINED_GLASS_PANE);
+      int rows = Math.max(1, inv.getSize() / 9);
+
       for (int i = 0; i < inv.getSize(); i++) {
          if (inv.getItem(i) == null) {
-            inv.setItem(i, glass);
+            int row = i / 9;
+            int col = i % 9;
+            inv.setItem(i, row == 0 || row == rows - 1 || col == 0 || col == 8 ? border : inner);
          }
       }
    }
@@ -10870,6 +11338,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (item != null
                && e.getClickedInventory() == e.getView().getTopInventory()
                && item.getType() != Material.BLACK_STAINED_GLASS_PANE
+               && item.getType() != Material.GRAY_STAINED_GLASS_PANE
                && item.getType() != Material.AIR) {
                UUID u = p.getUniqueId();
                long nowClick = System.currentTimeMillis();
@@ -13374,7 +13843,15 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Bukkit.getScheduler().runTaskLater(this, () -> this.msgKey(p, "invoice.join-notice", "count", String.valueOf(pendingInvoices)), 60L);
       }
       double pocket = econ.getBalance(p);
-      Bukkit.getScheduler().runTaskLater(this, () -> this.updateScoreboard(p), 20L);
+      Bukkit.getScheduler().runTaskLater(this, () -> {
+         if (p.isOnline()) {
+            if (this.eventBar != null && !this.newsBroadcastOff.contains(p.getUniqueId())) {
+               p.showBossBar(this.eventBar);
+            }
+
+            this.refreshPresentation();
+         }
+      }, 20L);
       if (!this.tutorialSeen.contains(u)) {
          Bukkit.getScheduler().runTaskLater(this, () -> this.openTutorialGUI(p), 40L);
       }
@@ -15857,6 +16334,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void clearPersistedState() {
       this.invoices.clear();
       this.soundsOff.clear();
+      this.sidebarOff.clear();
       this.activeDebts.clear();
       this.adminAuditLog.clear();
       this.auctionBid.clear();
@@ -17115,6 +17593,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.taxRevenueTotal = this.db.getDouble("tax_state", "revenue", 0.0);
 
       this.loadUuidSet("sounds_off", this.soundsOff);
+      this.loadUuidSet("sidebar_off", this.sidebarOff);
       this.wealthTaxNextAt = this.db.getLong("tax_state", "wealth_next_at", 0L);
 
       for (String key : this.db.getKeys("resource_price_history")) {
@@ -17181,6 +17660,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.db.setString("standing_v2", st.id, st.serialize());
       }
       this.saveUuidSet("sounds_off", this.soundsOff);
+      this.saveUuidSet("sidebar_off", this.sidebarOff);
       this.db.removeSection("tax_paid");
 
       for (Entry<UUID, Double> entry : this.taxPaidTotal.entrySet()) {
@@ -17621,6 +18101,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       String text = this.getMsgFor(p, key, kv);
       if (!text.isEmpty()) {
          p.sendMessage(this.mm(text));
+         this.fxForMessage(p, key, kv);
       }
    }
 
@@ -17686,17 +18167,20 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          meta.displayName(this.guiText(name));
          if (lores.length > 0) {
             List<Component> lore = new ArrayList<>();
+            lore.add(Component.empty());
             boolean spaced = false;
 
             for (int i = 0; i < lores.length; i++) {
                String line = lores[i];
-               boolean actionHint = MiniMessage.miniMessage().stripTags(line).contains("クリック");
+               String plain = MiniMessage.miniMessage().stripTags(line);
+               boolean actionHint = plain.contains("クリック");
                if (actionHint && !spaced && i > 0 && !MiniMessage.miniMessage().stripTags(lores[i - 1]).isBlank()) {
                   lore.add(Component.empty());
                }
 
                spaced |= actionHint;
-               lore.add(this.guiText(line));
+               // every click hint looks the same across all menus
+               lore.add(this.guiText(actionHint ? "<#e0a93a>▸</#e0a93a> <#f2dfae>" + MiniMessage.miniMessage().escapeTags(plain.strip()) + "</#f2dfae>" : line));
             }
 
             meta.lore(lore);
@@ -17710,7 +18194,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private Component guiText(String miniMessage) {
-      return this.mm(miniMessage).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+      return this.mm(EMOJI.matcher(miniMessage).replaceAll("")).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
+   }
+
+   /** Inventory title: a coloured marker and dark text, readable on the light-grey window. */
+   private Component guiTitle(String text, String accent) {
+      String hex = TITLE_ACCENTS.getOrDefault(accent, "#b07d12");
+      return this.mm("<" + hex + ">◆</" + hex + "> <#3a3a3a>" + text + "</#3a3a3a>");
    }
 
    @Override

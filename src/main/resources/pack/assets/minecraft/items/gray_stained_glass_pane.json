@@ -5,16 +5,16 @@
     "index": 0,
     "cases": [
       {
-        "when": "mb:toggle_off",
+        "when": "mb:panel_inner",
         "model": {
           "type": "minecraft:model",
-          "model": "minecraftbank:item/toggle_off"
+          "model": "minecraftbank:item/panel_inner"
         }
       }
     ],
     "fallback": {
       "type": "minecraft:model",
-      "model": "minecraft:item/gray_dye"
+      "model": "minecraft:item/gray_stained_glass_pane"
     }
   }
 }
