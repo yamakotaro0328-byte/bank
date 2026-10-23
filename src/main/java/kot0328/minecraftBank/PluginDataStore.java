@@ -87,7 +87,7 @@ final class PluginDataStore {
 
       try {
          Class.forName(mysql ? "com.mysql.cj.jdbc.Driver" : "org.sqlite.JDBC");
-      } catch (ClassNotFoundException var13) {
+      } catch (ClassNotFoundException ignored) {
       }
 
       this.conn = this.openConnection();
@@ -138,7 +138,7 @@ final class PluginDataStore {
       boolean valid;
       try {
          valid = this.conn != null && this.conn.isValid(3);
-      } catch (SQLException var3) {
+      } catch (SQLException ex) {
          valid = false;
       }
 
@@ -147,7 +147,7 @@ final class PluginDataStore {
             if (this.conn != null) {
                this.conn.close();
             }
-         } catch (SQLException var2) {
+         } catch (SQLException ignored) {
          }
 
          this.conn = this.openConnection();
@@ -203,7 +203,7 @@ final class PluginDataStore {
             }
 
             ins.executeBatch();
-         } catch (SQLException var14) {
+         } catch (SQLException ignored) {
          }
 
          this.conn.commit();
@@ -356,14 +356,14 @@ final class PluginDataStore {
          } catch (SQLException e) {
             try {
                this.conn.rollback();
-            } catch (SQLException var10) {
+            } catch (SQLException ignored) {
             }
 
             throw new RuntimeException(e);
          } finally {
             try {
                this.conn.setAutoCommit(true);
-            } catch (SQLException var9) {
+            } catch (SQLException ignored) {
             }
          }
       }, this.writer);
@@ -479,14 +479,14 @@ final class PluginDataStore {
          } catch (SQLException e) {
             try {
                this.conn.rollback();
-            } catch (SQLException var12) {
+            } catch (SQLException ignored) {
             }
 
             throw new RuntimeException(e);
          } finally {
             try {
                this.conn.setAutoCommit(true);
-            } catch (SQLException var11) {
+            } catch (SQLException ignored) {
             }
          }
       }, this.writer);
@@ -544,13 +544,13 @@ final class PluginDataStore {
          if (!this.writer.awaitTermination(60L, TimeUnit.SECONDS)) {
             this.log.severe("[SQLite] 書き込みが60秒以内に完了しませんでした。");
          }
-      } catch (InterruptedException var3) {
+      } catch (InterruptedException ex) {
          Thread.currentThread().interrupt();
       }
 
       try {
          this.conn.close();
-      } catch (SQLException var2) {
+      } catch (SQLException ignored) {
       }
    }
 
@@ -678,7 +678,7 @@ final class PluginDataStore {
       } catch (SQLException e) {
          try {
             this.conn.rollback();
-         } catch (SQLException var13) {
+         } catch (SQLException ignored) {
          }
 
          this.retryOps.addAll(ops);
@@ -686,7 +686,7 @@ final class PluginDataStore {
       } finally {
          try {
             this.conn.setAutoCommit(true);
-         } catch (SQLException var12) {
+         } catch (SQLException ignored) {
          }
       }
    }
@@ -726,7 +726,7 @@ final class PluginDataStore {
          } catch (SQLException e) {
             try {
                this.conn.rollback();
-            } catch (SQLException var11) {
+            } catch (SQLException ignored) {
             }
 
             if (this.ledgerQueue.size() < 100000) {
@@ -737,7 +737,7 @@ final class PluginDataStore {
          } finally {
             try {
                this.conn.setAutoCommit(true);
-            } catch (SQLException var10) {
+            } catch (SQLException ignored) {
             }
          }
       }
@@ -914,21 +914,10 @@ final class PluginDataStore {
       } else {
          try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos);
-
-            try {
+            try (BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos)) {
                oos.writeObject(item);
-            } catch (Throwable var9) {
-               try {
-                  oos.close();
-               } catch (Throwable var8) {
-                  var9.addSuppressed(var8);
-               }
-
-               throw var9;
             }
 
-            oos.close();
             this.setString(section, path, Base64.getEncoder().encodeToString(baos.toByteArray()));
          } catch (IOException e) {
             throw new RuntimeException("ItemStackのシリアライズに失敗しました: " + section + "/" + path, e);
@@ -944,24 +933,9 @@ final class PluginDataStore {
 
       try {
          byte[] bytes = Base64.getDecoder().decode(v);
-         BukkitObjectInputStream ois = new BukkitObjectInputStream(new ByteArrayInputStream(bytes));
-
-         ItemStack var7;
-         try {
-            Object obj = ois.readObject();
-            var7 = obj instanceof ItemStack ? (ItemStack)obj : null;
-         } catch (Throwable var9) {
-            try {
-               ois.close();
-            } catch (Throwable var8) {
-               var9.addSuppressed(var8);
-            }
-
-            throw var9;
+         try (BukkitObjectInputStream ois = new BukkitObjectInputStream(new ByteArrayInputStream(bytes))) {
+            return ois.readObject() instanceof ItemStack item ? item : null;
          }
-
-         ois.close();
-         return var7;
       } catch (Exception e) {
          throw new RuntimeException("ItemStackのデシリアライズに失敗しました: " + section + "/" + path, e);
       }
@@ -971,21 +945,10 @@ final class PluginDataStore {
       if (items != null && !items.isEmpty()) {
          try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos);
-
-            try {
+            try (BukkitObjectOutputStream oos = new BukkitObjectOutputStream(baos)) {
                oos.writeObject(new ArrayList<>(items));
-            } catch (Throwable var9) {
-               try {
-                  oos.close();
-               } catch (Throwable var8) {
-                  var9.addSuppressed(var8);
-               }
-
-               throw var9;
             }
 
-            oos.close();
             this.setString(section, path, Base64.getEncoder().encodeToString(baos.toByteArray()));
          } catch (IOException e) {
             throw new RuntimeException("ItemStackリストのシリアライズに失敗しました: " + section + "/" + path, e);
@@ -1003,34 +966,18 @@ final class PluginDataStore {
 
       try {
          byte[] bytes = Base64.getDecoder().decode(v);
-         BukkitObjectInputStream ois = new BukkitObjectInputStream(new ByteArrayInputStream(bytes));
-
-         ArrayList var11;
-         label37: {
-            try {
-               Object obj = ois.readObject();
-               if (obj instanceof List) {
-                  var11 = new ArrayList((List)obj);
-                  break label37;
+         try (BukkitObjectInputStream ois = new BukkitObjectInputStream(new ByteArrayInputStream(bytes))) {
+            List<ItemStack> items = new ArrayList<>();
+            if (ois.readObject() instanceof List<?> list) {
+               for (Object o : list) {
+                  if (o instanceof ItemStack item) {
+                     items.add(item);
+                  }
                }
-
-               var11 = new ArrayList();
-            } catch (Throwable var9) {
-               try {
-                  ois.close();
-               } catch (Throwable var8) {
-                  var9.addSuppressed(var8);
-               }
-
-               throw var9;
             }
 
-            ois.close();
-            return var11;
+            return items;
          }
-
-         ois.close();
-         return var11;
       } catch (Exception e) {
          throw new RuntimeException("ItemStackリストのデシリアライズに失敗しました: " + section + "/" + path, e);
       }

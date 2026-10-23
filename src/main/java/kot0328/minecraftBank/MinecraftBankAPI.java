@@ -4,11 +4,11 @@ import java.util.UUID;
 import org.bukkit.OfflinePlayer;
 
 public interface MinecraftBankAPI {
-   double getPocketBalance(OfflinePlayer var1);
+   double getPocketBalance(OfflinePlayer player);
 
-   double getPersonalBankBalance(UUID var1);
+   double getPersonalBankBalance(UUID playerId);
 
-   int getCreditScoreOf(UUID var1);
+   int getCreditScoreOf(UUID playerId);
 
    double getTreasuryBalance();
 
