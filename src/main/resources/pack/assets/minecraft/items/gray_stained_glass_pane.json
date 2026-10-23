@@ -1,0 +1,20 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "cases": [
+      {
+        "when": "mb:panel_inner",
+        "model": {
+          "type": "minecraft:model",
+          "model": "minecraftbank:item/panel_inner"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/gray_stained_glass_pane"
+    }
+  }
+}

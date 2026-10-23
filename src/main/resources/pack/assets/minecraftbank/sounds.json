@@ -1,0 +1,47 @@
+{
+  "ui.click": {
+    "sounds": [
+      "minecraftbank:ui/click"
+    ]
+  },
+  "ui.menu": {
+    "sounds": [
+      "minecraftbank:ui/menu"
+    ]
+  },
+  "ui.open": {
+    "sounds": [
+      "minecraftbank:ui/open"
+    ]
+  },
+  "ui.success": {
+    "sounds": [
+      "minecraftbank:ui/success"
+    ]
+  },
+  "ui.coin": {
+    "sounds": [
+      "minecraftbank:ui/coin"
+    ]
+  },
+  "ui.achievement": {
+    "sounds": [
+      "minecraftbank:ui/achievement"
+    ]
+  },
+  "ui.pickup": {
+    "sounds": [
+      "minecraftbank:ui/pickup"
+    ]
+  },
+  "ui.notify": {
+    "sounds": [
+      "minecraftbank:ui/notify"
+    ]
+  },
+  "ui.error": {
+    "sounds": [
+      "minecraftbank:ui/error"
+    ]
+  }
+}

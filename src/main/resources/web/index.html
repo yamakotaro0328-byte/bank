@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ホーム | MinecraftBank</title>
+<meta name="description" content="MinecraftBank サーバー経済ダッシュボード">
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js"></script>
+</head>
+<body data-page="home">
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">ECONOMY DASHBOARD</div>
+    <h1>サーバー経済のいま</h1>
+    <p class="hero-lead">国庫・取引・相場・ランキングまで、サーバーのお金の動きをリアルタイムでお届けします。</p>
+    <div class="hero-row" style="margin-top:22px">
+      <div class="hero-figure">
+        <div class="label">国庫残高</div>
+        <div class="value num"><span id="treasury" class="skeleton">000,000,000円</span></div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill"><span class="dot live"></span><span id="updatedAt">接続中…</span></span>
+        <span class="pill" id="countdown">--</span>
+        <span class="pill gold" id="eventBadge">イベント: 通常</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+  <div class="kpis overlap" id="kpis">
+    <div class="card kpi accent"><div class="k-label" data-icon="receipt">政府債務の合計</div><div class="k-value skeleton" id="totalGovDebt">0000000円</div><div class="k-sub">プレイヤーへの政府ローン残高</div></div>
+    <div class="card kpi accent"><div class="k-label" data-icon="pulse">今週の取引量</div><div class="k-value skeleton" id="weeklyTrade">0000000円</div><div class="k-sub">ショップ・送金などの合計</div></div>
+    <div class="card kpi accent"><div class="k-label" data-icon="globe">株式評価額の合計</div><div class="k-value skeleton" id="stockValue">0000000円</div><div class="k-sub" id="stockSub">&nbsp;</div></div>
+    <div class="card kpi accent"><div class="k-label" data-icon="gavel">オークション出品中</div><div class="k-value skeleton" id="auctionCount">00件</div><div class="k-sub">マイページから入札できます</div></div>
+  </div>
+
+  <div class="cols-main" style="margin-top:20px">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="badge-icon" data-icon="chart"></span><div>国庫残高の推移<div class="card-sub">直近の記録（ポイントにカーソルを合わせると金額を表示）</div></div></div>
+      </div>
+      <div class="card-body"><div id="treasuryChart" style="min-height:260px"></div></div>
+    </div>
+    <div class="stack">
+      <div class="card">
+        <div class="card-head"><div class="card-title"><span class="badge-icon" data-icon="shield"></span>システムの健全性</div></div>
+        <div class="card-body" id="selfcheckBox"><div class="skeleton" style="height:64px"></div></div>
+      </div>
+      <div class="ticket">
+        <div class="t-label">宝くじ ・ 次回の賞金プール</div>
+        <div class="t-value num" id="lotteryPool">-</div>
+        <div class="t-rows">
+          <div>抽選まで<b id="lotteryCountdown">-</b></div>
+          <div>販売枚数<b id="lotteryTickets">-</b></div>
+          <div style="grid-column:1/-1">前回の当せん<b id="lotteryLastWinner">-</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title"><h2>資産ランキング</h2><p>所持金と預金の合計</p></div>
+  <div class="card">
+    <div class="podium" id="podium"></div>
+    <div class="card-head" style="padding-top:14px">
+      <div class="input-wrap" style="flex:1;max-width:320px" data-search>
+        <input class="input" id="lbSearch" type="search" placeholder="プレイヤー名で検索" aria-label="プレイヤー名で検索">
+      </div>
+    </div>
+    <div class="card-body flush">
+      <div class="table-wrap">
+        <table class="data" id="lbTable">
+          <thead><tr>
+            <th data-key="rank">順位<span class="arrow"></span></th>
+            <th data-key="name">プレイヤー<span class="arrow"></span></th>
+            <th data-key="credit_score" class="r">信用スコア<span class="arrow"></span></th>
+            <th data-key="total_assets" class="r">総資産<span class="arrow"></span></th>
+          </tr></thead>
+          <tbody id="lbBody"></tbody>
+        </table>
+      </div>
+      <div id="lbEmpty"></div>
+      <div class="pager">
+        <span id="lbPageInfo"></span>
+        <span class="btns"><button class="btn ghost sm" id="lbPrev" type="button">← 前へ</button><button class="btn ghost sm" id="lbNext" type="button">次へ →</button></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title"><h2>マーケット</h2><p><a href="/economy.html">相場の詳細を見る →</a></p></div>
+  <div class="cols-2">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="badge-icon gold" data-icon="store"></span><div>巡回商人<div class="card-sub" id="merchantRefresh">&nbsp;</div></div></div>
+      </div>
+      <ul class="list" id="merchantList" style="margin-top:8px"></ul>
+    </div>
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="badge-icon" data-icon="globe"></span><div>世界株 ・ 人気銘柄<div class="card-sub" id="stockInvestors">&nbsp;</div></div></div>
+      </div>
+      <ul class="list" id="worldStockTopList" style="margin-top:8px"></ul>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px">
+    <div class="card-head">
+      <div class="card-title"><span class="badge-icon" data-icon="trend"></span><div>資源相場 ・ 基準価格との差<div class="card-sub">需要が高いほど赤、だぶついているほど青</div></div></div>
+      <div class="legend"><span><i style="background:var(--div-neg)"></i>基準より安い</span><span><i style="background:var(--div-mid)"></i>横ばい</span><span><i style="background:var(--div-pos)"></i>基準より高い</span></div>
+    </div>
+    <div class="card-body"><div class="heat" id="resourceHeat"></div></div>
+  </div>
+
+  <div class="section-title"><h2>くらしとイベント</h2><p>依頼ボード・倉庫・分割払い・埋蔵金</p></div>
+  <div class="kpis" id="lifeKpis"></div>
+</main>
+
+<script>
+(() => {
+  const { el, icon, fmt, fill, countUp, empty, lineChart, diverging } = MB;
+  const $ = (id) => document.getElementById(id);
+  const PAGE_SIZE = 10;
+  const state = { sortKey: 'rank', sortDir: 1, page: 1, search: '' };
+  let data = null;
+
+  document.querySelectorAll('[data-icon]').forEach((n) => n.prepend(icon(n.dataset.icon)));
+  document.querySelector('[data-search]').prepend(icon('search'));
+
+  const MATERIAL_JA = {
+    COAL: '石炭', IRON_INGOT: '鉄インゴット', GOLD_INGOT: '金インゴット', COPPER_INGOT: '銅インゴット',
+    REDSTONE: 'レッドストーン', LAPIS_LAZULI: 'ラピスラズリ', DIAMOND: 'ダイヤモンド', EMERALD: 'エメラルド',
+    NETHERITE_SCRAP: 'ネザライトの欠片', WHEAT: '小麦', CARROT: 'ニンジン', POTATO: 'ジャガイモ',
+    BEETROOT: 'ビートルート', MELON_SLICE: 'スイカ', PUMPKIN: 'カボチャ', SUGAR_CANE: 'サトウキビ',
+    NETHER_WART: 'ネザーウォート', COCOA_BEANS: 'カカオ豆', ROTTEN_FLESH: '腐った肉', BONE: '骨',
+    STRING: '糸', GUNPOWDER: '火薬', SPIDER_EYE: 'クモの目', SLIME_BALL: 'スライムボール',
+    ENDER_PEARL: 'エンダーパール', BLAZE_ROD: 'ブレイズロッド', GHAST_TEAR: 'ガストの涙',
+    OAK_LOG: 'オークの原木', SPRUCE_LOG: 'トウヒの原木', BIRCH_LOG: 'シラカバの原木', JUNGLE_LOG: 'ジャングルの原木',
+    ACACIA_LOG: 'アカシアの原木', DARK_OAK_LOG: 'ダークオークの原木', MANGROVE_LOG: 'マングローブの原木', CHERRY_LOG: 'サクラの原木',
+    ELYTRA: 'エリトラ', TOTEM_OF_UNDYING: '不死のトーテム', NETHERITE_INGOT: 'ネザライトインゴット',
+    NETHERITE_BLOCK: 'ネザライトブロック', ENCHANTED_GOLDEN_APPLE: 'エンチャントされた金のリンゴ',
+    SADDLE: 'サドル', NAME_TAG: '名札', SHULKER_BOX: 'シュルカーボックス', TRIDENT: 'トライデント',
+    NETHER_STAR: 'ネザースター', DRAGON_EGG: 'ドラゴンの卵', BEACON: 'ビーコン', DIAMOND_BLOCK: 'ダイヤモンドブロック',
+    EMERALD_BLOCK: 'エメラルドブロック', MUSIC_DISC_PIGSTEP: 'レコード(Pigstep)', MUSIC_DISC_OTHERSIDE: 'レコード(Otherside)',
+    HEART_OF_THE_SEA: '海の心', CONDUIT: 'コンジット', END_CRYSTAL: 'エンドクリスタル', GOLDEN_CARROT: '金のニンジン'
+  };
+  const materialLabel = (name) => MATERIAL_JA[name] || String(name).toLowerCase().split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  const CAT = ['var(--series-1)', 'var(--series-2)', 'var(--series-3)', 'var(--series-4)', 'var(--series-5)'];
+
+  function renderPodium(rows) {
+    const box = $('podium');
+    box.replaceChildren();
+    const top = [...rows].sort((a, b) => a.rank - b.rank).slice(0, 3);
+    if (!top.length) { box.style.display = 'none'; return; }
+    box.style.display = '';
+    const places = ['1st', '2nd', '3rd'];
+    top.forEach((p, i) => box.append(el('div', {},
+      el('div', { class: 'place' }, places[i] + (i === 0 ? ' 👑' : '')),
+      el('div', { class: 'who', title: p.name }, p.name),
+      el('div', { class: 'amt' }, fmt.yen(p.total_assets)),
+      el('div', { class: 'sc' }, '信用スコア ' + p.credit_score))));
+  }
+
+  function renderLeaderboard() {
+    if (!data) return;
+    let rows = data.leaderboard || [];
+    if (state.search) {
+      const q = state.search.toLowerCase();
+      rows = rows.filter((r) => r.name.toLowerCase().includes(q));
+    }
+    rows = [...rows].sort((a, b) => {
+      const av = a[state.sortKey], bv = b[state.sortKey];
+      return (typeof av === 'string' ? av.localeCompare(bv, 'ja') : (av ?? 0) - (bv ?? 0)) * state.sortDir;
+    });
+    const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+    state.page = Math.min(state.page, pages);
+    const slice = rows.slice((state.page - 1) * PAGE_SIZE, state.page * PAGE_SIZE);
+    const max = Math.max(1, ...rows.map((r) => r.total_assets));
+    $('lbBody').replaceChildren(...slice.map((p) => el('tr', {},
+      el('td', { class: 'strong' }, p.rank <= 3 ? ['🥇', '🥈', '🥉'][p.rank - 1] : String(p.rank)),
+      el('td', { class: 'strong', title: p.name }, p.name),
+      el('td', { class: 'r' }, String(p.credit_score)),
+      el('td', { class: 'r' }, el('div', { class: 'bar-inline' },
+        el('div', { class: 'meter' }, el('span', { style: { width: Math.max(3, p.total_assets / max * 100) + '%' } })),
+        el('span', { class: 'strong' }, fmt.yen(p.total_assets)))))));
+    $('lbEmpty').replaceChildren(rows.length ? '' : empty(state.search ? '該当するプレイヤーがいません' : 'まだデータがありません', 'user'));
+    $('lbPageInfo').textContent = rows.length ? `${state.page} / ${pages} ページ（全${rows.length}人）` : '';
+    $('lbPrev').disabled = state.page <= 1;
+    $('lbNext').disabled = state.page >= pages;
+    document.querySelectorAll('#lbTable th[data-key]').forEach((th) => {
+      const on = th.dataset.key === state.sortKey;
+      th.querySelector('.arrow').textContent = on ? (state.sortDir === 1 ? '▲' : '▼') : '';
+      th.setAttribute('aria-sort', on ? (state.sortDir === 1 ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
+  function renderChart() {
+    if (!data) return;
+    const hist = data.history || { labels: [], treasury: [] };
+    const points = (hist.treasury || []).map((v, i) => ({ t: hist.labels ? hist.labels[i] : i, v }));
+    lineChart($('treasuryChart'), { points, height: 260, format: fmt.yen, formatTime: fmt.time, label: '国庫残高の推移' });
+  }
+
+  function renderSelfCheck() {
+    const sc = data.selfcheck || { checked_at: 0, issues: [] };
+    const issues = sc.issues || [];
+    const when = el('div', { class: 'when' }, '最終チェック: ' + (sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '未実行'));
+    const box = issues.length === 0
+      ? el('div', { class: 'status good' }, icon('check'), el('div', {}, el('b', {}, '異常は見つかっていません'), when))
+      : el('div', { class: 'status warn' }, icon('alert'), el('div', {},
+          el('b', {}, issues.length + ' 件の不整合を検出し、自動修復しました'),
+          el('ul', {}, issues.map((i) => el('li', {}, String(i)))), when));
+    $('selfcheckBox').replaceChildren(box);
+  }
+
+  function renderMarket() {
+    const ws = data.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };
+    const merchant = data.merchant || { refresh_at: 0, deals: [] };
+    countUp('stockValue', ws.total_portfolio_value || 0, fmt.yen);
+    fill('stockSub', `${fmt.num(ws.active_investors)}人が ${fmt.num(ws.distinct_symbols)} 銘柄を保有`);
+    countUp('auctionCount', (data.auction || {}).active_listings || 0, (v) => fmt.num(v) + '件');
+    fill('stockInvestors', `投資家 ${fmt.num(ws.active_investors)}人 ・ 保有株数の多い順`);
+
+    const tops = ws.top_symbols || [];
+    const maxShares = Math.max(1, ...tops.map((s) => s.total_shares));
+    $('worldStockTopList').replaceChildren(...(tops.length ? tops.map((s, i) => el('li', {},
+      el('span', { class: 'avatar', style: { background: `color-mix(in srgb, ${CAT[i % CAT.length]} 16%, transparent)`, color: 'var(--ink)' } }, String(i + 1)),
+      el('div', { class: 'grow' },
+        el('div', { class: 'title' }, s.symbol),
+        el('div', { class: 'meter', style: { marginTop: '6px' } }, el('span', { style: { width: (s.total_shares / maxShares * 100) + '%', background: CAT[i % CAT.length] } }))),
+      el('div', { style: { textAlign: 'right' } },
+        el('div', { class: 'amount' }, fmt.num(s.total_shares) + '株'),
+        el('div', { class: 'meta' }, fmt.num(s.holders) + '人が保有')))) : [el('li', {}, empty('まだ保有データがありません', 'globe'))]));
+
+    fill('merchantRefresh', '次回入荷まで ' + fmt.duration((merchant.refresh_at || 0) - Date.now()));
+    const deals = merchant.deals || [];
+    $('merchantList').replaceChildren(...(deals.length ? deals.map((d) => {
+      const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;
+      return el('li', {},
+        el('span', { class: 'avatar gold' }, icon('store')),
+        el('div', { class: 'grow' },
+          el('div', { class: 'title' }, materialLabel(d.material)),
+          el('div', { class: 'meter', style: { marginTop: '6px' }, title: '在庫' }, el('span', { style: { width: (ratio * 100).toFixed(0) + '%', background: 'var(--gold)' } })),
+          el('div', { class: 'meta' }, `在庫 ${fmt.num(d.stock_remaining)} / ${fmt.num(d.stock_total)}`)),
+        el('span', { class: 'tag good' }, Math.round(d.discount_percent) + '% OFF'));
+    }) : [el('li', {}, empty('現在の品揃えはありません', 'store'))]));
+
+    const res = data.resource_shop || [];
+    $('resourceHeat').replaceChildren(...(res.length ? res.map((r) => el('div', { title: `基準価格 ${fmt.num(r.base_price)}円/個` },
+      el('span', { class: 'sw', style: { background: diverging(r.trend_percent) } }),
+      el('span', { class: 'nm' }, materialLabel(r.material)),
+      el('span', { class: 'pc' }, fmt.pct(r.trend_percent)))) : [empty('相場データがありません', 'trend')]));
+  }
+
+  function lifeKpi(iconName, label, value, sub, tag) {
+    return el('div', { class: 'card kpi' },
+      el('div', { class: 'k-label' }, icon(iconName), label, tag || null),
+      el('div', { class: 'k-value' }, value),
+      sub ? el('div', { class: 'k-sub' }, sub) : null);
+  }
+
+  function renderLife() {
+    const q = data.quests || {};
+    const lottery = data.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };
+    countUp('lotteryPool', lottery.pool || 0, fmt.yen);
+    fill('lotteryCountdown', fmt.duration((lottery.draw_at || 0) - Date.now()));
+    fill('lotteryTickets', fmt.num(lottery.total_tickets_sold) + '枚');
+    fill('lotteryLastWinner', (lottery.last_winner_name || '-') + (lottery.last_winner_amount > 0 ? `（${fmt.yen(lottery.last_winner_amount)}）` : ''));
+
+    const treasure = data.treasure || { active: false, reward: 0 };
+    const storage = data.storage || {};
+    const inst = data.installments || {};
+    $('lifeKpis').replaceChildren(
+      lifeKpi('target', '依頼ボード', fmt.num(q.available) + '件 募集中', `受注中 ${fmt.num(q.in_progress)}件 ・ 待機中 ${fmt.num(q.cooldown)}件 ・ 運営 ${fmt.num(q.system_posted)} / プレイヤー ${fmt.num(q.player_posted)}`),
+      lifeKpi('map', '埋蔵金', treasure.active ? fmt.yen(treasure.reward) : '待機中', treasure.active ? 'どこかに眠っています' : '次の出現を待っています',
+        el('span', { class: 'tag ' + (treasure.active ? 'good' : '') , style: { marginLeft: 'auto' } }, treasure.active ? '発生中' : '待機')),
+      lifeKpi('box', 'レンタル倉庫', fmt.num(storage.active_renters) + '件', '契約中の倉庫'),
+      lifeKpi('card', '分割払い', fmt.yen(inst.total_outstanding), `${fmt.num(inst.active_plans)}件のプランが返済中`));
+  }
+
+  let nextRefreshAt = Date.now() + 10000;
+  async function refresh() {
+    try {
+      const res = await fetch('/dashboard.json', { cache: 'no-store' });
+      data = await res.json();
+      countUp('treasury', data.treasury || 0, fmt.yen);
+      countUp('totalGovDebt', data.total_gov_debt || 0, fmt.yen);
+      countUp('weeklyTrade', (data.weekly || {}).trade_volume || 0, fmt.yen);
+      $('eventBadge').textContent = 'イベント: ' + (data.active_event || '通常');
+      $('updatedAt').textContent = '最終更新 ' + fmt.time(data.generated_at || Date.now());
+      renderPodium(data.leaderboard || []);
+      renderLeaderboard();
+      renderChart();
+      renderSelfCheck();
+      renderMarket();
+      renderLife();
+    } catch (e) {
+      $('updatedAt').textContent = '取得できませんでした';
+    }
+    nextRefreshAt = Date.now() + 10000;
+  }
+
+  $('lbSearch').addEventListener('input', (e) => { state.search = e.target.value; state.page = 1; renderLeaderboard(); });
+  $('lbPrev').addEventListener('click', () => { state.page--; renderLeaderboard(); });
+  $('lbNext').addEventListener('click', () => { state.page++; renderLeaderboard(); });
+  document.querySelectorAll('#lbTable th[data-key]').forEach((th) => th.addEventListener('click', () => {
+    if (state.sortKey === th.dataset.key) state.sortDir *= -1;
+    else { state.sortKey = th.dataset.key; state.sortDir = th.dataset.key === 'rank' || th.dataset.key === 'name' ? 1 : -1; }
+    state.page = 1;
+    renderLeaderboard();
+  }));
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(renderChart, 150); });
+  setInterval(() => { $('countdown').textContent = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000)) + '秒後に更新'; }, 1000);
+  refresh();
+  setInterval(refresh, 10000);
+})();
+</script>
+</body>
+</html>

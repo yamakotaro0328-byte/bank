@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>家計簿 | MinecraftBank</title>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js"></script>
+</head>
+<body data-page="book">
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">HOUSEHOLD BOOK</div>
+    <h1 id="title">家計簿</h1>
+    <p class="hero-lead">お金の出入り、期限のある契約、定期送金、税金の見込みをまとめて確認できます。</p>
+    <div class="hero-row" style="margin-top:22px">
+      <div class="hero-figure">
+        <div class="label">総資産（所持金 ＋ 預金）</div>
+        <div class="value num"><span id="wealth" class="skeleton">0,000,000円</span></div>
+      </div>
+      <div class="hero-meta"><span class="pill" id="who">読み込み中…</span></div>
+    </div>
+  </div>
+</section>
+
+<main class="container" id="main">
+  <div class="kpis overlap" id="tiles"></div>
+
+  <div class="cols-2" style="margin-top:20px">
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="badge-icon gold" data-icon="calendar"></span><div>期限一覧<div class="card-sub">返済や家賃など、期限のある契約</div></div></div></div>
+      <ul class="list" id="due" style="margin-top:8px"></ul>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="badge-icon" data-icon="repeat"></span><div>定期送金<div class="card-sub">/meco standing add で登録できます</div></div></div></div>
+      <div class="card-body flush" id="standing"></div>
+    </div>
+  </div>
+
+  <div class="section-title"><h2>お金の記録</h2><p>台帳の最新30件と振り込み履歴</p></div>
+  <div class="cols-main">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="badge-icon" data-icon="receipt"></span><div>所持金の台帳<div class="card-sub" id="ledgerSum">&nbsp;</div></div></div>
+        <div class="legend"><span><i style="background:var(--div-pos)"></i>入金</span><span><i style="background:var(--div-neg)"></i>出金</span></div>
+      </div>
+      <div class="card-body flush" id="ledger"></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><div class="card-title"><span class="badge-icon" data-icon="send"></span>振り込み履歴</div></div>
+      <div id="transfers"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const { el, icon, fmt, fill, empty } = MB;
+  const $ = (id) => document.getElementById(id);
+  const token = new URLSearchParams(location.search).get('token') || MB.token || '';
+  document.querySelectorAll('[data-icon]').forEach((n) => n.prepend(icon(n.dataset.icon)));
+
+  function tile(iconName, label, value, sub) {
+    return el('div', { class: 'card kpi accent' }, el('div', { class: 'k-label' }, icon(iconName), label), el('div', { class: 'k-value' }, value), sub ? el('div', { class: 'k-sub' }, sub) : null);
+  }
+
+  async function load() {
+    const res = await fetch('/me/extra.json?token=' + encodeURIComponent(token), { cache: 'no-store' });
+    if (!res.ok) {
+      $('main').replaceChildren(el('div', { class: 'card error-page', style: { marginTop: '-40px', position: 'relative' } },
+        icon('alert'), el('h2', {}, 'リンクが無効です'), el('p', {}, 'ゲーム内で /meco webpage を実行して、新しいリンクを開いてください。')));
+      return;
+    }
+    const d = await res.json();
+    document.title = d.name + ' 様の家計簿 | MinecraftBank';
+    $('title').textContent = d.name + ' 様の家計簿';
+    $('who').textContent = d.name + ' 様';
+    fill('wealth', d.wealth_text);
+
+    const tiles = [tile('receipt', '納めた税金（累計）', d.tax_paid_text), tile('bank', '次回の資産税（見込み）', d.wealth_tax_estimate_text, '今の資産のままの場合')];
+    if (d.next_wealth_at > 0) tiles.push(tile('clock', '次の資産税まで', fmt.duration(d.next_wealth_at - Date.now()), new Date(d.next_wealth_at).toLocaleString('ja-JP')));
+    const ledger = d.ledger || [];
+    const inSum = ledger.filter((r) => r.delta > 0).reduce((a, r) => a + r.delta, 0);
+    const outSum = ledger.filter((r) => r.delta < 0).reduce((a, r) => a - r.delta, 0);
+    tiles.push(tile('wallet', '最近の収支', (inSum - outSum >= 0 ? '+' : '−') + fmt.yen(Math.abs(inSum - outSum)), `入金 ${fmt.yen(inSum)} ・ 出金 ${fmt.yen(outSum)}`));
+    $('tiles').replaceChildren(...tiles);
+
+    $('due').replaceChildren(...(d.due.length ? d.due.map((t) => el('li', {}, el('span', { class: 'avatar gold' }, icon('clock')), el('div', { class: 'grow title', style: { fontWeight: 600 } }, t)))
+      : [el('li', {}, empty('期限のある契約はありません', 'calendar'))]));
+
+    $('standing').replaceChildren(d.standing.length ? el('div', { class: 'table-wrap' }, el('table', { class: 'data' },
+      el('thead', {}, el('tr', {}, el('th', {}, '送金先'), el('th', { class: 'r' }, '金額'), el('th', { class: 'r' }, '間隔'), el('th', { class: 'r' }, '次回'))),
+      el('tbody', {}, d.standing.map((s) => el('tr', {}, el('td', { class: 'strong' }, s.to), el('td', { class: 'r strong' }, s.amount_text), el('td', { class: 'r' }, s.hours + '時間ごと'), el('td', { class: 'r' }, s.next))))))
+      : empty('登録されている定期送金はありません', 'repeat'));
+
+    $('ledgerSum').textContent = ledger.length ? `${ledger.length}件 ・ ${fmt.dateTime(ledger[ledger.length - 1].ts)} 〜 ${fmt.dateTime(ledger[0].ts)}` : '記録はまだありません';
+    $('ledger').replaceChildren(ledger.length ? el('div', { class: 'table-wrap', style: { maxHeight: '520px', overflow: 'auto' } }, el('table', { class: 'data' },
+      el('thead', {}, el('tr', {}, el('th', {}, '日時'), el('th', {}, '内容'), el('th', { class: 'r' }, '増減'))),
+      el('tbody', {}, ledger.map((r) => el('tr', {},
+        el('td', { style: { whiteSpace: 'nowrap', color: 'var(--ink-2)' } }, fmt.dateTime(r.ts)),
+        el('td', {}, r.source),
+        el('td', { class: 'r strong ' + (r.delta >= 0 ? 'amt-pos' : 'amt-neg') }, (r.delta >= 0 ? '+' : '−') + fmt.dec(Math.abs(r.delta))))))))
+      : empty('記録がありません', 'receipt'));
+
+    $('transfers').replaceChildren(d.transfers.length ? el('ul', { class: 'timeline' }, d.transfers.map((t) => el('li', {}, t))) : empty('振り込み履歴はまだありません', 'send'));
+  }
+
+  load().catch(() => $('main').replaceChildren(el('div', { class: 'card error-page', style: { marginTop: '-40px', position: 'relative' } }, icon('alert'), el('h2', {}, '読み込みに失敗しました'))));
+  setInterval(() => load().catch(() => {}), 60000);
+})();
+</script>
+</body>
+</html>

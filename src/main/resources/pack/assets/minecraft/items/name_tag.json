@@ -1,0 +1,20 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "index": 0,
+    "cases": [
+      {
+        "when": "mb:card",
+        "model": {
+          "type": "minecraft:model",
+          "model": "minecraftbank:item/card"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/name_tag"
+    }
+  }
+}

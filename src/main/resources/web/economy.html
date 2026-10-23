@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>マーケット | MinecraftBank</title>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js"></script>
+</head>
+<body data-page="market">
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">MARKET</div>
+    <h1>マーケット・相場</h1>
+    <p class="hero-lead">資源ショップの価格推移と、サーバー全体のお金の出入りを確認できます。</p>
+    <div class="hero-row" style="margin-top:22px">
+      <div class="hero-figure">
+        <div class="label">国庫残高</div>
+        <div class="value num"><span id="treasury" class="skeleton">0,000,000円</span></div>
+      </div>
+      <div class="hero-meta">
+        <span class="pill"><span class="dot live"></span><span id="updated">接続中…</span></span>
+        <span class="pill gold" id="taxPill">税金: -</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+  <div class="kpis overlap" id="tiles"></div>
+
+  <div class="section-title"><h2>お金の流れ</h2><p>直近24時間・5分ごとに集計</p></div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title"><span class="badge-icon" data-icon="pulse"></span><div>処理ごとの差し引き<div class="card-sub">プレイヤーの所持金がどの処理でどれだけ増減したか（お金の台帳より）</div></div></div>
+      <div class="legend"><span><i style="background:var(--div-pos)"></i>所持金が増えた（お金が出てきた）</span><span><i style="background:var(--div-neg)"></i>所持金が減った（お金が消えた）</span></div>
+    </div>
+    <div class="card-body" id="flows"></div>
+  </div>
+
+  <div class="section-title"><h2>資源相場</h2><p id="market-desc"></p></div>
+  <div class="card">
+    <div class="card-head">
+      <div class="segmented" id="filters" role="group" aria-label="カテゴリ"></div>
+      <div class="input-wrap" style="flex:0 1 260px" data-search><input class="input" id="q" type="search" placeholder="品目名で検索" aria-label="品目名で検索"></div>
+    </div>
+    <div class="card-body">
+      <div id="detail" class="card fade-in" style="display:none;margin-bottom:18px;box-shadow:var(--shadow-2)">
+        <div class="card-head">
+          <div>
+            <div class="card-title" id="d-name"></div>
+            <div class="card-sub" id="d-stats"></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <div style="text-align:right"><div class="kpi" style="padding:0"><div class="k-value" id="d-price"></div><div class="k-sub" id="d-base"></div></div></div>
+            <button class="btn ghost sm" id="d-close" type="button">閉じる</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="d-chart"></div>
+          <details style="margin-top:10px"><summary style="cursor:pointer;color:var(--ink-2);font-size:13px">表で見る</summary>
+            <div class="table-wrap" style="max-height:280px;overflow:auto;margin-top:8px"><table class="data" id="d-table"></table></div>
+          </details>
+        </div>
+      </div>
+      <div class="market-grid" id="grid"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const { el, icon, fmt, fill, empty, lineChart, sparkline, delta } = MB;
+  const $ = (id) => document.getElementById(id);
+  let data = null, activeCat = 'all', query = '', selected = null;
+  document.querySelectorAll('[data-icon]').forEach((n) => n.prepend(icon(n.dataset.icon)));
+  document.querySelector('[data-search]').prepend(icon('search'));
+
+  function tile(iconName, label, value, sub) {
+    return el('div', { class: 'card kpi accent' },
+      el('div', { class: 'k-label' }, icon(iconName), label), el('div', { class: 'k-value' }, value), sub ? el('div', { class: 'k-sub' }, sub) : null);
+  }
+
+  function renderTiles() {
+    const tax = data.tax, lg = data.ledger;
+    const tiles = [tile('bank', '銀行預金の合計', data.bank_total_text, '全プレイヤーの預金残高'),
+      tile('receipt', '税収（累計）', tax.revenue_text, tax.enabled ? `取引税 ${(tax.sales_rate * 100).toFixed(2)}%` : '税金は無効')];
+    if (tax.enabled) tiles.push(tile('clock', '次の資産税まで', fmt.duration(tax.next_wealth_at - Date.now()), `${tax.wealth_threshold_text} を超えた分の ${(tax.wealth_rate * 100).toFixed(2)}%（${tax.wealth_interval_hours}時間ごと）`));
+    if (lg) {
+      tiles.push(tile('trend', '24時間で出てきたお金', lg.in_text, `${lg.count.toLocaleString()} 件の入出金`));
+      tiles.push(tile('wallet', '24時間で消えたお金', lg.out_text, `差し引き ${lg.net_text}`));
+    }
+    $('tiles').replaceChildren(...tiles);
+    fill('treasury', data.treasury_text);
+    $('taxPill').textContent = tax.enabled ? `取引税 ${(tax.sales_rate * 100).toFixed(2)}%` : '税金なし';
+  }
+
+  function renderFlows() {
+    const lg = data.ledger;
+    if (!lg || !lg.sources.length) { $('flows').replaceChildren(empty('まだ記録がありません（台帳が無効、または集計前です）', 'pulse')); return; }
+    const max = Math.max(...lg.sources.map((s) => Math.abs(s.net))) || 1;
+    $('flows').replaceChildren(...lg.sources.map((s) => {
+      const bar = el('div', { class: 'flow-bar ' + (s.net >= 0 ? 'pos' : 'neg') });
+      bar.style.width = `calc(${Math.max(0.5, Math.abs(s.net) / max * 50)}% - 1px)`;
+      return el('div', { class: 'flow', title: `${s.label}: ${s.net_text}（${s.count}件）` },
+        el('span', { class: 'name' }, s.label), el('div', { class: 'flow-track' }, bar), el('span', { class: 'val' }, s.net_text));
+    }));
+  }
+
+  const allItems = () => data.categories.flatMap((c) => c.items.map((i) => ({ ...i, cat: c.id })));
+  const change = (item) => { const h = item.history; return h.length >= 2 && h[0] > 0 ? (h[h.length - 1] - h[0]) / h[0] * 100 : 0; };
+  const spanText = (points) => { const m = (points - 1) * data.record_minutes; return m >= 60 ? `${Math.round(m / 60)}時間` : `${m}分`; };
+  const timeAt = (h, i) => data.generated_at - (h.length - 1 - i) * data.record_minutes * 60000;
+
+  function renderFilters() {
+    const cats = [{ id: 'all', name: 'すべて' }, ...data.categories];
+    $('filters').replaceChildren(...cats.map((c) => el('button', {
+      class: 'chip', type: 'button', 'aria-pressed': String(activeCat === c.id),
+      onclick: () => { activeCat = c.id; renderFilters(); renderGrid(); },
+    }, c.name)));
+  }
+
+  function renderGrid() {
+    const items = allItems().filter((i) => (activeCat === 'all' || i.cat === activeCat) && (!query || i.name.includes(query) || i.id.toLowerCase().includes(query.toLowerCase())));
+    if (!items.length) { $('grid').replaceChildren(empty('該当する品目がありません', 'search')); return; }
+    $('grid').replaceChildren(...items.map((item) => {
+      const ch = change(item);
+      const card = el('button', { class: 'mcard', type: 'button', 'aria-pressed': String(selected === item.id), title: item.name + '（クリックで詳しいチャート）',
+        onclick: () => { selected = selected === item.id ? null : item.id; renderGrid(); renderDetail(); if (selected) $('detail').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } },
+        el('span', { class: 'n' }, item.name),
+        el('span', { class: 'p' }, fmt.dec(item.price), el('small', {}, '/個')),
+        item.history.length >= 2 ? el('span', {}, delta(ch), el('span', { class: 'k-sub', style: { marginLeft: '6px', color: 'var(--ink-3)', fontSize: '11.5px' } }, '直近' + spanText(item.history.length))) : el('span', { class: 'delta flat' }, 'データ収集中'));
+      if (item.history.length >= 2) card.append(sparkline(item.history, { color: ch > 0.05 ? 'var(--div-pos)' : ch < -0.05 ? 'var(--div-neg)' : 'var(--ink-3)' }));
+      return card;
+    }));
+  }
+
+  function renderDetail() {
+    const item = selected && allItems().find((i) => i.id === selected);
+    if (!item) { $('detail').style.display = 'none'; return; }
+    $('detail').style.display = '';
+    const h = item.history;
+    $('d-name').textContent = item.name;
+    $('d-price').textContent = fmt.dec(item.price) + ' /個';
+    $('d-base').textContent = '基準価格 ' + fmt.dec(item.base);
+    $('d-stats').replaceChildren(h.length < 2 ? `データ収集中（${data.record_minutes}分ごとに記録）`
+      : el('span', {}, `最高 ${fmt.dec(Math.max(...h))} ・ 最安 ${fmt.dec(Math.min(...h))} ・ 期間内の変動 `, delta(change(item))));
+    lineChart($('d-chart'), { points: h.map((v, i) => ({ t: timeAt(h, i), v })), height: 280, format: (v) => fmt.dec(v) + ' /個', label: item.name + 'の価格推移' });
+    const table = $('d-table');
+    table.replaceChildren(el('thead', {}, el('tr', {}, el('th', {}, '日時'), el('th', { class: 'r' }, '価格'))),
+      el('tbody', {}, h.map((v, i) => el('tr', {}, el('td', {}, fmt.dateTime(timeAt(h, i))), el('td', { class: 'r' }, fmt.dec(v)))).reverse()));
+  }
+
+  $('d-close').onclick = () => { selected = null; renderGrid(); renderDetail(); };
+  $('q').oninput = (e) => { query = e.target.value.trim(); renderGrid(); };
+
+  async function load() {
+    try {
+      const res = await fetch('/economy.json', { cache: 'no-store' });
+      data = await res.json();
+      $('updated').textContent = '最終更新 ' + fmt.time(data.generated_at);
+      const total = data.categories.reduce((n, c) => n + c.items.length, 0);
+      $('market-desc').textContent = `全 ${total} 品目 ・ ${data.record_minutes}分ごとに価格を記録`;
+      renderTiles();
+      renderFlows();
+      if (!$('filters').childElementCount) renderFilters();
+      renderGrid();
+      renderDetail();
+    } catch (e) {
+      $('updated').textContent = '読み込みに失敗しました';
+    }
+  }
+  load();
+  setInterval(load, 60000);
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { if (data) renderDetail(); }, 150); });
+})();
+</script>
+</body>
+</html>

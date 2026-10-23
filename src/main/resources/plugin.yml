@@ -12,6 +12,7 @@ author: kot0328
 # バージョン文字列はbuild.gradle.ktsのcompileOnly("org.xerial:sqlite-jdbc:...")と必ず一致させること。
 libraries:
   - org.xerial:sqlite-jdbc:3.53.4.0
+  - com.mysql:mysql-connector-j:9.7.0
 
 commands:
   meco:
@@ -27,9 +28,98 @@ permissions:
   bank.admin:
     description: /bank admin 系の管理者コマンド(残高操作・データリセットなど)を利用できる権限
     default: op
+  bank.feature.auction:
+    description: auction 機能を利用できる権限
+    default: true
+  bank.feature.resource:
+    description: resource 機能を利用できる権限
+    default: true
+  bank.feature.worldstock:
+    description: worldstock 機能を利用できる権限
+    default: true
+  bank.feature.merchant:
+    description: merchant 機能を利用できる権限
+    default: true
+  bank.feature.vip:
+    description: vip 機能を利用できる権限
+    default: true
+  bank.feature.quest:
+    description: quest 機能を利用できる権限
+    default: true
+  bank.feature.lottery:
+    description: lottery 機能を利用できる権限
+    default: true
+  bank.feature.storage:
+    description: storage 機能を利用できる権限
+    default: true
+  bank.feature.loan:
+    description: loan 機能を利用できる権限
+    default: true
+  bank.feature.govloan:
+    description: govloan 機能を利用できる権限
+    default: true
+  bank.feature.insurance:
+    description: insurance 機能を利用できる権限
+    default: true
+  bank.feature.collateral:
+    description: collateral 機能を利用できる権限
+    default: true
+  bank.feature.deposit:
+    description: deposit 機能を利用できる権限
+    default: true
+  bank.feature.personal:
+    description: personal 機能を利用できる権限
+    default: true
+  bank.feature.treasure:
+    description: treasure 機能を利用できる権限
+    default: true
+  bank.feature.trade:
+    description: trade 機能を利用できる権限
+    default: true
+  bank.feature.group:
+    description: group 機能を利用できる権限
+    default: true
+  bank.feature.fund:
+    description: fund 機能を利用できる権限
+    default: true
+  bank.feature.standing:
+    description: standing 機能を利用できる権限
+    default: true
+  bank.feature.donate:
+    description: donate 機能を利用できる権限
+    default: true
+  bank.feature.invoice:
+    description: invoice 機能を利用できる権限
+    default: true
+  bank.feature.*:
+    description: すべての機能の利用権限
+    default: true
+    children:
+      bank.feature.auction: true
+      bank.feature.resource: true
+      bank.feature.worldstock: true
+      bank.feature.merchant: true
+      bank.feature.vip: true
+      bank.feature.quest: true
+      bank.feature.lottery: true
+      bank.feature.storage: true
+      bank.feature.loan: true
+      bank.feature.govloan: true
+      bank.feature.insurance: true
+      bank.feature.collateral: true
+      bank.feature.deposit: true
+      bank.feature.personal: true
+      bank.feature.treasure: true
+      bank.feature.trade: true
+      bank.feature.group: true
+      bank.feature.fund: true
+      bank.feature.standing: true
+      bank.feature.donate: true
+      bank.feature.invoice: true
   bank.*:
     description: MinecraftBank の全権限をまとめたワイルドカード
     default: op
     children:
       bank.use: true
       bank.admin: true
+      bank.feature.*: true

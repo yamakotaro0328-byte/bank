@@ -1,0 +1,12 @@
+{
+  "pack": {
+    "description": "MinecraftBank 専用アイコン・効果音",
+    "pack_format": 46,
+    "supported_formats": [
+      46,
+      999
+    ],
+    "min_format": 46,
+    "max_format": 999
+  }
+}
