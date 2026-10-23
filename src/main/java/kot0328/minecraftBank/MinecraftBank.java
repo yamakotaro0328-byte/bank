@@ -1,70 +1,3 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  me.clip.placeholderapi.expansion.PlaceholderExpansion
- *  net.kyori.adventure.text.Component
- *  net.kyori.adventure.text.minimessage.MiniMessage
- *  net.kyori.adventure.title.Title
- *  net.milkbowl.vault.economy.Economy
- *  org.bukkit.Bukkit
- *  org.bukkit.ChatColor
- *  org.bukkit.Location
- *  org.bukkit.Material
- *  org.bukkit.NamespacedKey
- *  org.bukkit.OfflinePlayer
- *  org.bukkit.Registry
- *  org.bukkit.Sound
- *  org.bukkit.World
- *  org.bukkit.block.Block
- *  org.bukkit.block.BlockState
- *  org.bukkit.block.TileState
- *  org.bukkit.command.Command
- *  org.bukkit.command.CommandExecutor
- *  org.bukkit.command.CommandSender
- *  org.bukkit.command.TabCompleter
- *  org.bukkit.configuration.ConfigurationSection
- *  org.bukkit.configuration.file.FileConfiguration
- *  org.bukkit.configuration.file.YamlConfiguration
- *  org.bukkit.enchantments.Enchantment
- *  org.bukkit.entity.Entity
- *  org.bukkit.entity.HumanEntity
- *  org.bukkit.entity.Player
- *  org.bukkit.entity.WanderingTrader
- *  org.bukkit.event.EventHandler
- *  org.bukkit.event.EventPriority
- *  org.bukkit.event.Listener
- *  org.bukkit.event.block.Action
- *  org.bukkit.event.block.BlockBreakEvent
- *  org.bukkit.event.entity.PlayerDeathEvent
- *  org.bukkit.event.inventory.ClickType
- *  org.bukkit.event.inventory.InventoryClickEvent
- *  org.bukkit.event.inventory.InventoryCloseEvent
- *  org.bukkit.event.inventory.InventoryDragEvent
- *  org.bukkit.event.player.AsyncPlayerChatEvent
- *  org.bukkit.event.player.PlayerInteractEntityEvent
- *  org.bukkit.event.player.PlayerInteractEvent
- *  org.bukkit.event.player.PlayerJoinEvent
- *  org.bukkit.event.player.PlayerMoveEvent
- *  org.bukkit.inventory.EquipmentSlot
- *  org.bukkit.inventory.Inventory
- *  org.bukkit.inventory.ItemFlag
- *  org.bukkit.inventory.ItemStack
- *  org.bukkit.inventory.meta.EnchantmentStorageMeta
- *  org.bukkit.inventory.meta.ItemMeta
- *  org.bukkit.persistence.PersistentDataType
- *  org.bukkit.plugin.Plugin
- *  org.bukkit.plugin.RegisteredServiceProvider
- *  org.bukkit.plugin.ServicePriority
- *  org.bukkit.plugin.java.JavaPlugin
- *  org.bukkit.scoreboard.Criteria
- *  org.bukkit.scoreboard.DisplaySlot
- *  org.bukkit.scoreboard.Objective
- *  org.bukkit.scoreboard.Scoreboard
- *  org.bukkit.scoreboard.ScoreboardManager
- *  org.bukkit.util.io.BukkitObjectInputStream
- *  org.bukkit.util.io.BukkitObjectOutputStream
- */
 package kot0328.minecraftBank;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -76,8 +9,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.invoke.CallSite;
-import java.lang.invoke.LambdaMetafactory;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.URL;
@@ -117,10 +48,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import kot0328.minecraftBank.MinecraftBankAPI;
@@ -316,7 +244,7 @@ MinecraftBankAPI {
     private String cfgDiscordBotToken = "";
     private String cfgDiscordChannelId = "";
     private double treasury = 0.0;
-    private String activeEconomyEvent = "\u901a\u5e38";
+    private String activeEconomyEvent = "通常";
     private long activeEconomyEventUntil = 0L;
     private final Random economyRandom = new Random();
     private double cfgRandomEventChance = 0.15;
@@ -361,7 +289,7 @@ MinecraftBankAPI {
     private double cfgWorldStockMaxProfitPerDay = 100000.0;
     private int cfgWorldStockTradeCooldownSeconds = 30;
     private int cfgWorldStockMaxBulkQty = 1000;
-    private String cfgCurrencyUnit = "\u5186";
+    private String cfgCurrencyUnit = "円";
     private boolean cfgCustomMoneyEnabled = false;
     private String cfgCustomMoneySymbol = "V";
     private double cfgCustomMoneyRate = 10.0;
@@ -479,58 +407,58 @@ MinecraftBankAPI {
     private int cfgStorageSize = 27;
     private double cfgStorageRentAmount = 2000.0;
     private int cfgStorageRentIntervalHours = 72;
-    private final Component tMain = this.mm("<bold><gold>\u3010\u7dcf\u5408\u91d1\u878d\u30bb\u30f3\u30bf\u30fc\u30c8\u30c3\u30d7\u3011</gold></bold>");
-    private final Component tPersonal = this.mm("<bold><aqua>\u3010\u500b\u4eba\u53e3\u5ea7\u30fb\u9810\u91d1\u7a93\u53e3\u3011</aqua></bold>");
-    private final Component tMarket = this.mm("<bold><green>\u3010\u878d\u8cc7\u5e02\u5834\uff08\u30ed\u30fc\u30f3\u30de\u30fc\u30b1\u30c3\u30c8\uff09\u3011</green></bold>");
-    private final Component tRepay = this.mm("<bold><yellow>\u3010\u7dcf\u5408\u30fb\u501f\u91d1\u8fd4\u6e08\u7a93\u53e3\u3011</yellow></bold>");
-    private final Component tEstablish = this.mm("<bold><dark_purple>\u3010\u9280\u884c\u8a2d\u7acb\u30aa\u30d5\u30a3\u30b9\u3011</dark_purple></bold>");
-    private final Component tBanker = this.mm("<bold><red>\u3010\u982d\u53d6\u30b3\u30f3\u30c8\u30ed\u30fc\u30eb\u30d1\u30cd\u30eb\u3011</red></bold>");
-    private final Component tPlan = this.mm("<bold><dark_red>\u3010\u878d\u8cc7\u30d7\u30e9\u30f3\u8a2d\u8a08\u5ba4\u3011</dark_red></bold>");
-    private final Component tGovLoan = this.mm("<bold><aqua>\u3010\u56fd\u55b6\u516c\u5eab\u30fb\u30b5\u30fc\u30d0\u30fc\u30ed\u30fc\u30f3\u3011</aqua></bold>");
-    private final Component tFixedDepo = this.mm("<bold><gold>\u3010\u9ad8\u91d1\u5229\u30fb\u5b9a\u671f\u9810\u91d1\u7a93\u53e3\u3011</gold></bold>");
-    private final Component tCredit = this.mm("<bold><green>\u3010\u500b\u4eba\u4fe1\u7528\u60c5\u5831\u30bb\u30f3\u30bf\u30fc\u3011</green></bold>");
-    private final Component tQuestBoard = this.mm("<bold><dark_aqua>\u3010\u4f9d\u983c\u30dc\u30fc\u30c9\u30fb\u63a2\u7d22\u4f9d\u983c\u3011</dark_aqua></bold>");
-    private final Component tWorldStock = this.mm("<bold><blue>\u3010\u4e16\u754c\u682a\u5f0f\u5e02\u5834\u3011</blue></bold>");
-    private final Component tWorldStockDetail = this.mm("<bold><blue>\u3010\u4e16\u754c\u682a\u5f0f\u5e02\u5834\u30fb\u9298\u67c4\u8a73\u7d30\u3011</blue></bold>");
-    private final Component tWorldStockLeaderboard = this.mm("<bold><blue>\u3010\u4e16\u754c\u682a\u5f0f\u5e02\u5834\u30fb\u4fdd\u6709\u682a\u30e9\u30f3\u30ad\u30f3\u30b0\u3011</blue></bold>");
-    private final Component tResourceShop = this.mm("<bold><green>\u3010\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u3011</green></bold>");
-    private final Component tResourceShopList = this.mm("<bold><green>\u3010\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u30fb\u54c1\u76ee\u4e00\u89a7\u3011</green></bold>");
-    private final Component tResourceShopDetail = this.mm("<bold><green>\u3010\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u30fb\u58f2\u8cb7\u3011</green></bold>");
-    private final Component tTravelingMerchant = this.mm("<bold><gold>\u3010\u5de1\u56de\u5546\u4eba\u3011</gold></bold>");
-    private final Component tLeaderboard = this.mm("<bold><yellow>\u3010\u8cc7\u7523\u30e9\u30f3\u30ad\u30f3\u30b0\u3011</yellow></bold>");
-    private final Component tCollateral = this.mm("<bold><dark_purple>\u3010\u8cea\u5c4b\u30fb\u62c5\u4fdd\u4ed8\u304d\u878d\u8cc7\u3011</dark_purple></bold>");
-    private final Component tInsurance = this.mm("<bold><blue>\u3010\u751f\u547d\u4fdd\u967a\u7a93\u53e3\u3011</blue></bold>");
-    private final Component tAchievement = this.mm("<bold><gold>\u3010\u5b9f\u7e3e\u30fb\u79f0\u53f7\u30b3\u30ec\u30af\u30b7\u30e7\u30f3\u3011</gold></bold>");
-    private final Component tAuction = this.mm("<bold><green>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30cf\u30a6\u30b9\u3011</green></bold>");
-    private final Component tHub = this.mm("<bold><white>\u3010\u7d4c\u6e08\u7dcf\u5408\u30e1\u30cb\u30e5\u30fc\u3011</white></bold>");
-    private final Component tBankHub = this.mm("<bold><aqua>\u3010\u9280\u884c\u7a93\u53e3\u3011</aqua></bold>");
-    private final Component tMarketHub = this.mm("<bold><green>\u3010\u30de\u30fc\u30b1\u30c3\u30c8\u3011</green></bold>");
-    private final Component tTodoHub = this.mm("<bold><yellow>\u3010\u3084\u308b\u3053\u3068\u3011</yellow></bold>");
-    private final Component tMyPage = this.mm("<bold><light_purple>\u3010\u30de\u30a4\u30da\u30fc\u30b8\u3011</light_purple></bold>");
-    private final Component tInstallmentList = this.mm("<bold><light_purple>\u3010\u5206\u5272\u6255\u3044\u306e\u72b6\u6cc1\u3011</light_purple></bold>");
-    private final Component tTutorial = this.mm("<bold><gold>\u3010\u7d4c\u6e08\u521d\u5fc3\u8005\u30ac\u30a4\u30c9\u3011</gold></bold>");
-    private final Component tAuctionSelect = this.mm("<bold><green>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u51fa\u54c1\u30a2\u30a4\u30c6\u30e0\u9078\u629e\u3011</green></bold>");
-    private final Component tAuctionCancelConfirm = this.mm("<bold><red>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u51fa\u54c1\u53d6\u6d88\u306e\u78ba\u8a8d\u3011</red></bold>");
-    private final Component tAuctionRanking = this.mm("<bold><green>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30fb\u843d\u672d\u58f2\u4e0a\u30e9\u30f3\u30ad\u30f3\u30b0\u3011</green></bold>");
-    private final Component tCollateralSelect = this.mm("<bold><dark_purple>\u3010\u62c5\u4fdd\u30a2\u30a4\u30c6\u30e0\u9078\u629e\u3011</dark_purple></bold>");
-    private final Component tAdminMain = this.mm("<bold><red>\u3010\u7ba1\u7406\u8005\u30d1\u30cd\u30eb\u3011</red></bold>");
-    private final Component tAdminPlayerList = this.mm("<bold><red>\u3010\u7ba1\u7406\u8005\uff1a\u30d7\u30ec\u30a4\u30e4\u30fc\u4e00\u89a7\u3011</red></bold>");
-    private final Component tAdminPlayerDetail = this.mm("<bold><red>\u3010\u7ba1\u7406\u8005\uff1a\u30d7\u30ec\u30a4\u30e4\u30fc\u8a73\u7d30\u3011</red></bold>");
-    private final Component tAdminServer = this.mm("<bold><red>\u3010\u7ba1\u7406\u8005\uff1a\u30b5\u30fc\u30d0\u30fc\u7ba1\u7406\u3011</red></bold>");
-    private final Component tConfigEditor = this.mm("<bold><red>\u3010\u7ba1\u7406\u8005\uff1aconfig\u8a2d\u5b9a\u3011</red></bold>");
-    private final Component tLottery = this.mm("<bold><gold>\u3010\u5b9a\u671f\u62bd\u9078\u30fb\u5b9d\u304f\u3058\u3011</gold></bold>");
-    private final Component tStorageRent = this.mm("<bold><gold>\u3010\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u30fb\u5951\u7d04\u7a93\u53e3\u3011</gold></bold>");
-    private final Component tStorageLocker = this.mm("<bold><gray>\u3010\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3011</gray></bold>");
-    private final Component tTradeSelect = this.mm("<bold><green>\u3010\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u30fb\u76f8\u624b\u9078\u629e\u3011</green></bold>");
-    private final Component tTrade = this.mm("<bold><gold>\u3010\u5b89\u5168\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u3011</gold></bold>");
-    private final Component tGroupList = this.mm("<bold><gold>\u3010\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u3011</gold></bold>");
-    private final Component tGroupAccount = this.mm("<bold><gold>\u3010\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u30fb\u8a73\u7d30\u3011</gold></bold>");
-    private final Component tGroupMembers = this.mm("<bold><gold>\u3010\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u30fb\u30e1\u30f3\u30d0\u30fc\u7ba1\u7406\u3011</gold></bold>");
-    private final Component tFundList = this.mm("<bold><dark_green>\u3010\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u3011</dark_green></bold>");
-    private final Component tFundInfo = this.mm("<bold><dark_green>\u3010\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u30fb\u60c5\u5831\u3011</dark_green></bold>");
-    private final Component tFundStock = this.mm("<bold><dark_green>\u3010\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u30fb\u904b\u7528\u3011</dark_green></bold>");
-    private final Component tFundStockDetail = this.mm("<bold><dark_green>\u3010\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u30fb\u9298\u67c4\u8a73\u7d30\u3011</dark_green></bold>");
-    private final Component tVipLounge = this.mm("<bold><light_purple>\u3010\ud83d\udc8e VIP\u30e9\u30a6\u30f3\u30b8\u3011</light_purple></bold>");
+    private final Component tMain = this.mm("<bold><gold>【総合金融センタートップ】</gold></bold>");
+    private final Component tPersonal = this.mm("<bold><aqua>【個人口座・預金窓口】</aqua></bold>");
+    private final Component tMarket = this.mm("<bold><green>【融資市場（ローンマーケット）】</green></bold>");
+    private final Component tRepay = this.mm("<bold><yellow>【総合・借金返済窓口】</yellow></bold>");
+    private final Component tEstablish = this.mm("<bold><dark_purple>【銀行設立オフィス】</dark_purple></bold>");
+    private final Component tBanker = this.mm("<bold><red>【頭取コントロールパネル】</red></bold>");
+    private final Component tPlan = this.mm("<bold><dark_red>【融資プラン設計室】</dark_red></bold>");
+    private final Component tGovLoan = this.mm("<bold><aqua>【国営公庫・サーバーローン】</aqua></bold>");
+    private final Component tFixedDepo = this.mm("<bold><gold>【高金利・定期預金窓口】</gold></bold>");
+    private final Component tCredit = this.mm("<bold><green>【個人信用情報センター】</green></bold>");
+    private final Component tQuestBoard = this.mm("<bold><dark_aqua>【依頼ボード・探索依頼】</dark_aqua></bold>");
+    private final Component tWorldStock = this.mm("<bold><blue>【世界株式市場】</blue></bold>");
+    private final Component tWorldStockDetail = this.mm("<bold><blue>【世界株式市場・銘柄詳細】</blue></bold>");
+    private final Component tWorldStockLeaderboard = this.mm("<bold><blue>【世界株式市場・保有株ランキング】</blue></bold>");
+    private final Component tResourceShop = this.mm("<bold><green>【資源相場ショップ】</green></bold>");
+    private final Component tResourceShopList = this.mm("<bold><green>【資源相場ショップ・品目一覧】</green></bold>");
+    private final Component tResourceShopDetail = this.mm("<bold><green>【資源相場ショップ・売買】</green></bold>");
+    private final Component tTravelingMerchant = this.mm("<bold><gold>【巡回商人】</gold></bold>");
+    private final Component tLeaderboard = this.mm("<bold><yellow>【資産ランキング】</yellow></bold>");
+    private final Component tCollateral = this.mm("<bold><dark_purple>【質屋・担保付き融資】</dark_purple></bold>");
+    private final Component tInsurance = this.mm("<bold><blue>【生命保険窓口】</blue></bold>");
+    private final Component tAchievement = this.mm("<bold><gold>【実績・称号コレクション】</gold></bold>");
+    private final Component tAuction = this.mm("<bold><green>【オークションハウス】</green></bold>");
+    private final Component tHub = this.mm("<bold><white>【経済総合メニュー】</white></bold>");
+    private final Component tBankHub = this.mm("<bold><aqua>【銀行窓口】</aqua></bold>");
+    private final Component tMarketHub = this.mm("<bold><green>【マーケット】</green></bold>");
+    private final Component tTodoHub = this.mm("<bold><yellow>【やること】</yellow></bold>");
+    private final Component tMyPage = this.mm("<bold><light_purple>【マイページ】</light_purple></bold>");
+    private final Component tInstallmentList = this.mm("<bold><light_purple>【分割払いの状況】</light_purple></bold>");
+    private final Component tTutorial = this.mm("<bold><gold>【経済初心者ガイド】</gold></bold>");
+    private final Component tAuctionSelect = this.mm("<bold><green>【オークション出品アイテム選択】</green></bold>");
+    private final Component tAuctionCancelConfirm = this.mm("<bold><red>【オークション出品取消の確認】</red></bold>");
+    private final Component tAuctionRanking = this.mm("<bold><green>【オークション・落札売上ランキング】</green></bold>");
+    private final Component tCollateralSelect = this.mm("<bold><dark_purple>【担保アイテム選択】</dark_purple></bold>");
+    private final Component tAdminMain = this.mm("<bold><red>【管理者パネル】</red></bold>");
+    private final Component tAdminPlayerList = this.mm("<bold><red>【管理者：プレイヤー一覧】</red></bold>");
+    private final Component tAdminPlayerDetail = this.mm("<bold><red>【管理者：プレイヤー詳細】</red></bold>");
+    private final Component tAdminServer = this.mm("<bold><red>【管理者：サーバー管理】</red></bold>");
+    private final Component tConfigEditor = this.mm("<bold><red>【管理者：config設定】</red></bold>");
+    private final Component tLottery = this.mm("<bold><gold>【定期抽選・宝くじ】</gold></bold>");
+    private final Component tStorageRent = this.mm("<bold><gold>【レンタル倉庫・契約窓口】</gold></bold>");
+    private final Component tStorageLocker = this.mm("<bold><gray>【レンタル倉庫】</gray></bold>");
+    private final Component tTradeSelect = this.mm("<bold><green>【アイテム交換・相手選択】</green></bold>");
+    private final Component tTrade = this.mm("<bold><gold>【安全アイテム交換】</gold></bold>");
+    private final Component tGroupList = this.mm("<bold><gold>【グループ貯金箱】</gold></bold>");
+    private final Component tGroupAccount = this.mm("<bold><gold>【グループ貯金箱・詳細】</gold></bold>");
+    private final Component tGroupMembers = this.mm("<bold><gold>【グループ貯金箱・メンバー管理】</gold></bold>");
+    private final Component tFundList = this.mm("<bold><dark_green>【共同投資ファンド】</dark_green></bold>");
+    private final Component tFundInfo = this.mm("<bold><dark_green>【共同投資ファンド・情報】</dark_green></bold>");
+    private final Component tFundStock = this.mm("<bold><dark_green>【共同投資ファンド・運用】</dark_green></bold>");
+    private final Component tFundStockDetail = this.mm("<bold><dark_green>【共同投資ファンド・銘柄詳細】</dark_green></bold>");
+    private final Component tVipLounge = this.mm("<bold><light_purple>【💎 VIPラウンジ】</light_purple></bold>");
     private PluginDataStore db;
     private FileConfiguration messages;
     private File messagesFile;
@@ -539,8 +467,8 @@ MinecraftBankAPI {
     private static final int DASHBOARD_HISTORY_LIMIT = 60;
     private final ArrayDeque<Long> dashboardHistoryTimestamps = new ArrayDeque();
     private final ArrayDeque<Long> dashboardHistoryTreasury = new ArrayDeque();
-    private static final String MY_DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>\u500b\u4eba\u30da\u30fc\u30b8 | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>\ud83d\udc64 \u500b\u4eba\u30da\u30fc\u30b8</h1>\n    <div class=\"sub\" id=\"playerName\">\u8aad\u8fbc\u4e2d...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>\u30aa\u30d5\u30e9\u30a4\u30f3\u64cd\u4f5c\u7528\u30d1\u30b9\u30ef\u30fc\u30c9</h2>\n      <div class=\"empty\">\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u306a\u3044\u6642\u306b\u3053\u306e\u30da\u30fc\u30b8\u304b\u3089\u64cd\u4f5c\u3059\u308b\u306b\u306f\u3001\u30d1\u30b9\u30ef\u30fc\u30c9\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044(\u30b2\u30fc\u30e0\u5185\u306e /meco webpage password \u3067\u8a2d\u5b9a\u3067\u304d\u307e\u3059)\u3002\u30ed\u30b0\u30a4\u30f3\u4e2d\u306f\u4e0d\u8981\u3067\u3059\u3002</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"\u30d1\u30b9\u30ef\u30fc\u30c9\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">\u6240\u6301\u91d1</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">\u9280\u884c\u6b8b\u9ad8</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">\u4fe1\u7528\u30b9\u30b3\u30a2</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">\u5b9f\u7e3e\u89e3\u9664\u6570</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">\u53d7\u53d6\u7bb1</h2>\n        <button class=\"btn\" id=\"collectBtn\">\ud83d\udce6 \u53d7\u53d6\u7bb1\u3092\u78ba\u8a8d\u3059\u308b</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u843d\u672d\u54c1\u306a\u3069\u304c\u5c4a\u3044\u3066\u3044\u307e\u3059\u3002\u30ed\u30b0\u30a4\u30f3\u4e2d\u306b\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u306e\u7a7a\u304d\u304c\u7121\u304f\u3066\u53d7\u3051\u53d6\u308c\u306a\u304b\u3063\u305f\u5206\u3082\u3053\u3053\u3067\u518d\u53d6\u5f97\u3067\u304d\u307e\u3059\u3002</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>\u4fdd\u6709\u4e2d\u306e\u4e16\u754c\u682a / \u8cfc\u5165</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">\u8aad\u8fbc\u4e2d...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"\u9298\u67c4(\u4f8b: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"\u682a\u6570\">\n        <button class=\"btn\" id=\"stockBuyBtn\">\u8cfc\u5165\u3059\u308b</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>\u30aa\u30fc\u30af\u30b7\u30e7\u30f3</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">\u8aad\u8fbc\u4e2d...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>\u30ec\u30f3\u30bf\u30eb\u5009\u5eab</h2>\n      <div id=\"storageArea\"><div class=\"empty\">\u8aad\u8fbc\u4e2d...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>\u76f4\u8fd1\u306e\u53d6\u5f15\u5c65\u6b74</h2>\n      <div id=\"logsArea\"><div class=\"empty\">\u8aad\u8fbc\u4e2d...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '\u5186'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">\u30ea\u30f3\u30af\u304c\u7121\u52b9\u3067\u3059\u3002\u30b2\u30fc\u30e0\u5185\u3067 /meco webpage \u3092\u5b9f\u884c\u3057\u76f4\u3057\u3066\u304f\u3060\u3055\u3044\u3002</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' \u3055\u3093\u306e\u500b\u4eba\u30da\u30fc\u30b8';\n        document.getElementById('onlineStatus').textContent = data.online ? '\ud83d\udfe2 \u30ed\u30b0\u30a4\u30f3\u4e2d' : '\u26aa \u30aa\u30d5\u30e9\u30a4\u30f3';\n        // \u2605\u4fee\u6b63: \u30d1\u30b9\u30ef\u30fc\u30c9\u672a\u8a2d\u5b9a\u3067\u3082\u5165\u529b\u6b04\u81ea\u4f53\u306f\u5fc5\u305a\u8868\u793a\u3059\u308b(\u7ba1\u7406\u8005\u304c\u767a\u884c\u3057\u305f\u30d1\u30b9\u30ef\u30fc\u30c9\u3067\n        // \u64cd\u4f5c\u3067\u304d\u308b\u53ef\u80fd\u6027\u304c\u3042\u308b\u305f\u3081\u3001\u300c\u672a\u8a2d\u5b9a\u300d\u3092\u7406\u7531\u306b\u5165\u529b\u6b04\u3054\u3068\u6d88\u3057\u3066\u306f\u3044\u3051\u306a\u3044)\u3002\n        document.getElementById('passwordPanel').hidden = data.online;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">\u4fdd\u6709\u4e2d\u306e\u682a\u306f\u3042\u308a\u307e\u305b\u3093\u3002</div>' :\n          '<table><thead><tr><th>\u9298\u67c4</th><th>\u682a\u6570</th><th>\u5e73\u5747\u53d6\u5f97\u5358\u4fa1</th><th>\u8a55\u4fa1\u984d</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + s.symbol + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">\u53d6\u5f15\u5c65\u6b74\u306f\u3042\u308a\u307e\u305b\u3093\u3002</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">\u8aad\u8fbc\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return '\u307e\u3082\u306a\u304f\u7d42\u4e86';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '\u5206' + (s % 60) + '\u79d2';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">\u51fa\u54c1\u4e2d\u306e\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u306f\u3042\u308a\u307e\u305b\u3093\u3002</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">\u5373\u6c7a (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + a.item + (a.is_own ? '(\u81ea\u5206\u306e\u51fa\u54c1)' : '') + '</div>' +\n          '<div class=\"meta\">\u51fa\u54c1\u8005: ' + a.seller + ' / \u73fe\u5728\u4fa1\u683c: ' + fmtYen(a.bid) + ' / \u5165\u672d\u8005: ' + (a.has_bidder ? '\u3042\u308a' : '\u306a\u3057') + ' / \u6b8b\u308a: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"\u5165\u672d\u984d\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">\u5165\u672d\u3059\u308b</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">\u672a\u5951\u7d04\u3067\u3059\u3002\u5951\u7d04\u3059\u308b\u3068\u5009\u5eab\u304c\u4f7f\u3048\u308b\u3088\u3046\u306b\u306a\u308a\u307e\u3059(\u5bb6\u8cc3 ' + fmtYen(storage.rent_amount) + ' / \u5b9a\u671f\u652f\u6255\u3044)\u3002</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">\u5951\u7d04\u3059\u308b</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">\u5951\u7d04\u4e2d\u3002\u6b21\u56de\u5bb6\u8cc3\u652f\u6255\u3044\u671f\u9650: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">\u5bb6\u8cc3\u3092\u4eca\u6255\u3063\u3066\u5ef6\u9577\u3059\u308b (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    async function postAction(path, params) {\n      const password = (document.getElementById('offlinePassword') || {}).value || '';\n      const body = new URLSearchParams(Object.assign({ token, password }, params));\n      const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n      if (!res.ok) {\n        const err = await res.json().catch(() => ({}));\n        return { ok: false, message: err.message || ('HTTP\u30a8\u30e9\u30fc ' + res.status) };\n      }\n      return await res.json();\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        showStatus('collectMsg', r.ok, r.ok ? '\u53d7\u53d6\u7bb1\u3092\u78ba\u8a8d\u3057\u307e\u3057\u305f\u3002' : (r.message || '\u5931\u6557\u3057\u307e\u3057\u305f\u3002'));\n        load();\n      } catch (e) { showStatus('collectMsg', false, '\u30b2\u30fc\u30e0\u5185\u306b\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u308b\u6642\u3060\u3051\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '\u9298\u67c4\u3068\u682a\u6570\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '\u8cfc\u5165\u51e6\u7406\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f(\u7d50\u679c\u306f\u30b2\u30fc\u30e0\u5185\u30c1\u30e3\u30c3\u30c8\u3067\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044)\u3002' : (r.message || '\u5931\u6557\u3057\u307e\u3057\u305f\u3002'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, '\u30b2\u30fc\u30e0\u5185\u306b\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u308b\u6642\u3060\u3051\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '\u652f\u6255\u3044\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f\u3002' : (r.message || '\u6b8b\u9ad8\u4e0d\u8db3\u3001\u307e\u305f\u306f\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u307e\u305b\u3093\u3002'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, '\u30b2\u30fc\u30e0\u5185\u306b\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u308b\u6642\u3060\u3051\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '\u5165\u672d\u3092\u9001\u4fe1\u3057\u307e\u3057\u305f(\u7d50\u679c\u306f\u30b2\u30fc\u30e0\u5185\u30c1\u30e3\u30c3\u30c8\u3067\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044)\u3002' : (r.message || '\u5931\u6557\u3057\u307e\u3057\u305f\u3002'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, '\u30b2\u30fc\u30e0\u5185\u306b\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u308b\u6642\u3060\u3051\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '\u5165\u672d\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n";
-    private static final String DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>\u7d4c\u6e08\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9 | MinecraftBank</title>\n<style>\n  :root {\n    --bg: #0b0f19;\n    --panel: #141b2c;\n    --panel-alt: #101625;\n    --panel-border: #232c42;\n    --text: #eaeefb;\n    --text-dim: #8b93a7;\n    --gold: #f4c542;\n    --emerald: #4ade9b;\n    --red: #ff6b6b;\n    --accent: #5b8cff;\n    --purple: #b18cff;\n    --cyan: #43d9e0;\n\n    /* \u2605\u8ffd\u52a0: \u30c7\u30fc\u30bf\u53ef\u8996\u5316\u7528\u306e\u691c\u8a3c\u6e08\u307f\u30d1\u30ec\u30c3\u30c8(dataviz skill\u306ecolor-formula.md\u306b\u6e96\u62e0)\n       \u30ab\u30c6\u30b4\u30ea\u30ab\u30eb8\u8272\u306f\u56fa\u5b9a\u9806\u3067\u8b58\u5225(\u7cfb\u5217/\u30ab\u30c6\u30b4\u30ea)\u5c02\u7528\u3001\u30b9\u30c6\u30fc\u30bf\u30b94\u8272\u306f\u72b6\u614b\u5c02\u7528\u3001\n       \u30b7\u30fc\u30b1\u30f3\u30b7\u30e3\u30eb/\u30c0\u30a4\u30d0\u30fc\u30b8\u30f3\u30b0\u306f\u5927\u5c0f\u30fb\u6975\u6027\u306e\u8868\u73fe\u5c02\u7528\u3002\u8272\u306e\u5f79\u5272\u3092\u6df7\u540c\u3057\u306a\u3044\u3053\u3068\u3002 */\n    --cat-1: #3987e5; /* blue */\n    --cat-2: #d95926; /* orange */\n    --cat-3: #199e70; /* aqua */\n    --cat-4: #c98500; /* yellow */\n    --cat-5: #d55181; /* magenta */\n    --cat-6: #008300; /* green */\n    --cat-7: #9085e9; /* violet */\n    --cat-8: #e66767; /* red */\n    --status-good: #0ca30c;\n    --status-warning: #fab219;\n    --status-serious: #ec835a;\n    --status-critical: #d03b3b;\n    --seq-100: #cde2fb;\n    --seq-400: #3987e5;\n    --seq-700: #0d366b;\n    --div-neg: #3987e5;  /* \u57fa\u6e96\u5024\u3088\u308a\u5b89\u3044(\u30de\u30a4\u30ca\u30b9\u5074\u306e\u6975) */\n    --div-pos: #e66767;  /* \u57fa\u6e96\u5024\u3088\u308a\u9ad8\u3044(\u30d7\u30e9\u30b9\u5074\u306e\u6975) */\n    --div-mid: #383835;  /* \u4e2d\u7acb(\u57fa\u6e96\u5024\u3068\u540c\u6c34\u6e96) */\n  }\n  * { box-sizing: border-box; }\n  ::-webkit-scrollbar { width: 10px; height: 10px; }\n  ::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 6px; }\n  ::-webkit-scrollbar-track { background: transparent; }\n  body {\n    margin: 0;\n    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;\n    background:\n      radial-gradient(circle at 15% -10%, #24304f66 0%, transparent 45%),\n      radial-gradient(circle at 100% 0%, #1a2c2266 0%, transparent 40%),\n      var(--bg);\n    color: var(--text);\n    min-height: 100vh;\n    padding: 32px 20px 60px;\n  }\n  .wrap { max-width: 1180px; margin: 0 auto; }\n  @keyframes fadeInUp {\n    from { opacity: 0; transform: translateY(10px); }\n    to { opacity: 1; transform: translateY(0); }\n  }\n  header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 12px;\n    margin-bottom: 24px;\n    animation: fadeInUp .4s ease both;\n  }\n  header h1 {\n    font-size: 25px;\n    margin: 0 0 6px;\n    letter-spacing: 0.3px;\n  }\n  header h1 span { color: var(--gold); }\n  .sub-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n  .event-badge {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    background: #1c2440;\n    border: 1px solid var(--panel-border);\n    color: var(--cyan);\n    font-size: 12px;\n    font-weight: 600;\n    padding: 5px 12px;\n    border-radius: 999px;\n  }\n  .event-badge::before { content: '\u25cf'; font-size: 8px; color: var(--cyan); }\n  #updated {\n    font-size: 12px;\n    color: var(--text-dim);\n    text-align: right;\n  }\n  #updated b { color: var(--emerald); }\n  #countdown { color: var(--text-dim); font-variant-numeric: tabular-nums; }\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));\n    gap: 14px;\n    margin-bottom: 18px;\n  }\n  .stat-card {\n    background: linear-gradient(160deg, var(--panel), var(--panel-alt));\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 16px 18px;\n    animation: fadeInUp .45s ease both;\n    transition: transform .15s ease, border-color .15s ease;\n  }\n  .stat-card:hover { transform: translateY(-2px); border-color: #34406a; }\n  .stat-card .label {\n    font-size: 11.5px;\n    color: var(--text-dim);\n    margin-bottom: 6px;\n    white-space: nowrap;\n  }\n  .stat-card .value {\n    font-size: 23px;\n    font-weight: 700;\n    font-variant-numeric: tabular-nums;\n  }\n  .stat-card.gold .value { color: var(--gold); }\n  .stat-card.emerald .value { color: var(--emerald); }\n  .stat-card.accent .value { color: var(--accent); }\n  .stat-card.red .value { color: var(--red); }\n  .stat-card.purple .value { color: var(--purple); }\n  .stat-card.cyan .value { color: var(--cyan); }\n  .stat-card.status-good .value { color: var(--status-good); }\n  .stat-card.status-warning .value { color: var(--status-warning); }\n  .stat-card.status-critical .value { color: var(--status-critical); }\n\n  /* \u2605\u8ffd\u52a0: \u300c\u30de\u30fc\u30b1\u30c3\u30c8\u6982\u6cc1\u300d\u300c\u3084\u308b\u3053\u3068\u6982\u6cc1\u300d\u5411\u3051\u306e\u65b0\u898f\u30b3\u30f3\u30dd\u30fc\u30cd\u30f3\u30c8 */\n  .subpanel {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    border-radius: 12px;\n    padding: 14px 16px;\n  }\n  .subpanel h3 {\n    font-size: 12.5px;\n    margin: 0 0 12px;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .rank-list { display: flex; flex-direction: column; gap: 9px; }\n  .rank-list-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }\n  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }\n  .rank-list-name { font-weight: 600; font-variant-numeric: tabular-nums; }\n  .rank-list-meta { margin-left: auto; color: var(--text-dim); font-size: 11.5px; text-align: right; white-space: nowrap; }\n  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }\n  .badge {\n    display: flex;\n    align-items: center;\n    gap: 7px;\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 8px;\n    padding: 7px 10px;\n    font-size: 12px;\n  }\n  .badge .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }\n  .badge-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }\n  .badge-trend { font-variant-numeric: tabular-nums; color: var(--text-dim); font-weight: 600; white-space: nowrap; }\n  .mini-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; }\n  .mini-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .merchant-refresh { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }\n  .merchant-refresh b { color: var(--text); font-variant-numeric: tabular-nums; }\n  .deal-grid { display: flex; flex-direction: column; gap: 10px; }\n  .deal-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; }\n  .deal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }\n  .deal-name { font-weight: 600; font-size: 13px; }\n  .deal-discount { color: var(--emerald); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n  .meter-track { height: 7px; border-radius: 4px; background: var(--seq-100); overflow: hidden; }\n  .meter-fill { height: 100%; background: var(--seq-400); border-radius: 4px; transition: width .4s ease; }\n  .deal-stock { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }\n  .hero-tile { text-align: center; padding: 4px 0 16px; }\n  .hero-tile .hero-value {\n    font-size: 40px;\n    font-weight: 700;\n    color: var(--gold);\n    line-height: 1.15;\n    /* \u2605\u91cd\u8981: \u5927\u304d\u306a\u5358\u72ec\u306e\u6570\u5024\u306f\u6bd4\u4f8b\u6570\u5b57\u3092\u4f7f\u3046(\u7b49\u5e45\u306etabular-nums\u306f\u5927\u304d\u3044\u6587\u5b57\u3060\u3068\u9593\u5ef6\u3073\u3057\u3066\u898b\u3048\u308b) */\n  }\n  .hero-tile .hero-label {\n    font-size: 12px;\n    color: var(--text-dim);\n    margin-top: 6px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .mini-stats { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--text-dim); }\n  .mini-stats b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }\n  .panel {\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 20px 22px;\n    margin-bottom: 16px;\n    animation: fadeInUp .5s ease both;\n  }\n  .panel-head {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 10px;\n    margin-bottom: 14px;\n  }\n  .panel h2 {\n    font-size: 14px;\n    margin: 0;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: 1px;\n  }\n  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }\n  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .chart-box { position: relative; width: 100%; height: 220px; }\n  .chart-box canvas { width: 100%; height: 100%; display: block; }\n  .alert-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7; }\n  .alert-box.ok { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--emerald); }\n  .alert-box.warn { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.4); color: #f87171; }\n  .alert-box ul { margin: 6px 0 0 18px; padding: 0; }\n  .alert-box .alert-time { color: var(--text-dim); font-size: 11px; margin-top: 6px; }\n  .bars-box { position: relative; width: 100%; height: 160px; }\n  .panels-2col {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 16px;\n  }\n  @media (max-width: 820px) {\n    .panels-2col { grid-template-columns: 1fr; }\n  }\n  .toolbar {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    flex-wrap: wrap;\n  }\n  .search-input {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    font-size: 13px;\n    padding: 7px 12px;\n    border-radius: 8px;\n    outline: none;\n    min-width: 160px;\n  }\n  .search-input:focus { border-color: var(--accent); }\n  table { width: 100%; border-collapse: collapse; font-size: 13px; }\n  thead th {\n    position: sticky;\n    top: 0;\n    background: var(--panel);\n    text-align: left;\n    color: var(--text-dim);\n    font-weight: 600;\n    font-size: 11.5px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n    padding: 8px 10px;\n    border-bottom: 1px solid var(--panel-border);\n    cursor: pointer;\n    user-select: none;\n    white-space: nowrap;\n  }\n  thead th:hover { color: var(--text); }\n  thead th .arrow { opacity: .5; margin-left: 3px; font-size: 10px; }\n  tbody td {\n    padding: 8px 10px;\n    border-bottom: 1px solid #1c2438;\n    vertical-align: middle;\n  }\n  tbody tr { transition: background .12s ease; }\n  tbody tr:hover { background: #1a2136; }\n  tbody tr:nth-child(even) { background: #121a2b55; }\n  tbody tr:nth-child(even):hover { background: #1a2136; }\n  .rank-cell { width: 34px; font-weight: 700; color: var(--text-dim); }\n  .medal { font-size: 14px; }\n  .name-cell { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .bar-cell { min-width: 90px; }\n  .bar-track { height: 8px; background: #1c2338; border-radius: 5px; overflow: hidden; }\n  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--emerald)); border-radius: 5px; transition: width .4s ease; }\n  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; white-space: nowrap; }\n  .score-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--cyan); white-space: nowrap; }\n  .pagination {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    margin-top: 12px;\n    font-size: 12px;\n    color: var(--text-dim);\n  }\n  .pagination button {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    padding: 5px 12px;\n    border-radius: 7px;\n    cursor: pointer;\n    font-size: 12px;\n  }\n  .pagination button:disabled { opacity: .35; cursor: default; }\n  .pagination button:not(:disabled):hover { border-color: var(--accent); }\n  .empty { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }\n  footer {\n    text-align: center;\n    color: var(--text-dim);\n    font-size: 12px;\n    margin-top: 8px;\n  }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <header>\n      <div>\n        <h1>\ud83d\udcb0 <span>MinecraftBank</span> \u7d4c\u6e08\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9</h1>\n        <div class=\"sub-row\">\n          <div class=\"event-badge\" id=\"eventBadge\">\u901a\u5e38</div>\n        </div>\n      </div>\n      <div id=\"updated\">\u6700\u7d42\u66f4\u65b0: <b id=\"updatedAt\">-</b><br><span id=\"countdown\"></span></div>\n    </header>\n\n    <div class=\"grid\" id=\"statGrid\">\n      <div class=\"stat-card gold\">\n        <div class=\"label\">\u56fd\u5eab\u6b8b\u9ad8</div>\n        <div class=\"value\" id=\"treasury\">-</div>\n      </div>\n      <div class=\"stat-card red\">\n        <div class=\"label\">\u653f\u5e9c\u50b5\u52d9\u5408\u8a08</div>\n        <div class=\"value\" id=\"totalGovDebt\">-</div>\n      </div>\n      <div class=\"stat-card gold\">\n        <div class=\"label\">\u4eca\u9031\u306e\u53d6\u5f15\u91cf</div>\n        <div class=\"value\" id=\"weeklyTrade\">-</div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\u7570\u5e38\u691c\u77e5</h2>\n      </div>\n      <div class=\"alert-box ok\" id=\"selfcheckBox\">\u78ba\u8a8d\u4e2d...</div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\u56fd\u5eab\u6b8b\u9ad8\u306e\u63a8\u79fb</h2>\n      </div>\n      <div class=\"chart-box\"><canvas id=\"treasuryChart\"></canvas></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\u8cc7\u7523\u30e9\u30f3\u30ad\u30f3\u30b0</h2>\n        <div class=\"toolbar\">\n          <input class=\"search-input\" id=\"lbSearch\" type=\"text\" placeholder=\"\u30d7\u30ec\u30a4\u30e4\u30fc\u540d\u3067\u691c\u7d22...\">\n        </div>\n      </div>\n      <div style=\"overflow-x:auto\">\n        <table>\n          <thead>\n            <tr>\n              <th data-key=\"rank\">#<span class=\"arrow\"></span></th>\n              <th data-key=\"name\">\u30d7\u30ec\u30a4\u30e4\u30fc<span class=\"arrow\"></span></th>\n              <th data-key=\"credit_score\">\u4fe1\u7528\u30b9\u30b3\u30a2<span class=\"arrow\"></span></th>\n              <th data-key=\"total_assets\">\u7dcf\u8cc7\u7523<span class=\"arrow\"></span></th>\n            </tr>\n          </thead>\n          <tbody id=\"lbBody\"></tbody>\n        </table>\n      </div>\n      <div id=\"lbEmpty\" class=\"empty\" style=\"display:none\">\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>\n      <div class=\"pagination\">\n        <span id=\"lbPageInfo\"></span>\n        <button id=\"lbPrev\">\u2190 \u524d\u3078</button>\n        <button id=\"lbNext\">\u6b21\u3078 \u2192</button>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83d\uded2 \u30de\u30fc\u30b1\u30c3\u30c8\u6982\u6cc1</h2>\n      </div>\n\n      <div class=\"grid\" id=\"marketStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83d\udcc8 \u4e16\u754c\u682a\u5f0f\u5e02\u5834 - \u4fdd\u6709\u682a\u6570\u30c8\u30c3\u30d75</h3>\n          <div class=\"rank-list\" id=\"worldStockTopList\"></div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83e\uddf3 \u5de1\u56de\u5546\u4eba</h3>\n          <div id=\"merchantStatus\"></div>\n        </div>\n      </div>\n\n      <div class=\"subpanel\" style=\"margin-top:16px\">\n        <h3>\u26cf \u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7 - \u57fa\u6e96\u4fa1\u683c\u3068\u306e\u4e56\u96e2</h3>\n        <div class=\"mini-legend\">\n          <span><span class=\"dot\" style=\"background:var(--div-neg)\"></span>\u57fa\u6e96\u3088\u308a\u5b89\u3044</span>\n          <span><span class=\"dot\" style=\"background:var(--div-mid)\"></span>\u6a2a\u3070\u3044</span>\n          <span><span class=\"dot\" style=\"background:var(--div-pos)\"></span>\u57fa\u6e96\u3088\u308a\u9ad8\u3044</span>\n        </div>\n        <div class=\"badge-grid\" id=\"resourceBadgeGrid\"></div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>\ud83c\udfaf \u3084\u308b\u3053\u3068\u6982\u6cc1</h2>\n      </div>\n\n      <div class=\"grid\" id=\"questStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>\ud83c\udf9f \u5b9d\u304f\u3058</h3>\n          <div class=\"hero-tile\">\n            <div class=\"hero-value\" id=\"lotteryPool\">-</div>\n            <div class=\"hero-label\">\u6b21\u56de\u62bd\u9078\u306e\u8cde\u91d1\u30d7\u30fc\u30eb</div>\n          </div>\n          <div class=\"mini-stats\">\n            <div>\u6b21\u56de\u62bd\u9078\u307e\u3067: <b id=\"lotteryCountdown\">-</b></div>\n            <div>\u8ca9\u58f2\u30c1\u30b1\u30c3\u30c8\u6570: <b id=\"lotteryTickets\">-</b></div>\n            <div>\u524d\u56de\u306e\u5f53\u305b\u3093: <b id=\"lotteryLastWinner\">-</b></div>\n          </div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>\ud83d\udce6 \u5009\u5eab\u30ec\u30f3\u30bf\u30eb / \ud83d\udcb3 \u5206\u5272\u6255\u3044 / \u26cf \u57cb\u8535\u91d1</h3>\n          <div class=\"grid\" id=\"miscStatGrid\"></div>\n        </div>\n      </div>\n    </div>\n\n    <footer>10\u79d2\u3054\u3068\u306b\u81ea\u52d5\u66f4\u65b0\u3055\u308c\u307e\u3059</footer>\n  </div>\n\n  <script>\n    const PAGE_SIZE = 10;\n    let lastData = null;\n    const state = {\n      lb: { sortKey: 'rank', sortDir: 1, page: 1, search: '' }\n    };\n\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '\u5186'; }\n    function fmtNum(n) { return Math.round(n).toLocaleString('ja-JP'); }\n    function medal(rank) {\n      if (rank === 1) return '\ud83e\udd47';\n      if (rank === 2) return '\ud83e\udd48';\n      if (rank === 3) return '\ud83e\udd49';\n      return rank;\n    }\n\n    // \u2605\u8ffd\u52a0: \u30ab\u30c6\u30b4\u30ea\u30ab\u30eb\u30d1\u30ec\u30c3\u30c8(\u56fa\u5b9a8\u8272\u30fb\u56fa\u5b9a\u9806\u3002\u7cfb\u5217/\u30ab\u30c6\u30b4\u30ea\u306e\u8b58\u5225\u5c02\u7528\u3002\u30b9\u30c6\u30fc\u30bf\u30b9\u8272\u3068\u306f\u6df7\u540c\u3057\u306a\u3044\u3053\u3068)\n    const CAT_COLORS = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];\n\n    // \u2605\u8ffd\u52a0: \u30c0\u30a4\u30d0\u30fc\u30b8\u30f3\u30b0\u914d\u8272(\u9752\u21d4\u30b0\u30ec\u30fc\u21d4\u8d64)\u3002\u57fa\u6e96\u5024\u304b\u3089\u306e\u4e56\u96e2%\u3092\u00b130%\u3067\u30af\u30e9\u30f3\u30d7\u3057\u3066\u7dda\u5f62\u88dc\u9593\u3059\u308b\u3002\n    function divergingColor(pct) {\n      const clamped = Math.max(-30, Math.min(30, pct || 0));\n      const t = clamped / 30; // -1..1\n      const neg = [0x39, 0x87, 0xe5];  // --cat-1 / --div-neg (blue)\n      const mid = [0x38, 0x38, 0x35];  // --div-mid (neutral gray)\n      const pos = [0xe6, 0x67, 0x67];  // --cat-8 / --div-pos (red)\n      const from = t < 0 ? neg : pos;\n      const amt = Math.abs(t);\n      const rgb = mid.map((m, i) => Math.round(m + (from[i] - m) * amt));\n      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;\n    }\n\n    // \u2605\u8ffd\u52a0: \u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7/\u5de1\u56de\u5546\u4eba\u306e\u7d20\u6750\u540d \u65e5\u672c\u8a9e\u8868\u793a(\u672a\u767b\u9332\u306e\u7d20\u6750\u306f\u6574\u5f62\u3057\u3066\u8868\u793a)\n    const MATERIAL_JA = {\n      COAL: '\u77f3\u70ad', IRON_INGOT: '\u9244\u30a4\u30f3\u30b4\u30c3\u30c8', GOLD_INGOT: '\u91d1\u30a4\u30f3\u30b4\u30c3\u30c8', COPPER_INGOT: '\u9285\u30a4\u30f3\u30b4\u30c3\u30c8',\n      REDSTONE: '\u30ec\u30c3\u30c9\u30b9\u30c8\u30fc\u30f3', LAPIS_LAZULI: '\u30e9\u30d4\u30b9\u30e9\u30ba\u30ea', DIAMOND: '\u30c0\u30a4\u30e4\u30e2\u30f3\u30c9', EMERALD: '\u30a8\u30e1\u30e9\u30eb\u30c9',\n      NETHERITE_SCRAP: '\u30cd\u30b6\u30e9\u30a4\u30c8\u306e\u6b20\u7247', WHEAT: '\u5c0f\u9ea6', CARROT: '\u30cb\u30f3\u30b8\u30f3', POTATO: '\u30b8\u30e3\u30ac\u30a4\u30e2',\n      BEETROOT: '\u30d3\u30fc\u30c8\u30eb\u30fc\u30c8', MELON_SLICE: '\u30b9\u30a4\u30ab', PUMPKIN: '\u30ab\u30dc\u30c1\u30e3', SUGAR_CANE: '\u30b5\u30c8\u30a6\u30ad\u30d3',\n      NETHER_WART: '\u30cd\u30b6\u30fc\u30a6\u30a9\u30fc\u30c8', COCOA_BEANS: '\u30ab\u30ab\u30aa\u8c46', ROTTEN_FLESH: '\u8150\u3063\u305f\u8089', BONE: '\u9aa8',\n      STRING: '\u7cf8', GUNPOWDER: '\u706b\u85ac', SPIDER_EYE: '\u30af\u30e2\u306e\u76ee', SLIME_BALL: '\u30b9\u30e9\u30a4\u30e0\u30dc\u30fc\u30eb',\n      ENDER_PEARL: '\u30a8\u30f3\u30c0\u30fc\u30d1\u30fc\u30eb', BLAZE_ROD: '\u30d6\u30ec\u30a4\u30ba\u30ed\u30c3\u30c9', GHAST_TEAR: '\u30ac\u30b9\u30c8\u306e\u6d99',\n      OAK_LOG: '\u30aa\u30fc\u30af\u306e\u539f\u6728', SPRUCE_LOG: '\u30c8\u30a6\u30d2\u306e\u539f\u6728', BIRCH_LOG: '\u30b7\u30e9\u30ab\u30d0\u306e\u539f\u6728', JUNGLE_LOG: '\u30b8\u30e3\u30f3\u30b0\u30eb\u306e\u539f\u6728',\n      ACACIA_LOG: '\u30a2\u30ab\u30b7\u30a2\u306e\u539f\u6728', DARK_OAK_LOG: '\u30c0\u30fc\u30af\u30aa\u30fc\u30af\u306e\u539f\u6728', MANGROVE_LOG: '\u30de\u30f3\u30b0\u30ed\u30fc\u30d6\u306e\u539f\u6728', CHERRY_LOG: '\u30b5\u30af\u30e9\u306e\u539f\u6728',\n      ELYTRA: '\u30a8\u30ea\u30c8\u30e9', TOTEM_OF_UNDYING: '\u4e0d\u6b7b\u306e\u30c8\u30fc\u30c6\u30e0', NETHERITE_INGOT: '\u30cd\u30b6\u30e9\u30a4\u30c8\u30a4\u30f3\u30b4\u30c3\u30c8',\n      NETHERITE_BLOCK: '\u30cd\u30b6\u30e9\u30a4\u30c8\u30d6\u30ed\u30c3\u30af', ENCHANTED_GOLDEN_APPLE: '\u30a8\u30f3\u30c1\u30e3\u30f3\u30c8\u3055\u308c\u305f\u91d1\u306e\u30ea\u30f3\u30b4',\n      SADDLE: '\u30b5\u30c9\u30eb', NAME_TAG: '\u540d\u672d', SHULKER_BOX: '\u30b7\u30e5\u30eb\u30ab\u30fc\u30dc\u30c3\u30af\u30b9', TRIDENT: '\u30c8\u30e9\u30a4\u30c7\u30f3\u30c8',\n      NETHER_STAR: '\u30cd\u30b6\u30fc\u30b9\u30bf\u30fc', DRAGON_EGG: '\u30c9\u30e9\u30b4\u30f3\u306e\u5375', BEACON: '\u30d3\u30fc\u30b3\u30f3', DIAMOND_BLOCK: '\u30c0\u30a4\u30e4\u30e2\u30f3\u30c9\u30d6\u30ed\u30c3\u30af',\n      EMERALD_BLOCK: '\u30a8\u30e1\u30e9\u30eb\u30c9\u30d6\u30ed\u30c3\u30af', MUSIC_DISC_PIGSTEP: '\u30ec\u30b3\u30fc\u30c9(Pigstep)', MUSIC_DISC_OTHERSIDE: '\u30ec\u30b3\u30fc\u30c9(Otherside)',\n      HEART_OF_THE_SEA: '\u6d77\u306e\u5fc3', CONDUIT: '\u30b3\u30f3\u30b8\u30c3\u30c8', END_CRYSTAL: '\u30a8\u30f3\u30c9\u30af\u30ea\u30b9\u30bf\u30eb', GOLDEN_CARROT: '\u91d1\u306e\u30cb\u30f3\u30b8\u30f3'\n    };\n    function materialLabel(name) {\n      if (MATERIAL_JA[name]) return MATERIAL_JA[name];\n      return String(name).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n    }\n\n    // \u2605\u8ffd\u52a0: \u6b8b\u308a\u30df\u30ea\u79d2\u3092\u300c\u25ef\u65e5\u25ef\u6642\u9593\u300d\u300c\u25ef\u6642\u9593\u25ef\u5206\u300d\u300c\u25ef\u5206\u300d\u5f62\u5f0f\u306b\u6574\u5f62\n    function fmtDuration(ms) {\n      if (!ms || ms <= 0) return '\u307e\u3082\u306a\u304f';\n      const totalMin = Math.floor(ms / 60000);\n      const d = Math.floor(totalMin / 1440);\n      const h = Math.floor((totalMin % 1440) / 60);\n      const m = totalMin % 60;\n      if (d > 0) return d + '\u65e5' + h + '\u6642\u9593';\n      if (h > 0) return h + '\u6642\u9593' + m + '\u5206';\n      return m + '\u5206';\n    }\n\n    function sortRows(rows, key, dir) {\n      return [...rows].sort((a, b) => {\n        const av = a[key], bv = b[key];\n        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * dir;\n        return ((av ?? 0) - (bv ?? 0)) * dir;\n      });\n    }\n\n    function bindSortableHeaders(tableSelector, sortState, renderFn) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        th.addEventListener('click', () => {\n          const key = th.getAttribute('data-key');\n          if (sortState.sortKey === key) {\n            sortState.sortDir *= -1;\n          } else {\n            sortState.sortKey = key;\n            sortState.sortDir = 1;\n          }\n          sortState.page = 1;\n          renderFn();\n        });\n      });\n    }\n\n    function updateHeaderArrows(tableSelector, sortState) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        const arrow = th.querySelector('.arrow');\n        if (th.getAttribute('data-key') === sortState.sortKey) {\n          arrow.textContent = sortState.sortDir === 1 ? '\u25b2' : '\u25bc';\n        } else {\n          arrow.textContent = '';\n        }\n      });\n    }\n\n    function drawLineChart(canvas, series, labels) {\n      if (!canvas) return;\n      const dpr = window.devicePixelRatio || 1;\n      const rect = canvas.parentElement.getBoundingClientRect();\n      const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);\n      canvas.width = w * dpr; canvas.height = h * dpr;\n      const ctx = canvas.getContext('2d');\n      ctx.scale(dpr, dpr);\n      ctx.clearRect(0, 0, w, h);\n\n      const padL = 54, padR = 12, padT = 12, padB = 24;\n      const plotW = w - padL - padR, plotH = h - padT - padB;\n\n      const allVals = series.flatMap(s => s.data);\n      if (allVals.length === 0) {\n        ctx.fillStyle = '#8b93a7';\n        ctx.font = '12px sans-serif';\n        ctx.fillText('\u30c7\u30fc\u30bf\u304c\u84c4\u7a4d\u3055\u308c\u308b\u3068\u3053\u3053\u306b\u8868\u793a\u3055\u308c\u307e\u3059', padL, h / 2);\n        return;\n      }\n      let min = Math.min(...allVals), max = Math.max(...allVals);\n      if (min === max) { min -= 1; max += 1; }\n      const pad = (max - min) * 0.1;\n      min -= pad; max += pad;\n\n      ctx.strokeStyle = '#1f2740';\n      ctx.lineWidth = 1;\n      ctx.font = '10.5px sans-serif';\n      ctx.fillStyle = '#8b93a7';\n      const gridLines = 4;\n      for (let i = 0; i <= gridLines; i++) {\n        const y = padT + (plotH / gridLines) * i;\n        ctx.beginPath();\n        ctx.moveTo(padL, y);\n        ctx.lineTo(w - padR, y);\n        ctx.stroke();\n        const val = max - ((max - min) / gridLines) * i;\n        ctx.fillText(Math.round(val).toLocaleString('ja-JP'), 2, y + 3);\n      }\n\n      const n = Math.max(...series.map(s => s.data.length), 2);\n      series.forEach(s => {\n        if (s.data.length < 2) return;\n        ctx.beginPath();\n        s.data.forEach((v, i) => {\n          const x = padL + (i / (n - 1)) * plotW;\n          const y = padT + plotH - ((v - min) / (max - min)) * plotH;\n          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);\n        });\n        ctx.strokeStyle = s.color;\n        ctx.lineWidth = 2;\n        ctx.lineJoin = 'round';\n        ctx.stroke();\n      });\n\n      if (labels && labels.length >= 2) {\n        ctx.fillStyle = '#8b93a7';\n        const first = new Date(labels[0]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        const last = new Date(labels[labels.length - 1]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        ctx.fillText(first, padL, h - 6);\n        ctx.fillText(last, w - padR - 34, h - 6);\n      }\n    }\n\n    function renderLeaderboard() {\n      if (!lastData) return;\n      let rows = lastData.leaderboard || [];\n      if (state.lb.search) {\n        const q = state.lb.search.toLowerCase();\n        rows = rows.filter(r => r.name.toLowerCase().includes(q));\n      }\n      rows = sortRows(rows, state.lb.sortKey, state.lb.sortDir);\n      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));\n      state.lb.page = Math.min(state.lb.page, totalPages);\n      const pageRows = rows.slice((state.lb.page - 1) * PAGE_SIZE, state.lb.page * PAGE_SIZE);\n      const maxAsset = Math.max(1, ...rows.map(r => r.total_assets));\n\n      const body = document.getElementById('lbBody');\n      document.getElementById('lbEmpty').style.display = rows.length === 0 ? 'block' : 'none';\n      body.innerHTML = pageRows.map(p => `\n        <tr>\n          <td class=\"rank-cell\"><span class=\"medal\">${medal(p.rank)}</span></td>\n          <td class=\"name-cell\" title=\"${p.name}\">${p.name}</td>\n          <td class=\"score-cell\">${p.credit_score}</td>\n          <td class=\"amount-cell\">\n            <div style=\"display:flex;align-items:center;gap:8px;justify-content:flex-end\">\n              <div class=\"bar-track bar-cell\"><div class=\"bar-fill\" style=\"width:${Math.max(4, p.total_assets / maxAsset * 100)}%\"></div></div>\n              <span>${fmtYen(p.total_assets)}</span>\n            </div>\n          </td>\n        </tr>\n      `).join('');\n\n      document.getElementById('lbPageInfo').textContent = rows.length === 0 ? '' : `${state.lb.page} / ${totalPages} \u30da\u30fc\u30b8 (\u5168${rows.length}\u4ef6)`;\n      document.getElementById('lbPrev').disabled = state.lb.page <= 1;\n      document.getElementById('lbNext').disabled = state.lb.page >= totalPages;\n      updateHeaderArrows('#lbBody', state.lb);\n      updateHeaderArrows('table:has(#lbBody)', state.lb);\n    }\n\n    function renderCharts() {\n      if (!lastData) return;\n      const hist = lastData.history || { labels: [], treasury: [] };\n      drawLineChart(document.getElementById('treasuryChart'),\n        [{ label: '\u56fd\u5eab\u6b8b\u9ad8', color: '#f4c542', data: hist.treasury || [] }], hist.labels);\n    }\n\n    // \u2605\u8ffd\u52a0: \u300c\ud83d\uded2 \u30de\u30fc\u30b1\u30c3\u30c8\u6982\u6cc1\u300d\u30bb\u30af\u30b7\u30e7\u30f3\u306e\u63cf\u753b(\u4e16\u754c\u682a\u5f0f\u5e02\u5834/\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7/\u5de1\u56de\u5546\u4eba/\u30aa\u30fc\u30af\u30b7\u30e7\u30f3)\n    function renderMarket() {\n      if (!lastData) return;\n      const ws = lastData.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };\n      const merchant = lastData.merchant || { refresh_at: 0, deals: [] };\n      const auction = lastData.auction || { active_listings: 0 };\n      const resources = lastData.resource_shop || [];\n\n      document.getElementById('marketStatGrid').innerHTML = `\n        <div class=\"stat-card accent\"><div class=\"label\">\u682a\u5f0f\u6295\u8cc7\u5bb6\u6570</div><div class=\"value\">${fmtNum(ws.active_investors)}\u4eba</div></div>\n        <div class=\"stat-card cyan\"><div class=\"label\">\u4fdd\u6709\u9298\u67c4\u6570(\u7a2e\u985e)</div><div class=\"value\">${fmtNum(ws.distinct_symbols)}</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">\u682a\u5f0f\u8a55\u4fa1\u984d\u5408\u8a08</div><div class=\"value\">${fmtYen(ws.total_portfolio_value)}</div></div>\n        <div class=\"stat-card purple\"><div class=\"label\">\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u51fa\u54c1\u4e2d</div><div class=\"value\">${fmtNum(auction.active_listings)}\u4ef6</div></div>\n      `;\n\n      const topList = document.getElementById('worldStockTopList');\n      const topSymbols = ws.top_symbols || [];\n      topList.innerHTML = topSymbols.length === 0 ? '<div class=\"empty\">\u4fdd\u6709\u30c7\u30fc\u30bf\u304c\u3042\u308a\u307e\u305b\u3093</div>' :\n        topSymbols.map((s, i) => `\n          <div class=\"rank-list-item\">\n            <span class=\"cat-dot\" style=\"background:${CAT_COLORS[i % CAT_COLORS.length]}\"></span>\n            <span class=\"rank-list-name\">${s.symbol}</span>\n            <span class=\"rank-list-meta\">${fmtNum(s.holders)}\u4eba\u4fdd\u6709 \u30fb ${fmtNum(s.total_shares)}\u682a</span>\n          </div>\n        `).join('');\n\n      const remainMs = Math.max(0, (merchant.refresh_at || 0) - Date.now());\n      const deals = merchant.deals || [];\n      const dealsHtml = deals.length === 0 ? '<div class=\"empty\">\u73fe\u5728\u306e\u54c1\u63c3\u3048\u306f\u3042\u308a\u307e\u305b\u3093</div>' :\n        deals.map(d => {\n          const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;\n          return `\n            <div class=\"deal-card\">\n              <div class=\"deal-card-head\">\n                <span class=\"deal-name\">${materialLabel(d.material)}</span>\n                <span class=\"deal-discount\">-${Math.round(d.discount_percent)}%</span>\n              </div>\n              <div class=\"meter-track\"><div class=\"meter-fill\" style=\"width:${(ratio * 100).toFixed(0)}%\"></div></div>\n              <div class=\"deal-stock\">\u6b8b\u308a ${fmtNum(d.stock_remaining)} / ${fmtNum(d.stock_total)}</div>\n            </div>\n          `;\n        }).join('');\n      document.getElementById('merchantStatus').innerHTML = `\n        <div class=\"merchant-refresh\">\u6b21\u56de\u5165\u8377\u307e\u3067: <b>${fmtDuration(remainMs)}</b></div>\n        <div class=\"deal-grid\">${dealsHtml}</div>\n      `;\n\n      document.getElementById('resourceBadgeGrid').innerHTML = resources.map(r => {\n        const color = divergingColor(r.trend_percent);\n        const sign = r.trend_percent > 0 ? '+' : '';\n        return `\n          <div class=\"badge\" title=\"\u57fa\u6e96\u4fa1\u683c ${fmtNum(r.base_price)}\u5186/\u500b\">\n            <span class=\"dot\" style=\"background:${color}\"></span>\n            <span class=\"badge-name\">${materialLabel(r.material)}</span>\n            <span class=\"badge-trend\">${sign}${r.trend_percent.toFixed(1)}%</span>\n          </div>\n        `;\n      }).join('');\n    }\n\n    // \u2605\u8ffd\u52a0: \u300c\ud83c\udfaf \u3084\u308b\u3053\u3068\u6982\u6cc1\u300d\u30bb\u30af\u30b7\u30e7\u30f3\u306e\u63cf\u753b(\u4f9d\u983c\u30dc\u30fc\u30c9/\u5b9d\u304f\u3058/\u5009\u5eab\u30ec\u30f3\u30bf\u30eb/\u5206\u5272\u6255\u3044/\u57cb\u8535\u91d1)\n    function renderQuestsPanel() {\n      if (!lastData) return;\n      const q = lastData.quests || { available: 0, in_progress: 0, cooldown: 0, system_posted: 0, player_posted: 0 };\n      document.getElementById('questStatGrid').innerHTML = `\n        <div class=\"stat-card status-good\"><div class=\"label\">\u52df\u96c6\u4e2d</div><div class=\"value\">${fmtNum(q.available)}\u4ef6</div></div>\n        <div class=\"stat-card accent\"><div class=\"label\">\u53d7\u6ce8\u4e2d</div><div class=\"value\">${fmtNum(q.in_progress)}\u4ef6</div></div>\n        <div class=\"stat-card status-warning\"><div class=\"label\">\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d</div><div class=\"value\">${fmtNum(q.cooldown)}\u4ef6</div></div>\n        <div class=\"stat-card\"><div class=\"label\">\u904b\u55b6\u6295\u7a3f</div><div class=\"value\">${fmtNum(q.system_posted)}\u4ef6</div></div>\n        <div class=\"stat-card\"><div class=\"label\">\u30d7\u30ec\u30a4\u30e4\u30fc\u6295\u7a3f</div><div class=\"value\">${fmtNum(q.player_posted)}\u4ef6</div></div>\n      `;\n\n      const lottery = lastData.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };\n      document.getElementById('lotteryPool').textContent = fmtYen(lottery.pool);\n      document.getElementById('lotteryCountdown').textContent = fmtDuration((lottery.draw_at || 0) - Date.now());\n      document.getElementById('lotteryTickets').textContent = fmtNum(lottery.total_tickets_sold) + '\u679a';\n      document.getElementById('lotteryLastWinner').textContent = lottery.last_winner_name +\n        (lottery.last_winner_amount > 0 ? ` (${fmtYen(lottery.last_winner_amount)})` : '');\n\n      const treasure = lastData.treasure || { active: false, reward: 0 };\n      const storage = lastData.storage || { active_renters: 0 };\n      const installments = lastData.installments || { active_plans: 0, total_outstanding: 0 };\n      document.getElementById('miscStatGrid').innerHTML = `\n        <div class=\"stat-card ${treasure.active ? 'status-good' : ''}\">\n          <div class=\"label\">\u57cb\u8535\u91d1\u30a4\u30d9\u30f3\u30c8</div>\n          <div class=\"value\">${treasure.active ? ('\u767a\u751f\u4e2d (' + fmtYen(treasure.reward) + ')') : '\u5f85\u6a5f\u4e2d'}</div>\n        </div>\n        <div class=\"stat-card\"><div class=\"label\">\u5009\u5eab\u30ec\u30f3\u30bf\u30eb\u5951\u7d04\u6570</div><div class=\"value\">${fmtNum(storage.active_renters)}\u4ef6</div></div>\n        <div class=\"stat-card\"><div class=\"label\">\u5206\u5272\u6255\u3044\u30d7\u30e9\u30f3\u6570</div><div class=\"value\">${fmtNum(installments.active_plans)}\u4ef6</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">\u5206\u5272\u6255\u3044\u672a\u6255\u3044\u5408\u8a08</div><div class=\"value\">${fmtYen(installments.total_outstanding)}</div></div>\n      `;\n    }\n\n    function renderSelfCheck() {\n      const sc = (lastData && lastData.selfcheck) || { checked_at: 0, issues: [] };\n      const box = document.getElementById('selfcheckBox');\n      const issues = sc.issues || [];\n      const timeStr = sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '\u672a\u5b9f\u884c';\n      if (issues.length === 0) {\n        box.className = 'alert-box ok';\n        box.innerHTML = '\u2705 \u7570\u5e38\u306f\u691c\u51fa\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002<div class=\"alert-time\">\u6700\u7d42\u30c1\u30a7\u30c3\u30af: ' + timeStr + '</div>';\n      } else {\n        box.className = 'alert-box warn';\n        const items = issues.map(i => '<li>' + String(i).replace(/</g, '&lt;') + '</li>').join('');\n        box.innerHTML = '\u26a0\ufe0f ' + issues.length + ' \u4ef6\u306e\u4e0d\u6574\u5408\u3092\u691c\u51fa\u3057\u3001\u81ea\u52d5\u4fee\u5fa9\u3057\u307e\u3057\u305f\u3002<ul>' + items + '</ul><div class=\"alert-time\">\u6700\u7d42\u30c1\u30a7\u30c3\u30af: ' + timeStr + '</div>';\n      }\n    }\n\n    function renderAll() {\n      renderLeaderboard();\n      renderCharts();\n      renderMarket();\n      renderQuestsPanel();\n      renderSelfCheck();\n    }\n\n    let nextRefreshAt = Date.now() + 10000;\n    async function refresh() {\n      try {\n        const res = await fetch('/dashboard.json', { cache: 'no-store' });\n        const data = await res.json();\n        lastData = data;\n        document.getElementById('treasury').textContent = fmtYen(data.treasury || 0);\n        document.getElementById('totalGovDebt').textContent = fmtYen(data.total_gov_debt || 0);\n        const weekly = data.weekly || {};\n        document.getElementById('weeklyTrade').textContent = fmtYen(weekly.trade_volume || 0);\n        document.getElementById('eventBadge').textContent = data.active_event || '\u901a\u5e38';\n        document.getElementById('updatedAt').textContent = new Date(data.generated_at || Date.now()).toLocaleString('ja-JP');\n        renderAll();\n        nextRefreshAt = Date.now() + 10000;\n      } catch (e) {\n        document.getElementById('updatedAt').textContent = '\u53d6\u5f97\u30a8\u30e9\u30fc';\n      }\n    }\n\n    document.getElementById('lbSearch').addEventListener('input', e => { state.lb.search = e.target.value; state.lb.page = 1; renderLeaderboard(); });\n    document.getElementById('lbPrev').addEventListener('click', () => { state.lb.page--; renderLeaderboard(); });\n    document.getElementById('lbNext').addEventListener('click', () => { state.lb.page++; renderLeaderboard(); });\n    bindSortableHeaders('table:has(#lbBody)', state.lb, renderLeaderboard);\n\n    window.addEventListener('resize', renderCharts);\n    setInterval(() => {\n      const secLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));\n      document.getElementById('countdown').textContent = secLeft + '\u79d2\u5f8c\u306b\u66f4\u65b0';\n    }, 1000);\n\n    refresh();\n    setInterval(refresh, 10000);\n  </script>\n</body>\n</html>\n";
+    private static final String MY_DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>個人ページ | MinecraftBank</title>\n<style>\n  :root { --bg:#0b0f19; --panel:#141b2c; --panel-border:#232c42; --text:#e7ecf7; --text-dim:#8a93ab; --accent:#5b8cff; --gold:#f4c542; --emerald:#34d399; --red:#f87171; }\n  * { box-sizing: border-box; }\n  body { margin:0; background:var(--bg); color:var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }\n  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 40px; }\n  h1 { font-size: 20px; margin: 0 0 4px; }\n  .sub { color: var(--text-dim); font-size: 13px; margin-bottom: 18px; }\n  .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:18px; }\n  .card { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:14px; }\n  .card .label { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n  .card .value { font-size:20px; font-weight:700; }\n  .gold .value { color: var(--gold); }\n  .emerald .value { color: var(--emerald); }\n  .panel { background:var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:16px; margin-bottom:16px; }\n  .panel h2 { font-size:14px; margin:0 0 10px; color:var(--text-dim); font-weight:600; }\n  table { width:100%; border-collapse:collapse; font-size:13px; }\n  th, td { text-align:left; padding:6px 4px; border-bottom:1px solid var(--panel-border); }\n  th { color:var(--text-dim); font-weight:600; }\n  .log-line { font-size:12px; padding:5px 0; border-bottom:1px solid var(--panel-border); color: var(--text); }\n  .empty { color:var(--text-dim); font-size:13px; padding:10px 0; }\n  .err { color: var(--red); }\n  .btn { background:var(--accent); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }\n  .btn:hover { opacity:.9; }\n  .btn:disabled { opacity:.4; cursor:default; }\n  .btn.gold { background: var(--gold); color:#1a1300; }\n  .input { background:#0f1524; border:1px solid var(--panel-border); color:var(--text); border-radius:7px; padding:7px 10px; font-size:13px; width:100px; }\n  .row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }\n  .status-msg { font-size:12px; margin-top:8px; min-height:16px; }\n  .status-msg.ok { color: var(--emerald); }\n  .status-msg.err { color: var(--red); }\n  .auction-card { border-bottom:1px solid var(--panel-border); padding:10px 0; font-size:13px; }\n  .auction-card:last-child { border-bottom:none; }\n  .auction-card .title { font-weight:600; margin-bottom:4px; }\n  .auction-card .meta { color:var(--text-dim); font-size:12px; margin-bottom:6px; }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <h1>👤 個人ページ</h1>\n    <div class=\"sub\" id=\"playerName\">読込中...</div>\n    <div class=\"sub\" id=\"onlineStatus\"></div>\n\n    <div class=\"panel\" id=\"passwordPanel\" hidden>\n      <h2>オフライン操作用パスワード</h2>\n      <div class=\"empty\">ログインしていない時にこのページから操作するには、パスワードを入力してください(ゲーム内の /meco webpage password で設定できます)。ログイン中は不要です。</div>\n      <div class=\"row\"><input class=\"input\" id=\"offlinePassword\" type=\"password\" placeholder=\"パスワード\" style=\"width:160px;\"></div>\n    </div>\n\n    <div class=\"grid\">\n      <div class=\"card gold\"><div class=\"label\">所持金</div><div class=\"value\" id=\"pocket\">-</div></div>\n      <div class=\"card gold\"><div class=\"label\">銀行残高</div><div class=\"value\" id=\"bank\">-</div></div>\n      <div class=\"card emerald\"><div class=\"label\">信用スコア</div><div class=\"value\" id=\"credit\">-</div></div>\n      <div class=\"card\"><div class=\"label\">実績解除数</div><div class=\"value\" id=\"achievements\">-</div></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"row\" style=\"justify-content:space-between; margin-top:0;\">\n        <h2 style=\"margin:0;\">受取箱</h2>\n        <button class=\"btn\" id=\"collectBtn\">📦 受取箱を確認する</button>\n      </div>\n      <div class=\"status-msg\" id=\"collectMsg\"></div>\n      <div class=\"empty\">オークション落札品などが届いています。ログイン中にインベントリの空きが無くて受け取れなかった分もここで再取得できます。</div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>保有中の世界株 / 購入</h2>\n      <div id=\"stocksArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"row\">\n        <input class=\"input\" id=\"stockSymbol\" type=\"text\" placeholder=\"銘柄(例: AAPL)\" style=\"width:140px;\">\n        <input class=\"input\" id=\"stockQty\" type=\"number\" min=\"1\" value=\"1\" placeholder=\"株数\">\n        <button class=\"btn\" id=\"stockBuyBtn\">購入する</button>\n      </div>\n      <div class=\"status-msg\" id=\"stockMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>オークション</h2>\n      <div id=\"auctionArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"auctionMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>レンタル倉庫</h2>\n      <div id=\"storageArea\"><div class=\"empty\">読込中...</div></div>\n      <div class=\"status-msg\" id=\"storageMsg\"></div>\n    </div>\n\n    <div class=\"panel\">\n      <h2>直近の取引履歴</h2>\n      <div id=\"logsArea\"><div class=\"empty\">読込中...</div></div>\n    </div>\n  </div>\n\n  <script>\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    const params = new URLSearchParams(location.search);\n    const token = params.get('token') || '';\n\n    async function load() {\n      try {\n        const res = await fetch('/me.json?token=' + encodeURIComponent(token), { cache: 'no-store' });\n        const data = await res.json();\n        if (data.error) {\n          document.getElementById('playerName').innerHTML = '<span class=\"err\">リンクが無効です。ゲーム内で /meco webpage を実行し直してください。</span>';\n          return;\n        }\n        document.getElementById('playerName').textContent = data.name + ' さんの個人ページ';\n        document.getElementById('onlineStatus').textContent = data.online ? '🟢 ログイン中' : '⚪ オフライン';\n        // ★修正: パスワード未設定でも入力欄自体は必ず表示する(管理者が発行したパスワードで\n        // 操作できる可能性があるため、「未設定」を理由に入力欄ごと消してはいけない)。\n        document.getElementById('passwordPanel').hidden = data.online;\n        document.getElementById('pocket').textContent = fmtYen(data.pocket || 0);\n        document.getElementById('bank').textContent = fmtYen(data.bank || 0);\n        document.getElementById('credit').textContent = data.credit_score;\n        document.getElementById('achievements').textContent = data.achievement_count;\n\n        const stocks = data.world_stocks || [];\n        const stocksArea = document.getElementById('stocksArea');\n        stocksArea.innerHTML = stocks.length === 0 ? '<div class=\"empty\">保有中の株はありません。</div>' :\n          '<table><thead><tr><th>銘柄</th><th>株数</th><th>平均取得単価</th><th>評価額</th></tr></thead><tbody>' +\n          stocks.map(s => '<tr><td>' + s.symbol + '</td><td>' + s.qty + '</td><td>' + fmtYen(s.avg_cost) + '</td><td>' + fmtYen(s.value) + '</td></tr>').join('') +\n          '</tbody></table>';\n\n        const logs = data.logs || [];\n        const logsArea = document.getElementById('logsArea');\n        logsArea.innerHTML = logs.length === 0 ? '<div class=\"empty\">取引履歴はありません。</div>' :\n          logs.map(l => '<div class=\"log-line\">' + l.replace(/</g, '&lt;') + '</div>').join('');\n\n        renderAuctions(data.auctions || []);\n        renderStorage(data.storage || {});\n      } catch (e) {\n        document.getElementById('playerName').innerHTML = '<span class=\"err\">読込に失敗しました。</span>';\n      }\n    }\n\n    function fmtRemain(ms) {\n      if (ms <= 0) return 'まもなく終了';\n      const s = Math.floor(ms / 1000);\n      return Math.floor(s / 60) + '分' + (s % 60) + '秒';\n    }\n\n    function renderAuctions(auctions) {\n      const area = document.getElementById('auctionArea');\n      if (auctions.length === 0) { area.innerHTML = '<div class=\"empty\">出品中のオークションはありません。</div>'; return; }\n      area.innerHTML = auctions.map(a => {\n        const disabled = a.is_own ? 'disabled' : '';\n        const buyoutBtn = a.buyout !== null ? '<button class=\"btn gold\" ' + disabled + ' onclick=\"bidAuction(\\'' + a.id + '\\', ' + a.buyout + ')\">即決 (' + fmtYen(a.buyout) + ')</button>' : '';\n        return '<div class=\"auction-card\">' +\n          '<div class=\"title\">' + a.item + (a.is_own ? '(自分の出品)' : '') + '</div>' +\n          '<div class=\"meta\">出品者: ' + a.seller + ' / 現在価格: ' + fmtYen(a.bid) + ' / 入札者: ' + (a.has_bidder ? 'あり' : 'なし') + ' / 残り: ' + fmtRemain(a.remain_ms) + '</div>' +\n          '<div class=\"row\" style=\"margin-top:0;\">' +\n            '<input class=\"input\" id=\"bidamt-' + a.id + '\" type=\"number\" placeholder=\"入札額\" ' + disabled + '>' +\n            '<button class=\"btn\" ' + disabled + ' onclick=\"bidAuctionFromInput(\\'' + a.id + '\\')\">入札する</button>' +\n            buyoutBtn +\n          '</div></div>';\n      }).join('');\n    }\n\n    function renderStorage(storage) {\n      const area = document.getElementById('storageArea');\n      if (!storage.rented) {\n        area.innerHTML = '<div class=\"empty\">未契約です。契約すると倉庫が使えるようになります(家賃 ' + fmtYen(storage.rent_amount) + ' / 定期支払い)。</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">契約する</button></div>';\n      } else {\n        area.innerHTML = '<div class=\"empty\">契約中。次回家賃支払い期限: ' + new Date(storage.due_at).toLocaleString('ja-JP') + '</div>' +\n          '<div class=\"row\"><button class=\"btn\" onclick=\"payStorageRent()\">家賃を今払って延長する (' + fmtYen(storage.rent_amount) + ')</button></div>';\n      }\n    }\n\n    async function postAction(path, params) {\n      const password = (document.getElementById('offlinePassword') || {}).value || '';\n      const body = new URLSearchParams(Object.assign({ token, password }, params));\n      const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body });\n      if (!res.ok) {\n        const err = await res.json().catch(() => ({}));\n        return { ok: false, message: err.message || ('HTTPエラー ' + res.status) };\n      }\n      return await res.json();\n    }\n\n    function showStatus(id, ok, text) {\n      const el = document.getElementById(id);\n      el.className = 'status-msg ' + (ok ? 'ok' : 'err');\n      el.textContent = text;\n    }\n\n    document.getElementById('collectBtn').addEventListener('click', async () => {\n      try {\n        const r = await postAction('/me/collect', {});\n        showStatus('collectMsg', r.ok, r.ok ? '受取箱を確認しました。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('collectMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    document.getElementById('stockBuyBtn').addEventListener('click', async () => {\n      const symbol = document.getElementById('stockSymbol').value.trim();\n      const qty = document.getElementById('stockQty').value;\n      if (!symbol || !qty) { showStatus('stockMsg', false, '銘柄と株数を入力してください。'); return; }\n      try {\n        const r = await postAction('/me/worldstock/buy', { symbol, qty });\n        showStatus('stockMsg', r.ok, r.ok ? '購入処理を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('stockMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    });\n\n    async function payStorageRent() {\n      try {\n        const r = await postAction('/me/storage/pay-rent', {});\n        showStatus('storageMsg', r.ok, r.ok ? '支払いを送信しました。' : (r.message || '残高不足、またはログインしていません。'));\n        load();\n      } catch (e) { showStatus('storageMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    async function bidAuction(id, amount) {\n      try {\n        const r = await postAction('/me/auction/bid', { auction_id: id, amount });\n        showStatus('auctionMsg', r.ok, r.ok ? '入札を送信しました(結果はゲーム内チャットで確認してください)。' : (r.message || '失敗しました。'));\n        load();\n      } catch (e) { showStatus('auctionMsg', false, 'ゲーム内にログインしている時だけ操作できます。'); }\n    }\n\n    function bidAuctionFromInput(id) {\n      const val = document.getElementById('bidamt-' + id).value;\n      if (!val) { showStatus('auctionMsg', false, '入札額を入力してください。'); return; }\n      bidAuction(id, val);\n    }\n\n    load();\n  </script>\n</body>\n</html>\n";
+    private static final String DASHBOARD_HTML = "<!doctype html>\n<html lang=\"ja\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>経済ダッシュボード | MinecraftBank</title>\n<style>\n  :root {\n    --bg: #0b0f19;\n    --panel: #141b2c;\n    --panel-alt: #101625;\n    --panel-border: #232c42;\n    --text: #eaeefb;\n    --text-dim: #8b93a7;\n    --gold: #f4c542;\n    --emerald: #4ade9b;\n    --red: #ff6b6b;\n    --accent: #5b8cff;\n    --purple: #b18cff;\n    --cyan: #43d9e0;\n\n    /* ★追加: データ可視化用の検証済みパレット(dataviz skillのcolor-formula.mdに準拠)\n       カテゴリカル8色は固定順で識別(系列/カテゴリ)専用、ステータス4色は状態専用、\n       シーケンシャル/ダイバージングは大小・極性の表現専用。色の役割を混同しないこと。 */\n    --cat-1: #3987e5; /* blue */\n    --cat-2: #d95926; /* orange */\n    --cat-3: #199e70; /* aqua */\n    --cat-4: #c98500; /* yellow */\n    --cat-5: #d55181; /* magenta */\n    --cat-6: #008300; /* green */\n    --cat-7: #9085e9; /* violet */\n    --cat-8: #e66767; /* red */\n    --status-good: #0ca30c;\n    --status-warning: #fab219;\n    --status-serious: #ec835a;\n    --status-critical: #d03b3b;\n    --seq-100: #cde2fb;\n    --seq-400: #3987e5;\n    --seq-700: #0d366b;\n    --div-neg: #3987e5;  /* 基準値より安い(マイナス側の極) */\n    --div-pos: #e66767;  /* 基準値より高い(プラス側の極) */\n    --div-mid: #383835;  /* 中立(基準値と同水準) */\n  }\n  * { box-sizing: border-box; }\n  ::-webkit-scrollbar { width: 10px; height: 10px; }\n  ::-webkit-scrollbar-thumb { background: #2a3350; border-radius: 6px; }\n  ::-webkit-scrollbar-track { background: transparent; }\n  body {\n    margin: 0;\n    font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;\n    background:\n      radial-gradient(circle at 15% -10%, #24304f66 0%, transparent 45%),\n      radial-gradient(circle at 100% 0%, #1a2c2266 0%, transparent 40%),\n      var(--bg);\n    color: var(--text);\n    min-height: 100vh;\n    padding: 32px 20px 60px;\n  }\n  .wrap { max-width: 1180px; margin: 0 auto; }\n  @keyframes fadeInUp {\n    from { opacity: 0; transform: translateY(10px); }\n    to { opacity: 1; transform: translateY(0); }\n  }\n  header {\n    display: flex;\n    align-items: flex-start;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 12px;\n    margin-bottom: 24px;\n    animation: fadeInUp .4s ease both;\n  }\n  header h1 {\n    font-size: 25px;\n    margin: 0 0 6px;\n    letter-spacing: 0.3px;\n  }\n  header h1 span { color: var(--gold); }\n  .sub-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }\n  .event-badge {\n    display: inline-flex;\n    align-items: center;\n    gap: 6px;\n    background: #1c2440;\n    border: 1px solid var(--panel-border);\n    color: var(--cyan);\n    font-size: 12px;\n    font-weight: 600;\n    padding: 5px 12px;\n    border-radius: 999px;\n  }\n  .event-badge::before { content: '●'; font-size: 8px; color: var(--cyan); }\n  #updated {\n    font-size: 12px;\n    color: var(--text-dim);\n    text-align: right;\n  }\n  #updated b { color: var(--emerald); }\n  #countdown { color: var(--text-dim); font-variant-numeric: tabular-nums; }\n  .grid {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));\n    gap: 14px;\n    margin-bottom: 18px;\n  }\n  .stat-card {\n    background: linear-gradient(160deg, var(--panel), var(--panel-alt));\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 16px 18px;\n    animation: fadeInUp .45s ease both;\n    transition: transform .15s ease, border-color .15s ease;\n  }\n  .stat-card:hover { transform: translateY(-2px); border-color: #34406a; }\n  .stat-card .label {\n    font-size: 11.5px;\n    color: var(--text-dim);\n    margin-bottom: 6px;\n    white-space: nowrap;\n  }\n  .stat-card .value {\n    font-size: 23px;\n    font-weight: 700;\n    font-variant-numeric: tabular-nums;\n  }\n  .stat-card.gold .value { color: var(--gold); }\n  .stat-card.emerald .value { color: var(--emerald); }\n  .stat-card.accent .value { color: var(--accent); }\n  .stat-card.red .value { color: var(--red); }\n  .stat-card.purple .value { color: var(--purple); }\n  .stat-card.cyan .value { color: var(--cyan); }\n  .stat-card.status-good .value { color: var(--status-good); }\n  .stat-card.status-warning .value { color: var(--status-warning); }\n  .stat-card.status-critical .value { color: var(--status-critical); }\n\n  /* ★追加: 「マーケット概況」「やること概況」向けの新規コンポーネント */\n  .subpanel {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    border-radius: 12px;\n    padding: 14px 16px;\n  }\n  .subpanel h3 {\n    font-size: 12.5px;\n    margin: 0 0 12px;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .rank-list { display: flex; flex-direction: column; gap: 9px; }\n  .rank-list-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }\n  .cat-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }\n  .rank-list-name { font-weight: 600; font-variant-numeric: tabular-nums; }\n  .rank-list-meta { margin-left: auto; color: var(--text-dim); font-size: 11.5px; text-align: right; white-space: nowrap; }\n  .badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 8px; }\n  .badge {\n    display: flex;\n    align-items: center;\n    gap: 7px;\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 8px;\n    padding: 7px 10px;\n    font-size: 12px;\n  }\n  .badge .dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }\n  .badge-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }\n  .badge-trend { font-variant-numeric: tabular-nums; color: var(--text-dim); font-weight: 600; white-space: nowrap; }\n  .mini-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11.5px; color: var(--text-dim); margin-bottom: 10px; }\n  .mini-legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .merchant-refresh { font-size: 13px; color: var(--text-dim); margin-bottom: 10px; }\n  .merchant-refresh b { color: var(--text); font-variant-numeric: tabular-nums; }\n  .deal-grid { display: flex; flex-direction: column; gap: 10px; }\n  .deal-card { background: var(--panel); border: 1px solid var(--panel-border); border-radius: 10px; padding: 10px 12px; }\n  .deal-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }\n  .deal-name { font-weight: 600; font-size: 13px; }\n  .deal-discount { color: var(--emerald); font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }\n  .meter-track { height: 7px; border-radius: 4px; background: var(--seq-100); overflow: hidden; }\n  .meter-fill { height: 100%; background: var(--seq-400); border-radius: 4px; transition: width .4s ease; }\n  .deal-stock { font-size: 11.5px; color: var(--text-dim); margin-top: 6px; }\n  .hero-tile { text-align: center; padding: 4px 0 16px; }\n  .hero-tile .hero-value {\n    font-size: 40px;\n    font-weight: 700;\n    color: var(--gold);\n    line-height: 1.15;\n    /* ★重要: 大きな単独の数値は比例数字を使う(等幅のtabular-numsは大きい文字だと間延びして見える) */\n  }\n  .hero-tile .hero-label {\n    font-size: 12px;\n    color: var(--text-dim);\n    margin-top: 6px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n  }\n  .mini-stats { display: flex; flex-direction: column; gap: 7px; font-size: 13px; color: var(--text-dim); }\n  .mini-stats b { color: var(--text); font-variant-numeric: tabular-nums; font-weight: 600; }\n  .panel {\n    background: var(--panel);\n    border: 1px solid var(--panel-border);\n    border-radius: 14px;\n    padding: 20px 22px;\n    margin-bottom: 16px;\n    animation: fadeInUp .5s ease both;\n  }\n  .panel-head {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    flex-wrap: wrap;\n    gap: 10px;\n    margin-bottom: 14px;\n  }\n  .panel h2 {\n    font-size: 14px;\n    margin: 0;\n    color: var(--text-dim);\n    text-transform: uppercase;\n    letter-spacing: 1px;\n  }\n  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }\n  .legend .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }\n  .chart-box { position: relative; width: 100%; height: 220px; }\n  .chart-box canvas { width: 100%; height: 100%; display: block; }\n  .alert-box { border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.7; }\n  .alert-box.ok { background: rgba(16,185,129,.12); border: 1px solid rgba(16,185,129,.4); color: var(--emerald); }\n  .alert-box.warn { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.4); color: #f87171; }\n  .alert-box ul { margin: 6px 0 0 18px; padding: 0; }\n  .alert-box .alert-time { color: var(--text-dim); font-size: 11px; margin-top: 6px; }\n  .bars-box { position: relative; width: 100%; height: 160px; }\n  .panels-2col {\n    display: grid;\n    grid-template-columns: 1fr 1fr;\n    gap: 16px;\n  }\n  @media (max-width: 820px) {\n    .panels-2col { grid-template-columns: 1fr; }\n  }\n  .toolbar {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    flex-wrap: wrap;\n  }\n  .search-input {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    font-size: 13px;\n    padding: 7px 12px;\n    border-radius: 8px;\n    outline: none;\n    min-width: 160px;\n  }\n  .search-input:focus { border-color: var(--accent); }\n  table { width: 100%; border-collapse: collapse; font-size: 13px; }\n  thead th {\n    position: sticky;\n    top: 0;\n    background: var(--panel);\n    text-align: left;\n    color: var(--text-dim);\n    font-weight: 600;\n    font-size: 11.5px;\n    text-transform: uppercase;\n    letter-spacing: .5px;\n    padding: 8px 10px;\n    border-bottom: 1px solid var(--panel-border);\n    cursor: pointer;\n    user-select: none;\n    white-space: nowrap;\n  }\n  thead th:hover { color: var(--text); }\n  thead th .arrow { opacity: .5; margin-left: 3px; font-size: 10px; }\n  tbody td {\n    padding: 8px 10px;\n    border-bottom: 1px solid #1c2438;\n    vertical-align: middle;\n  }\n  tbody tr { transition: background .12s ease; }\n  tbody tr:hover { background: #1a2136; }\n  tbody tr:nth-child(even) { background: #121a2b55; }\n  tbody tr:nth-child(even):hover { background: #1a2136; }\n  .rank-cell { width: 34px; font-weight: 700; color: var(--text-dim); }\n  .medal { font-size: 14px; }\n  .name-cell { font-weight: 600; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n  .bar-cell { min-width: 90px; }\n  .bar-track { height: 8px; background: #1c2338; border-radius: 5px; overflow: hidden; }\n  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--emerald)); border-radius: 5px; transition: width .4s ease; }\n  .amount-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--gold); font-weight: 600; white-space: nowrap; }\n  .score-cell { text-align: right; font-variant-numeric: tabular-nums; color: var(--cyan); white-space: nowrap; }\n  .pagination {\n    display: flex;\n    align-items: center;\n    justify-content: flex-end;\n    gap: 10px;\n    margin-top: 12px;\n    font-size: 12px;\n    color: var(--text-dim);\n  }\n  .pagination button {\n    background: var(--panel-alt);\n    border: 1px solid var(--panel-border);\n    color: var(--text);\n    padding: 5px 12px;\n    border-radius: 7px;\n    cursor: pointer;\n    font-size: 12px;\n  }\n  .pagination button:disabled { opacity: .35; cursor: default; }\n  .pagination button:not(:disabled):hover { border-color: var(--accent); }\n  .empty { color: var(--text-dim); font-size: 13px; padding: 14px 0; text-align: center; }\n  footer {\n    text-align: center;\n    color: var(--text-dim);\n    font-size: 12px;\n    margin-top: 8px;\n  }\n</style>\n</head>\n<body>\n  <div class=\"wrap\">\n    <header>\n      <div>\n        <h1>💰 <span>MinecraftBank</span> 経済ダッシュボード</h1>\n        <div class=\"sub-row\">\n          <div class=\"event-badge\" id=\"eventBadge\">通常</div>\n        </div>\n      </div>\n      <div id=\"updated\">最終更新: <b id=\"updatedAt\">-</b><br><span id=\"countdown\"></span></div>\n    </header>\n\n    <div class=\"grid\" id=\"statGrid\">\n      <div class=\"stat-card gold\">\n        <div class=\"label\">国庫残高</div>\n        <div class=\"value\" id=\"treasury\">-</div>\n      </div>\n      <div class=\"stat-card red\">\n        <div class=\"label\">政府債務合計</div>\n        <div class=\"value\" id=\"totalGovDebt\">-</div>\n      </div>\n      <div class=\"stat-card gold\">\n        <div class=\"label\">今週の取引量</div>\n        <div class=\"value\" id=\"weeklyTrade\">-</div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>異常検知</h2>\n      </div>\n      <div class=\"alert-box ok\" id=\"selfcheckBox\">確認中...</div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>国庫残高の推移</h2>\n      </div>\n      <div class=\"chart-box\"><canvas id=\"treasuryChart\"></canvas></div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>資産ランキング</h2>\n        <div class=\"toolbar\">\n          <input class=\"search-input\" id=\"lbSearch\" type=\"text\" placeholder=\"プレイヤー名で検索...\">\n        </div>\n      </div>\n      <div style=\"overflow-x:auto\">\n        <table>\n          <thead>\n            <tr>\n              <th data-key=\"rank\">#<span class=\"arrow\"></span></th>\n              <th data-key=\"name\">プレイヤー<span class=\"arrow\"></span></th>\n              <th data-key=\"credit_score\">信用スコア<span class=\"arrow\"></span></th>\n              <th data-key=\"total_assets\">総資産<span class=\"arrow\"></span></th>\n            </tr>\n          </thead>\n          <tbody id=\"lbBody\"></tbody>\n        </table>\n      </div>\n      <div id=\"lbEmpty\" class=\"empty\" style=\"display:none\">データがありません</div>\n      <div class=\"pagination\">\n        <span id=\"lbPageInfo\"></span>\n        <button id=\"lbPrev\">← 前へ</button>\n        <button id=\"lbNext\">次へ →</button>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>🛒 マーケット概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"marketStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>📈 世界株式市場 - 保有株数トップ5</h3>\n          <div class=\"rank-list\" id=\"worldStockTopList\"></div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>🧳 巡回商人</h3>\n          <div id=\"merchantStatus\"></div>\n        </div>\n      </div>\n\n      <div class=\"subpanel\" style=\"margin-top:16px\">\n        <h3>⛏ 資源相場ショップ - 基準価格との乖離</h3>\n        <div class=\"mini-legend\">\n          <span><span class=\"dot\" style=\"background:var(--div-neg)\"></span>基準より安い</span>\n          <span><span class=\"dot\" style=\"background:var(--div-mid)\"></span>横ばい</span>\n          <span><span class=\"dot\" style=\"background:var(--div-pos)\"></span>基準より高い</span>\n        </div>\n        <div class=\"badge-grid\" id=\"resourceBadgeGrid\"></div>\n      </div>\n    </div>\n\n    <div class=\"panel\">\n      <div class=\"panel-head\">\n        <h2>🎯 やること概況</h2>\n      </div>\n\n      <div class=\"grid\" id=\"questStatGrid\"></div>\n\n      <div class=\"panels-2col\" style=\"margin-top:16px\">\n        <div class=\"subpanel\">\n          <h3>🎟 宝くじ</h3>\n          <div class=\"hero-tile\">\n            <div class=\"hero-value\" id=\"lotteryPool\">-</div>\n            <div class=\"hero-label\">次回抽選の賞金プール</div>\n          </div>\n          <div class=\"mini-stats\">\n            <div>次回抽選まで: <b id=\"lotteryCountdown\">-</b></div>\n            <div>販売チケット数: <b id=\"lotteryTickets\">-</b></div>\n            <div>前回の当せん: <b id=\"lotteryLastWinner\">-</b></div>\n          </div>\n        </div>\n        <div class=\"subpanel\">\n          <h3>📦 倉庫レンタル / 💳 分割払い / ⛏ 埋蔵金</h3>\n          <div class=\"grid\" id=\"miscStatGrid\"></div>\n        </div>\n      </div>\n    </div>\n\n    <footer>10秒ごとに自動更新されます</footer>\n  </div>\n\n  <script>\n    const PAGE_SIZE = 10;\n    let lastData = null;\n    const state = {\n      lb: { sortKey: 'rank', sortDir: 1, page: 1, search: '' }\n    };\n\n    function fmtYen(n) { return Math.round(n).toLocaleString('ja-JP') + '円'; }\n    function fmtNum(n) { return Math.round(n).toLocaleString('ja-JP'); }\n    function medal(rank) {\n      if (rank === 1) return '🥇';\n      if (rank === 2) return '🥈';\n      if (rank === 3) return '🥉';\n      return rank;\n    }\n\n    // ★追加: カテゴリカルパレット(固定8色・固定順。系列/カテゴリの識別専用。ステータス色とは混同しないこと)\n    const CAT_COLORS = ['var(--cat-1)', 'var(--cat-2)', 'var(--cat-3)', 'var(--cat-4)', 'var(--cat-5)', 'var(--cat-6)', 'var(--cat-7)', 'var(--cat-8)'];\n\n    // ★追加: ダイバージング配色(青⇔グレー⇔赤)。基準値からの乖離%を±30%でクランプして線形補間する。\n    function divergingColor(pct) {\n      const clamped = Math.max(-30, Math.min(30, pct || 0));\n      const t = clamped / 30; // -1..1\n      const neg = [0x39, 0x87, 0xe5];  // --cat-1 / --div-neg (blue)\n      const mid = [0x38, 0x38, 0x35];  // --div-mid (neutral gray)\n      const pos = [0xe6, 0x67, 0x67];  // --cat-8 / --div-pos (red)\n      const from = t < 0 ? neg : pos;\n      const amt = Math.abs(t);\n      const rgb = mid.map((m, i) => Math.round(m + (from[i] - m) * amt));\n      return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;\n    }\n\n    // ★追加: 資源相場ショップ/巡回商人の素材名 日本語表示(未登録の素材は整形して表示)\n    const MATERIAL_JA = {\n      COAL: '石炭', IRON_INGOT: '鉄インゴット', GOLD_INGOT: '金インゴット', COPPER_INGOT: '銅インゴット',\n      REDSTONE: 'レッドストーン', LAPIS_LAZULI: 'ラピスラズリ', DIAMOND: 'ダイヤモンド', EMERALD: 'エメラルド',\n      NETHERITE_SCRAP: 'ネザライトの欠片', WHEAT: '小麦', CARROT: 'ニンジン', POTATO: 'ジャガイモ',\n      BEETROOT: 'ビートルート', MELON_SLICE: 'スイカ', PUMPKIN: 'カボチャ', SUGAR_CANE: 'サトウキビ',\n      NETHER_WART: 'ネザーウォート', COCOA_BEANS: 'カカオ豆', ROTTEN_FLESH: '腐った肉', BONE: '骨',\n      STRING: '糸', GUNPOWDER: '火薬', SPIDER_EYE: 'クモの目', SLIME_BALL: 'スライムボール',\n      ENDER_PEARL: 'エンダーパール', BLAZE_ROD: 'ブレイズロッド', GHAST_TEAR: 'ガストの涙',\n      OAK_LOG: 'オークの原木', SPRUCE_LOG: 'トウヒの原木', BIRCH_LOG: 'シラカバの原木', JUNGLE_LOG: 'ジャングルの原木',\n      ACACIA_LOG: 'アカシアの原木', DARK_OAK_LOG: 'ダークオークの原木', MANGROVE_LOG: 'マングローブの原木', CHERRY_LOG: 'サクラの原木',\n      ELYTRA: 'エリトラ', TOTEM_OF_UNDYING: '不死のトーテム', NETHERITE_INGOT: 'ネザライトインゴット',\n      NETHERITE_BLOCK: 'ネザライトブロック', ENCHANTED_GOLDEN_APPLE: 'エンチャントされた金のリンゴ',\n      SADDLE: 'サドル', NAME_TAG: '名札', SHULKER_BOX: 'シュルカーボックス', TRIDENT: 'トライデント',\n      NETHER_STAR: 'ネザースター', DRAGON_EGG: 'ドラゴンの卵', BEACON: 'ビーコン', DIAMOND_BLOCK: 'ダイヤモンドブロック',\n      EMERALD_BLOCK: 'エメラルドブロック', MUSIC_DISC_PIGSTEP: 'レコード(Pigstep)', MUSIC_DISC_OTHERSIDE: 'レコード(Otherside)',\n      HEART_OF_THE_SEA: '海の心', CONDUIT: 'コンジット', END_CRYSTAL: 'エンドクリスタル', GOLDEN_CARROT: '金のニンジン'\n    };\n    function materialLabel(name) {\n      if (MATERIAL_JA[name]) return MATERIAL_JA[name];\n      return String(name).toLowerCase().split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');\n    }\n\n    // ★追加: 残りミリ秒を「◯日◯時間」「◯時間◯分」「◯分」形式に整形\n    function fmtDuration(ms) {\n      if (!ms || ms <= 0) return 'まもなく';\n      const totalMin = Math.floor(ms / 60000);\n      const d = Math.floor(totalMin / 1440);\n      const h = Math.floor((totalMin % 1440) / 60);\n      const m = totalMin % 60;\n      if (d > 0) return d + '日' + h + '時間';\n      if (h > 0) return h + '時間' + m + '分';\n      return m + '分';\n    }\n\n    function sortRows(rows, key, dir) {\n      return [...rows].sort((a, b) => {\n        const av = a[key], bv = b[key];\n        if (typeof av === 'string') return av.localeCompare(bv, 'ja') * dir;\n        return ((av ?? 0) - (bv ?? 0)) * dir;\n      });\n    }\n\n    function bindSortableHeaders(tableSelector, sortState, renderFn) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        th.addEventListener('click', () => {\n          const key = th.getAttribute('data-key');\n          if (sortState.sortKey === key) {\n            sortState.sortDir *= -1;\n          } else {\n            sortState.sortKey = key;\n            sortState.sortDir = 1;\n          }\n          sortState.page = 1;\n          renderFn();\n        });\n      });\n    }\n\n    function updateHeaderArrows(tableSelector, sortState) {\n      document.querySelectorAll(tableSelector + ' thead th[data-key]').forEach(th => {\n        const arrow = th.querySelector('.arrow');\n        if (th.getAttribute('data-key') === sortState.sortKey) {\n          arrow.textContent = sortState.sortDir === 1 ? '▲' : '▼';\n        } else {\n          arrow.textContent = '';\n        }\n      });\n    }\n\n    function drawLineChart(canvas, series, labels) {\n      if (!canvas) return;\n      const dpr = window.devicePixelRatio || 1;\n      const rect = canvas.parentElement.getBoundingClientRect();\n      const w = Math.max(rect.width, 100), h = Math.max(rect.height, 100);\n      canvas.width = w * dpr; canvas.height = h * dpr;\n      const ctx = canvas.getContext('2d');\n      ctx.scale(dpr, dpr);\n      ctx.clearRect(0, 0, w, h);\n\n      const padL = 54, padR = 12, padT = 12, padB = 24;\n      const plotW = w - padL - padR, plotH = h - padT - padB;\n\n      const allVals = series.flatMap(s => s.data);\n      if (allVals.length === 0) {\n        ctx.fillStyle = '#8b93a7';\n        ctx.font = '12px sans-serif';\n        ctx.fillText('データが蓄積されるとここに表示されます', padL, h / 2);\n        return;\n      }\n      let min = Math.min(...allVals), max = Math.max(...allVals);\n      if (min === max) { min -= 1; max += 1; }\n      const pad = (max - min) * 0.1;\n      min -= pad; max += pad;\n\n      ctx.strokeStyle = '#1f2740';\n      ctx.lineWidth = 1;\n      ctx.font = '10.5px sans-serif';\n      ctx.fillStyle = '#8b93a7';\n      const gridLines = 4;\n      for (let i = 0; i <= gridLines; i++) {\n        const y = padT + (plotH / gridLines) * i;\n        ctx.beginPath();\n        ctx.moveTo(padL, y);\n        ctx.lineTo(w - padR, y);\n        ctx.stroke();\n        const val = max - ((max - min) / gridLines) * i;\n        ctx.fillText(Math.round(val).toLocaleString('ja-JP'), 2, y + 3);\n      }\n\n      const n = Math.max(...series.map(s => s.data.length), 2);\n      series.forEach(s => {\n        if (s.data.length < 2) return;\n        ctx.beginPath();\n        s.data.forEach((v, i) => {\n          const x = padL + (i / (n - 1)) * plotW;\n          const y = padT + plotH - ((v - min) / (max - min)) * plotH;\n          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);\n        });\n        ctx.strokeStyle = s.color;\n        ctx.lineWidth = 2;\n        ctx.lineJoin = 'round';\n        ctx.stroke();\n      });\n\n      if (labels && labels.length >= 2) {\n        ctx.fillStyle = '#8b93a7';\n        const first = new Date(labels[0]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        const last = new Date(labels[labels.length - 1]).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });\n        ctx.fillText(first, padL, h - 6);\n        ctx.fillText(last, w - padR - 34, h - 6);\n      }\n    }\n\n    function renderLeaderboard() {\n      if (!lastData) return;\n      let rows = lastData.leaderboard || [];\n      if (state.lb.search) {\n        const q = state.lb.search.toLowerCase();\n        rows = rows.filter(r => r.name.toLowerCase().includes(q));\n      }\n      rows = sortRows(rows, state.lb.sortKey, state.lb.sortDir);\n      const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));\n      state.lb.page = Math.min(state.lb.page, totalPages);\n      const pageRows = rows.slice((state.lb.page - 1) * PAGE_SIZE, state.lb.page * PAGE_SIZE);\n      const maxAsset = Math.max(1, ...rows.map(r => r.total_assets));\n\n      const body = document.getElementById('lbBody');\n      document.getElementById('lbEmpty').style.display = rows.length === 0 ? 'block' : 'none';\n      body.innerHTML = pageRows.map(p => `\n        <tr>\n          <td class=\"rank-cell\"><span class=\"medal\">${medal(p.rank)}</span></td>\n          <td class=\"name-cell\" title=\"${p.name}\">${p.name}</td>\n          <td class=\"score-cell\">${p.credit_score}</td>\n          <td class=\"amount-cell\">\n            <div style=\"display:flex;align-items:center;gap:8px;justify-content:flex-end\">\n              <div class=\"bar-track bar-cell\"><div class=\"bar-fill\" style=\"width:${Math.max(4, p.total_assets / maxAsset * 100)}%\"></div></div>\n              <span>${fmtYen(p.total_assets)}</span>\n            </div>\n          </td>\n        </tr>\n      `).join('');\n\n      document.getElementById('lbPageInfo').textContent = rows.length === 0 ? '' : `${state.lb.page} / ${totalPages} ページ (全${rows.length}件)`;\n      document.getElementById('lbPrev').disabled = state.lb.page <= 1;\n      document.getElementById('lbNext').disabled = state.lb.page >= totalPages;\n      updateHeaderArrows('#lbBody', state.lb);\n      updateHeaderArrows('table:has(#lbBody)', state.lb);\n    }\n\n    function renderCharts() {\n      if (!lastData) return;\n      const hist = lastData.history || { labels: [], treasury: [] };\n      drawLineChart(document.getElementById('treasuryChart'),\n        [{ label: '国庫残高', color: '#f4c542', data: hist.treasury || [] }], hist.labels);\n    }\n\n    // ★追加: 「🛒 マーケット概況」セクションの描画(世界株式市場/資源相場ショップ/巡回商人/オークション)\n    function renderMarket() {\n      if (!lastData) return;\n      const ws = lastData.world_stock || { active_investors: 0, distinct_symbols: 0, total_portfolio_value: 0, top_symbols: [] };\n      const merchant = lastData.merchant || { refresh_at: 0, deals: [] };\n      const auction = lastData.auction || { active_listings: 0 };\n      const resources = lastData.resource_shop || [];\n\n      document.getElementById('marketStatGrid').innerHTML = `\n        <div class=\"stat-card accent\"><div class=\"label\">株式投資家数</div><div class=\"value\">${fmtNum(ws.active_investors)}人</div></div>\n        <div class=\"stat-card cyan\"><div class=\"label\">保有銘柄数(種類)</div><div class=\"value\">${fmtNum(ws.distinct_symbols)}</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">株式評価額合計</div><div class=\"value\">${fmtYen(ws.total_portfolio_value)}</div></div>\n        <div class=\"stat-card purple\"><div class=\"label\">オークション出品中</div><div class=\"value\">${fmtNum(auction.active_listings)}件</div></div>\n      `;\n\n      const topList = document.getElementById('worldStockTopList');\n      const topSymbols = ws.top_symbols || [];\n      topList.innerHTML = topSymbols.length === 0 ? '<div class=\"empty\">保有データがありません</div>' :\n        topSymbols.map((s, i) => `\n          <div class=\"rank-list-item\">\n            <span class=\"cat-dot\" style=\"background:${CAT_COLORS[i % CAT_COLORS.length]}\"></span>\n            <span class=\"rank-list-name\">${s.symbol}</span>\n            <span class=\"rank-list-meta\">${fmtNum(s.holders)}人保有 ・ ${fmtNum(s.total_shares)}株</span>\n          </div>\n        `).join('');\n\n      const remainMs = Math.max(0, (merchant.refresh_at || 0) - Date.now());\n      const deals = merchant.deals || [];\n      const dealsHtml = deals.length === 0 ? '<div class=\"empty\">現在の品揃えはありません</div>' :\n        deals.map(d => {\n          const ratio = d.stock_total > 0 ? Math.max(0, Math.min(1, d.stock_remaining / d.stock_total)) : 0;\n          return `\n            <div class=\"deal-card\">\n              <div class=\"deal-card-head\">\n                <span class=\"deal-name\">${materialLabel(d.material)}</span>\n                <span class=\"deal-discount\">-${Math.round(d.discount_percent)}%</span>\n              </div>\n              <div class=\"meter-track\"><div class=\"meter-fill\" style=\"width:${(ratio * 100).toFixed(0)}%\"></div></div>\n              <div class=\"deal-stock\">残り ${fmtNum(d.stock_remaining)} / ${fmtNum(d.stock_total)}</div>\n            </div>\n          `;\n        }).join('');\n      document.getElementById('merchantStatus').innerHTML = `\n        <div class=\"merchant-refresh\">次回入荷まで: <b>${fmtDuration(remainMs)}</b></div>\n        <div class=\"deal-grid\">${dealsHtml}</div>\n      `;\n\n      document.getElementById('resourceBadgeGrid').innerHTML = resources.map(r => {\n        const color = divergingColor(r.trend_percent);\n        const sign = r.trend_percent > 0 ? '+' : '';\n        return `\n          <div class=\"badge\" title=\"基準価格 ${fmtNum(r.base_price)}円/個\">\n            <span class=\"dot\" style=\"background:${color}\"></span>\n            <span class=\"badge-name\">${materialLabel(r.material)}</span>\n            <span class=\"badge-trend\">${sign}${r.trend_percent.toFixed(1)}%</span>\n          </div>\n        `;\n      }).join('');\n    }\n\n    // ★追加: 「🎯 やること概況」セクションの描画(依頼ボード/宝くじ/倉庫レンタル/分割払い/埋蔵金)\n    function renderQuestsPanel() {\n      if (!lastData) return;\n      const q = lastData.quests || { available: 0, in_progress: 0, cooldown: 0, system_posted: 0, player_posted: 0 };\n      document.getElementById('questStatGrid').innerHTML = `\n        <div class=\"stat-card status-good\"><div class=\"label\">募集中</div><div class=\"value\">${fmtNum(q.available)}件</div></div>\n        <div class=\"stat-card accent\"><div class=\"label\">受注中</div><div class=\"value\">${fmtNum(q.in_progress)}件</div></div>\n        <div class=\"stat-card status-warning\"><div class=\"label\">クールダウン中</div><div class=\"value\">${fmtNum(q.cooldown)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">運営投稿</div><div class=\"value\">${fmtNum(q.system_posted)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">プレイヤー投稿</div><div class=\"value\">${fmtNum(q.player_posted)}件</div></div>\n      `;\n\n      const lottery = lastData.lottery || { pool: 0, draw_at: 0, total_tickets_sold: 0, last_winner_name: '-', last_winner_amount: 0 };\n      document.getElementById('lotteryPool').textContent = fmtYen(lottery.pool);\n      document.getElementById('lotteryCountdown').textContent = fmtDuration((lottery.draw_at || 0) - Date.now());\n      document.getElementById('lotteryTickets').textContent = fmtNum(lottery.total_tickets_sold) + '枚';\n      document.getElementById('lotteryLastWinner').textContent = lottery.last_winner_name +\n        (lottery.last_winner_amount > 0 ? ` (${fmtYen(lottery.last_winner_amount)})` : '');\n\n      const treasure = lastData.treasure || { active: false, reward: 0 };\n      const storage = lastData.storage || { active_renters: 0 };\n      const installments = lastData.installments || { active_plans: 0, total_outstanding: 0 };\n      document.getElementById('miscStatGrid').innerHTML = `\n        <div class=\"stat-card ${treasure.active ? 'status-good' : ''}\">\n          <div class=\"label\">埋蔵金イベント</div>\n          <div class=\"value\">${treasure.active ? ('発生中 (' + fmtYen(treasure.reward) + ')') : '待機中'}</div>\n        </div>\n        <div class=\"stat-card\"><div class=\"label\">倉庫レンタル契約数</div><div class=\"value\">${fmtNum(storage.active_renters)}件</div></div>\n        <div class=\"stat-card\"><div class=\"label\">分割払いプラン数</div><div class=\"value\">${fmtNum(installments.active_plans)}件</div></div>\n        <div class=\"stat-card gold\"><div class=\"label\">分割払い未払い合計</div><div class=\"value\">${fmtYen(installments.total_outstanding)}</div></div>\n      `;\n    }\n\n    function renderSelfCheck() {\n      const sc = (lastData && lastData.selfcheck) || { checked_at: 0, issues: [] };\n      const box = document.getElementById('selfcheckBox');\n      const issues = sc.issues || [];\n      const timeStr = sc.checked_at ? new Date(sc.checked_at).toLocaleString('ja-JP') : '未実行';\n      if (issues.length === 0) {\n        box.className = 'alert-box ok';\n        box.innerHTML = '✅ 異常は検出されていません。<div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      } else {\n        box.className = 'alert-box warn';\n        const items = issues.map(i => '<li>' + String(i).replace(/</g, '&lt;') + '</li>').join('');\n        box.innerHTML = '⚠️ ' + issues.length + ' 件の不整合を検出し、自動修復しました。<ul>' + items + '</ul><div class=\"alert-time\">最終チェック: ' + timeStr + '</div>';\n      }\n    }\n\n    function renderAll() {\n      renderLeaderboard();\n      renderCharts();\n      renderMarket();\n      renderQuestsPanel();\n      renderSelfCheck();\n    }\n\n    let nextRefreshAt = Date.now() + 10000;\n    async function refresh() {\n      try {\n        const res = await fetch('/dashboard.json', { cache: 'no-store' });\n        const data = await res.json();\n        lastData = data;\n        document.getElementById('treasury').textContent = fmtYen(data.treasury || 0);\n        document.getElementById('totalGovDebt').textContent = fmtYen(data.total_gov_debt || 0);\n        const weekly = data.weekly || {};\n        document.getElementById('weeklyTrade').textContent = fmtYen(weekly.trade_volume || 0);\n        document.getElementById('eventBadge').textContent = data.active_event || '通常';\n        document.getElementById('updatedAt').textContent = new Date(data.generated_at || Date.now()).toLocaleString('ja-JP');\n        renderAll();\n        nextRefreshAt = Date.now() + 10000;\n      } catch (e) {\n        document.getElementById('updatedAt').textContent = '取得エラー';\n      }\n    }\n\n    document.getElementById('lbSearch').addEventListener('input', e => { state.lb.search = e.target.value; state.lb.page = 1; renderLeaderboard(); });\n    document.getElementById('lbPrev').addEventListener('click', () => { state.lb.page--; renderLeaderboard(); });\n    document.getElementById('lbNext').addEventListener('click', () => { state.lb.page++; renderLeaderboard(); });\n    bindSortableHeaders('table:has(#lbBody)', state.lb, renderLeaderboard);\n\n    window.addEventListener('resize', renderCharts);\n    setInterval(() => {\n      const secLeft = Math.max(0, Math.round((nextRefreshAt - Date.now()) / 1000));\n      document.getElementById('countdown').textContent = secLeft + '秒後に更新';\n    }, 1000);\n\n    refresh();\n    setInterval(refresh, 10000);\n  </script>\n</body>\n</html>\n";
     private static final LinkedHashMap<String, String> DEFAULT_MESSAGES;
 
     private String resolveCurrencyByCountry(String country) {
@@ -578,7 +506,7 @@ MinecraftBankAPI {
             return string;
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Economy] \u30b5\u30fc\u30d0\u30fc\u306e\u6240\u5728\u5730\u81ea\u52d5\u5224\u5b9a\u306b\u5931\u6557\u3057\u307e\u3057\u305f(currency-unit\u3092\u4f7f\u7528\u3057\u307e\u3059): " + ex.getMessage());
+            this.getLogger().warning("[Economy] サーバーの所在地自動判定に失敗しました(currency-unitを使用します): " + ex.getMessage());
             String string = null;
             return string;
         }
@@ -628,17 +556,17 @@ MinecraftBankAPI {
         set.add(id);
         Player online = Bukkit.getPlayer((UUID)u);
         if (online != null && online.isOnline()) {
-            online.showTitle(Title.title((Component)this.mm("<gold><bold>\u5b9f\u7e3e\u89e3\u653e\uff01</bold></gold>"), (Component)this.mm("<yellow>" + displayName + "</yellow>")));
+            online.showTitle(Title.title((Component)this.mm("<gold><bold>実績解放！</bold></gold>"), (Component)this.mm("<yellow>" + displayName + "</yellow>")));
             this.msgKey(online, "achievement.unlocked", "title", displayName);
             online.playSound(online.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.2f);
         }
-        this.addLog(u, "\u5b9f\u7e3e\u89e3\u653e: " + displayName);
-        this.sendDiscordWebhook("\ud83c\udfc6 **" + (online != null ? online.getName() : Bukkit.getOfflinePlayer((UUID)u).getName()) + "** \u304c\u5b9f\u7e3e\u300c**" + displayName + "**\u300d\u3092\u89e3\u653e\u3057\u307e\u3057\u305f\uff01");
+        this.addLog(u, "実績解放: " + displayName);
+        this.sendDiscordWebhook("🏆 **" + (online != null ? online.getName() : Bukkit.getOfflinePlayer((UUID)u).getName()) + "** が実績「**" + displayName + "**」を解放しました！");
     }
 
     public void onEnable() {
         if (!this.setupEconomy()) {
-            this.getLogger().severe("Vault\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002\u30d7\u30e9\u30b0\u30a4\u30f3\u3092\u505c\u6b62\u3057\u307e\u3059\u3002");
+            this.getLogger().severe("Vaultが見つかりません。プラグインを停止します。");
             this.getServer().getPluginManager().disablePlugin((Plugin)this);
             return;
         }
@@ -673,7 +601,7 @@ MinecraftBankAPI {
             this.db = new PluginDataStore(dbFile);
         }
         catch (SQLException ex) {
-            this.getLogger().severe("SQLite\u30c7\u30fc\u30bf\u30d9\u30fc\u30b9(data.db)\u306e\u521d\u671f\u5316\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002\u30d7\u30e9\u30b0\u30a4\u30f3\u3092\u505c\u6b62\u3057\u307e\u3059: " + ex.getMessage());
+            this.getLogger().severe("SQLiteデータベース(data.db)の初期化に失敗しました。プラグインを停止します: " + ex.getMessage());
             this.getServer().getPluginManager().disablePlugin((Plugin)this);
             return;
         }
@@ -687,9 +615,9 @@ MinecraftBankAPI {
         this.lastSelfCheckIssues = startupIssues;
         this.lastSelfCheckAt = System.currentTimeMillis();
         if (!startupIssues.isEmpty()) {
-            this.getLogger().warning("[\u81ea\u52d5\u4fee\u5fa9] \u8d77\u52d5\u6642\u306e\u30c7\u30fc\u30bf\u81ea\u5df1\u8a3a\u65ad\u3067 " + startupIssues.size() + " \u4ef6\u306e\u4e0d\u6574\u5408\u3092\u691c\u51fa\u3057\u3001\u81ea\u52d5\u4fee\u5fa9\u3057\u307e\u3057\u305f:");
+            this.getLogger().warning("[自動修復] 起動時のデータ自己診断で " + startupIssues.size() + " 件の不整合を検出し、自動修復しました:");
             for (String issue : startupIssues) {
-                this.getLogger().warning("[\u81ea\u52d5\u4fee\u5fa9] " + issue);
+                this.getLogger().warning("[自動修復] " + issue);
             }
             this.saveData();
         }
@@ -701,7 +629,7 @@ MinecraftBankAPI {
         long autosaveTicks = (long)Math.max(1, this.cfgAutosaveIntervalMinutes) * 60L * 20L;
         Bukkit.getScheduler().runTaskTimer((Plugin)this, () -> {
             this.saveData();
-            this.getLogger().info("[\u81ea\u52d5\u4fdd\u5b58] \u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u81ea\u52d5\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002");
+            this.getLogger().info("[自動保存] 経済データを自動保存しました。");
         }, autosaveTicks, autosaveTicks);
         long backupTicks = (long)Math.max(1, this.cfgBackupIntervalMinutes) * 60L * 20L;
         Bukkit.getScheduler().runTaskTimer((Plugin)this, this::backupDatabase, backupTicks, backupTicks);
@@ -742,15 +670,15 @@ MinecraftBankAPI {
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             try {
                 new BankPlaceholderExpansion(this).register();
-                this.getLogger().info("[PlaceholderAPI] \u30d7\u30ec\u30fc\u30b9\u30db\u30eb\u30c0\u30fc\u3092\u767b\u9332\u3057\u307e\u3057\u305f\u3002");
+                this.getLogger().info("[PlaceholderAPI] プレースホルダーを登録しました。");
             }
             catch (Throwable ex) {
-                this.getLogger().warning("[PlaceholderAPI] \u767b\u9332\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + ex.getMessage());
+                this.getLogger().warning("[PlaceholderAPI] 登録に失敗しました: " + ex.getMessage());
             }
         }
         this.getServer().getServicesManager().register(MinecraftBankAPI.class, (Object)this, (Plugin)this, ServicePriority.Normal);
-        this.getLogger().info("[\u516c\u958bAPI] MinecraftBankAPI \u3092ServicesManager\u306b\u767b\u9332\u3057\u307e\u3057\u305f\u3002");
-        this.getLogger().info("\u3010\u8d85\u7d76\u5f37\u5316\u7248\u3011BtoB\u5378\u58f2\u5e02\u5834\u62e1\u5145\u30fb\u5168\u6a5f\u80fd\u5b8c\u5168\u7a3c\u50cd\u30b7\u30b9\u30c6\u30e0\u304c\u8d77\u52d5\u3057\u307e\u3057\u305f\uff01");
+        this.getLogger().info("[公開API] MinecraftBankAPI をServicesManagerに登録しました。");
+        this.getLogger().info("【超絶強化版】BtoB卸売市場拡充・全機能完全稼働システムが起動しました！");
     }
 
     private void loadConfigValues() {
@@ -889,7 +817,7 @@ MinecraftBankAPI {
         c.addDefault("economy.fx-fallback-rate-default", (Object)this.cfgFxFallbackRateDefault);
         c.options().copyDefaults(true);
         c.setComments("economy.currency-country", List.of("Leave this blank to auto-detect the currency from the server's own location (IP-based, checked once on startup).", "Or type an English country name yourself to force it (e.g. \"Japan\", \"United States\", \"Germany\").", "If auto-detection fails and this is blank, 'currency-unit' below is used instead."));
-        c.setComments("economy.currency-unit", List.of("Manual override for the currency symbol/suffix shown after every amount (e.g. \"$\", \"USD\", \"\u5186\").", "Only used when 'currency-country' above is blank or not recognised."));
+        c.setComments("economy.currency-unit", List.of("Manual override for the currency symbol/suffix shown after every amount (e.g. \"$\", \"USD\", \"円\").", "Only used when 'currency-country' above is blank or not recognised."));
         c.setComments("economy.custom-money", List.of("Optional custom currency. Just fill this in to enable it - leave blank to disable.", "Format: 1<symbol>=<amount>  (amount is in the base currency set above)", "Example: \"1V=10\" means 1V is worth 10 of the base currency, and all balances/prices will display in V."));
         this.saveConfig();
         this.cfgBankEstablishCost = c.getDouble("economy.bank-establish-cost", this.cfgBankEstablishCost);
@@ -924,7 +852,7 @@ MinecraftBankAPI {
         String resolvedCountryCurrency = this.resolveCurrencyByCountry(effectiveCountry);
         String string = this.cfgCurrencyUnit = resolvedCountryCurrency != null ? resolvedCountryCurrency : c.getString("economy.currency-unit", this.cfgCurrencyUnit);
         if (cfgCountryInput.isBlank() && resolvedCountryCurrency != null) {
-            this.getLogger().info("[Economy] \u30b5\u30fc\u30d0\u30fc\u306e\u6240\u5728\u5730\u3092\u81ea\u52d5\u5224\u5b9a\u3057\u307e\u3057\u305f: " + effectiveCountry + " \u2192 \u901a\u8ca8\u8868\u8a18: " + resolvedCountryCurrency);
+            this.getLogger().info("[Economy] サーバーの所在地を自動判定しました: " + effectiveCountry + " → 通貨表記: " + resolvedCountryCurrency);
         }
         this.parseCustomMoney(c.getString("economy.custom-money", ""));
         List fxList = c.getStringList("economy.fx-currencies");
@@ -1062,8 +990,8 @@ MinecraftBankAPI {
                 if (online != null && online.isOnline()) {
                     this.msgKey(online, "loan.gov-overdue-penalty", "amount", String.valueOf((long)penalty));
                 }
-                this.addLog(u, "\u56fd\u55b6\u30ed\u30fc\u30f3\u5ef6\u6ede\u91d1 +" + this.fmtCur(penalty));
-                this.sendDiscordWebhook("\u26a0\ufe0f **" + Bukkit.getOfflinePlayer((UUID)u).getName() + "** \u306e\u56fd\u55b6\u30ed\u30fc\u30f3\u304c\u5ef6\u6ede\u3057\u3001" + (long)penalty + "\u5186 \u306e\u5ef6\u6ede\u91d1\u304c\u52a0\u7b97\u3055\u308c\u307e\u3057\u305f\u3002");
+                this.addLog(u, "国営ローン延滞金 +" + this.fmtCur(penalty));
+                this.sendDiscordWebhook("⚠️ **" + Bukkit.getOfflinePlayer((UUID)u).getName() + "** の国営ローンが延滞し、" + (long)penalty + "円 の延滞金が加算されました。");
                 continue;
             }
             if (online == null || !online.isOnline()) continue;
@@ -1085,7 +1013,7 @@ MinecraftBankAPI {
                 if (econ.getBalance(offlineOwner) >= plan.installmentAmount) {
                     econ.withdrawPlayer(offlineOwner, plan.installmentAmount);
                     --plan.installmentsRemaining;
-                    this.addLog(owner, "\u5206\u5272\u6255\u3044: " + plan.description + " -" + this.fmtCurPrecise(plan.installmentAmount));
+                    this.addLog(owner, "分割払い: " + plan.description + " -" + this.fmtCurPrecise(plan.installmentAmount));
                     if (plan.installmentsRemaining <= 0) {
                         it.remove();
                         if (online == null || !online.isOnline()) continue;
@@ -1124,12 +1052,12 @@ MinecraftBankAPI {
             this.collateralLender.remove(u);
             this.addScore(u, -30);
             Player online = Bukkit.getPlayer((UUID)u);
-            String string = itemName = forfeited != null ? forfeited.getType().name() : "\u30a2\u30a4\u30c6\u30e0";
+            String string = itemName = forfeited != null ? forfeited.getType().name() : "アイテム";
             if (online != null && online.isOnline()) {
                 this.msgKey(online, "collateral.seized", "item", itemName);
             }
-            this.addLog(u, "\u62c5\u4fdd\u6ca1\u53ce: " + itemName);
-            this.sendDiscordWebhook("\u26a0\ufe0f **" + Bukkit.getOfflinePlayer((UUID)u).getName() + "** \u306e\u62c5\u4fdd " + itemName + " \u304c\u8fd4\u6e08\u671f\u9650\u8d85\u904e\u306b\u3088\u308a\u6ca1\u53ce\u3055\u308c\u307e\u3057\u305f\u3002");
+            this.addLog(u, "担保没収: " + itemName);
+            this.sendDiscordWebhook("⚠️ **" + Bukkit.getOfflinePlayer((UUID)u).getName() + "** の担保 " + itemName + " が返済期限超過により没収されました。");
         }
     }
 
@@ -1152,7 +1080,7 @@ MinecraftBankAPI {
                 if (sellerOnline != null && sellerOnline.isOnline()) {
                     this.msgKey(sellerOnline, "auction.no-bid-returned", "item", item.getType().name());
                 }
-                this.addLog(seller, "\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u6d41\u672d: " + item.getType().name());
+                this.addLog(seller, "オークション流札: " + item.getType().name());
                 this.clearAuctionEntry(auctionId);
                 continue;
             }
@@ -1216,20 +1144,20 @@ MinecraftBankAPI {
         }
         this.auctionBid.put(auctionId, amount);
         this.auctionBidder.put(auctionId, u);
-        this.addLog(u, "\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u5165\u672d: " + auctionedItem.getType().name() + " -" + this.fmtCur(amount) + (online == null ? "(Web/\u30aa\u30d5\u30e9\u30a4\u30f3)" : ""));
+        this.addLog(u, "オークション入札: " + auctionedItem.getType().name() + " -" + this.fmtCur(amount) + (online == null ? "(Web/オフライン)" : ""));
         if (online != null) {
             this.msgKey(online, "auction.bid-placed", "item", auctionedItem.getType().name(), "amount", String.valueOf((long)amount));
             online.playSound(online.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-            this.sendToast(online, "\u5165\u672d\u6210\u529f", auctionedItem.getType().name() + " \u306b " + (long)amount + "\u5186 \u3067\u5165\u672d");
+            this.sendToast(online, "入札成功", auctionedItem.getType().name() + " に " + (long)amount + "円 で入札");
         }
-        this.sendDiscordWebhook("\ud83d\udcb7 **" + p.getName() + "** \u304c **" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "** \u306e\u51fa\u54c1(" + auctionedItem.getType().name() + ")\u306b " + (long)amount + "\u5186 \u3067\u5165\u672d\u3057\u307e\u3057\u305f\u3002");
+        this.sendDiscordWebhook("💷 **" + p.getName() + "** が **" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "** の出品(" + auctionedItem.getType().name() + ")に " + (long)amount + "円 で入札しました。");
     }
 
     private void notifyAuctionOutbid(UUID prevBidder, ItemStack auctionedItem, double refundAmount) {
         Player prevOnline = Bukkit.getPlayer((UUID)prevBidder);
         if (prevOnline != null && prevOnline.isOnline()) {
             this.msgKey(prevOnline, "auction.outbid-refund", "item", auctionedItem.getType().name(), "amount", String.valueOf((long)refundAmount));
-            this.sendToast(prevOnline, "\u5165\u672d\u66f4\u65b0", auctionedItem.getType().name() + " \u304c\u4ed6\u306e\u4eba\u306b\u5165\u672d\u3055\u308c\u307e\u3057\u305f");
+            this.sendToast(prevOnline, "入札更新", auctionedItem.getType().name() + " が他の人に入札されました");
             prevOnline.playSound(prevOnline.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 0.7f);
         } else {
             this.queueAuctionOfflineNotice(prevBidder, auctionedItem.getType().name(), refundAmount);
@@ -1247,16 +1175,16 @@ MinecraftBankAPI {
         Player sellerOnline = Bukkit.getPlayer((UUID)seller);
         if (sellerOnline != null && sellerOnline.isOnline()) {
             this.msgKey(sellerOnline, "auction.sold", "item", item.getType().name(), "amount", String.valueOf((long)finalBid), "fee", String.valueOf((long)fee), "net", String.valueOf((long)proceeds));
-            this.sendToast(sellerOnline, "\u843d\u672d\u6210\u7acb", item.getType().name() + " / +" + this.fmtCur(proceeds));
+            this.sendToast(sellerOnline, "落札成立", item.getType().name() + " / +" + this.fmtCur(proceeds));
         }
         if ((winnerOnline = Bukkit.getPlayer((UUID)winner)) != null && winnerOnline.isOnline()) {
             this.msgKey(winnerOnline, "auction.won", "item", item.getType().name(), "amount", String.valueOf((long)finalBid));
-            this.sendToast(winnerOnline, "\u843d\u672d", item.getType().name() + " \u304c\u53d7\u53d6\u7bb1\u306b\u5c4a\u304d\u307e\u3057\u305f\uff01");
+            this.sendToast(winnerOnline, "落札", item.getType().name() + " が受取箱に届きました！");
         }
-        this.addLog(seller, "\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u843d\u672d\u6210\u7acb: " + item.getType().name() + " +" + this.fmtCur(proceeds));
-        this.addLog(winner, "\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u843d\u672d: " + item.getType().name() + " -" + this.fmtCur(finalBid));
-        this.sendDiscordWebhook("\ud83d\udd28 **" + Bukkit.getOfflinePlayer((UUID)winner).getName() + "** \u304c **" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "** \u306e\u51fa\u54c1(" + item.getType().name() + ")\u3092 " + (long)finalBid + "\u5186 \u3067\u843d\u672d\u3057\u307e\u3057\u305f\u3002");
-        this.broadcastNews("<gold><bold>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u3011</bold></gold> <white>" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "</white>\u306e<white>" + item.getType().name() + "</white>\u304c<yellow>" + Bukkit.getOfflinePlayer((UUID)winner).getName() + "</yellow>\u306b\u3088\u308a<gold>" + (long)finalBid + "\u5186</gold>\u3060\uff01");
+        this.addLog(seller, "オークション落札成立: " + item.getType().name() + " +" + this.fmtCur(proceeds));
+        this.addLog(winner, "オークション落札: " + item.getType().name() + " -" + this.fmtCur(finalBid));
+        this.sendDiscordWebhook("🔨 **" + Bukkit.getOfflinePlayer((UUID)winner).getName() + "** が **" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "** の出品(" + item.getType().name() + ")を " + (long)finalBid + "円 で落札しました。");
+        this.broadcastNews("<gold><bold>【オークション】</bold></gold> <white>" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "</white>の<white>" + item.getType().name() + "</white>が<yellow>" + Bukkit.getOfflinePlayer((UUID)winner).getName() + "</yellow>により<gold>" + (long)finalBid + "円</gold>だ！");
         this.clearAuctionEntry(auctionId);
     }
 
@@ -1345,20 +1273,20 @@ MinecraftBankAPI {
             return 0.0;
         }
         double total = (switch (item.getType()) {
-            case Material.NETHERITE_INGOT -> 8000.0;
-            case Material.NETHERITE_BLOCK -> 72000.0;
-            case Material.DIAMOND -> 1000.0;
-            case Material.DIAMOND_BLOCK -> 9000.0;
-            case Material.EMERALD -> 500.0;
-            case Material.EMERALD_BLOCK -> 4500.0;
-            case Material.GOLD_INGOT -> 200.0;
-            case Material.GOLD_BLOCK -> 1800.0;
-            case Material.IRON_INGOT -> 50.0;
-            case Material.TOTEM_OF_UNDYING -> 20000.0;
-            case Material.ENCHANTED_GOLDEN_APPLE -> 15000.0;
-            case Material.NETHER_STAR -> 25000.0;
-            case Material.ELYTRA -> 15000.0;
-            case Material.ENCHANTED_BOOK -> 0.0;
+            case NETHERITE_INGOT -> 8000.0;
+            case NETHERITE_BLOCK -> 72000.0;
+            case DIAMOND -> 1000.0;
+            case DIAMOND_BLOCK -> 9000.0;
+            case EMERALD -> 500.0;
+            case EMERALD_BLOCK -> 4500.0;
+            case GOLD_INGOT -> 200.0;
+            case GOLD_BLOCK -> 1800.0;
+            case IRON_INGOT -> 50.0;
+            case TOTEM_OF_UNDYING -> 20000.0;
+            case ENCHANTED_GOLDEN_APPLE -> 15000.0;
+            case NETHER_STAR -> 25000.0;
+            case ELYTRA -> 15000.0;
+            case ENCHANTED_BOOK -> 0.0;
             default -> 0.0;
         }) * (double)item.getAmount();
         ItemMeta itemMeta = item.getItemMeta();
@@ -1378,14 +1306,14 @@ MinecraftBankAPI {
 
     private void sendPeriodicEconomyReport() {
         StringBuilder report = new StringBuilder();
-        report.append("<gold><bold>========== \ud83d\udcca \u7d4c\u6e08\u30ec\u30dd\u30fc\u30c8 (\u76f4\u8fd1").append(this.cfgReportIntervalDays).append("\u65e5\u9593) ==========</bold></gold>\n");
-        report.append("<gray>\u7dcf\u53d6\u5f15\u984d(\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30fb\u878d\u8cc7\u306e\u5408\u8a08):</gray> <green>").append((long)this.weeklyTradeVolume).append("\u5186</green>\n");
-        report.append("<gray>\u56fd\u5eab\u6b8b\u9ad8:</gray> <gold>").append((long)this.treasury).append("\u5186</gold>");
+        report.append("<gold><bold>========== 📊 経済レポート (直近").append(this.cfgReportIntervalDays).append("日間) ==========</bold></gold>\n");
+        report.append("<gray>総取引額(オークション・融資の合計):</gray> <green>").append((long)this.weeklyTradeVolume).append("円</green>\n");
+        report.append("<gray>国庫残高:</gray> <gold>").append((long)this.treasury).append("円</gold>");
         String text = report.toString();
         for (String line : text.split("\n")) {
             this.broadcastNews(line);
         }
-        this.sendDiscordWebhook("\ud83d\udcca **\u9031\u6b21\u7d4c\u6e08\u30ec\u30dd\u30fc\u30c8**\n\u7dcf\u53d6\u5f15\u984d: " + (long)this.weeklyTradeVolume + "\u5186\n\u56fd\u5eab\u6b8b\u9ad8: " + this.fmtCur(this.treasury));
+        this.sendDiscordWebhook("📊 **週次経済レポート**\n総取引額: " + (long)this.weeklyTradeVolume + "円\n国庫残高: " + this.fmtCur(this.treasury));
         this.weeklyTradeVolume = 0.0;
         this.saveData();
     }
@@ -1395,17 +1323,17 @@ MinecraftBankAPI {
     }
 
     private double economyMultiplier() {
-        if (this.economyEventActive("\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5")) {
+        if (this.economyEventActive("黄金ラッシュ")) {
             return 1.1;
         }
-        if (this.economyEventActive("\u51ac\u306e\u6642\u4ee3")) {
+        if (this.economyEventActive("冬の時代")) {
             return 0.9;
         }
         return 1.0;
     }
 
     private double effectiveWorldStockFeeRate() {
-        return this.economyEventActive("\u624b\u6570\u6599\u9ad8\u9a30") ? this.cfgWorldStockFeeRate * 2.0 : this.cfgWorldStockFeeRate;
+        return this.economyEventActive("手数料高騰") ? this.cfgWorldStockFeeRate * 2.0 : this.cfgWorldStockFeeRate;
     }
 
     private double effectiveWorldStockFeeRate(UUID u) {
@@ -1416,30 +1344,30 @@ MinecraftBankAPI {
         long duration = 600000L;
         if (type.equals("random")) {
             type = switch (this.economyRandom.nextInt(4)) {
-                case 0 -> "\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5";
-                case 1 -> "\u624b\u6570\u6599\u9ad8\u9a30";
-                case 2 -> "\u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc";
-                default -> "\u51ac\u306e\u6642\u4ee3";
+                case 0 -> "黄金ラッシュ";
+                case 1 -> "手数料高騰";
+                case 2 -> "ボーナス支給デー";
+                default -> "冬の時代";
             };
         }
         this.activeEconomyEvent = type;
         this.activeEconomyEventUntil = System.currentTimeMillis() + duration;
         String text = switch (type) {
-            case "\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5" -> this.getMsg("event.boom", new String[0]);
-            case "\u624b\u6570\u6599\u9ad8\u9a30" -> this.getMsg("event.tax", new String[0]);
-            case "\u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc" -> {
+            case "黄金ラッシュ" -> this.getMsg("event.boom", new String[0]);
+            case "手数料高騰" -> this.getMsg("event.tax", new String[0]);
+            case "ボーナス支給デー" -> {
                 for (Player online : Bukkit.getOnlinePlayers()) {
                     double bonus = 5000.0;
                     econ.depositPlayer((OfflinePlayer)online, bonus);
-                    this.addLog(online.getUniqueId(), "\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u30dc\u30fc\u30ca\u30b9 +" + this.fmtCur(bonus));
-                    this.sendToast(online, "\u30dc\u30fc\u30ca\u30b9\u652f\u7d66", "+5,000\u5186 \u304c\u652f\u7d66\u3055\u308c\u307e\u3057\u305f\uff01");
+                    this.addLog(online.getUniqueId(), "経済イベントボーナス +" + this.fmtCur(bonus));
+                    this.sendToast(online, "ボーナス支給", "+5,000円 が支給されました！");
                 }
                 yield this.getMsg("event.bonus", new String[0]);
             }
             default -> this.getMsg("event.recession", new String[0]);
         };
         this.broadcastNews(text);
-        this.sendDiscordWebhook("\ud83d\udce2 " + MiniMessage.miniMessage().stripTags(text));
+        this.sendDiscordWebhook("📢 " + MiniMessage.miniMessage().stripTags(text));
         this.saveData();
     }
 
@@ -1464,10 +1392,10 @@ MinecraftBankAPI {
             return;
         }
         Scoreboard board = sm.getNewScoreboard();
-        Objective obj = board.registerNewObjective("keizai", Criteria.DUMMY, this.mm("<gold><bold>\u7d4c\u6e08\u30b9\u30c6\u30fc\u30bf\u30b9</bold></gold>"));
+        Objective obj = board.registerNewObjective("keizai", Criteria.DUMMY, this.mm("<gold><bold>経済ステータス</bold></gold>"));
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
         UUID u = p.getUniqueId();
-        String[] lines = new String[]{"\u00a77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500", "\u00a7e\u6240\u6301\u91d1 \u00a7f" + this.fmtCur(econ.getBalance((OfflinePlayer)p)), "\u00a7b\u53e3\u5ea7 \u00a7f" + this.fmtCur(this.personalBank.getOrDefault(u, 0.0)), "\u00a7d\u4fe1\u7528 \u00a7f" + this.getScore(u), "\u00a76\u56fd\u5eab \u00a7f" + this.fmtCur(this.treasury), "\u00a77\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500"};
+        String[] lines = new String[]{"§7────────────", "§e所持金 §f" + this.fmtCur(econ.getBalance((OfflinePlayer)p)), "§b口座 §f" + this.fmtCur(this.personalBank.getOrDefault(u, 0.0)), "§d信用 §f" + this.getScore(u), "§6国庫 §f" + this.fmtCur(this.treasury), "§7────────────"};
         int score = lines.length;
         for (String line : lines) {
             obj.getScore(line).setScore(score--);
@@ -1479,17 +1407,17 @@ MinecraftBankAPI {
         if (p == null || !p.isOnline()) {
             return;
         }
-        p.sendActionBar(this.mm("<gold><bold>" + title + "</bold></gold> <gray>\u00bb</gray> <white>" + message + "</white>"));
+        p.sendActionBar(this.mm("<gold><bold>" + title + "</bold></gold> <gray>»</gray> <white>" + message + "</white>"));
         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.15f);
     }
 
     private void openTutorialGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tTutorial);
-        gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>\u7d4c\u6e08\u306e\u306f\u3058\u3081\u304b\u305f</bold></gold>", "<gray>\u307e\u305a\u306f\u500b\u4eba\u53e3\u5ea7\u3078\u9810\u91d1\u3057\u3066\u307f\u307e\u3057\u3087\u3046\u3002</gray>"));
-        gui.setItem(10, this.createItem(Material.CHEST, "<green>1. \u500b\u4eba\u53e3\u5ea7</green>", "<gray>\u304a\u91d1\u3092\u5b89\u5168\u306b\u9810\u3051\u5165\u308c\u30fb\u5f15\u304d\u51fa\u305b\u307e\u3059\u3002</gray>"));
-        gui.setItem(14, this.createItem(Material.ITEM_FRAME, "<yellow>2. \u30aa\u30fc\u30af\u30b7\u30e7\u30f3</yellow>", "<gray>\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u304b\u3089\u597d\u304d\u306a\u30a2\u30a4\u30c6\u30e0\u3092\u51fa\u54c1\u3067\u304d\u307e\u3059\u3002</gray>"));
-        gui.setItem(22, this.createItem(Material.LIME_DYE, "<green><bold>\u30c1\u30e5\u30fc\u30c8\u30ea\u30a2\u30eb\u5b8c\u4e86</bold></green>", "<gray>\u6b21\u56de\u304b\u3089\u81ea\u52d5\u8868\u793a\u3057\u307e\u305b\u3093\u3002</gray>"));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u9589\u3058\u308b</gray>", new String[0]));
+        gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>経済のはじめかた</bold></gold>", "<gray>まずは個人口座へ預金してみましょう。</gray>"));
+        gui.setItem(10, this.createItem(Material.CHEST, "<green>1. 個人口座</green>", "<gray>お金を安全に預け入れ・引き出せます。</gray>"));
+        gui.setItem(14, this.createItem(Material.ITEM_FRAME, "<yellow>2. オークション</yellow>", "<gray>インベントリから好きなアイテムを出品できます。</gray>"));
+        gui.setItem(22, this.createItem(Material.LIME_DYE, "<green><bold>チュートリアル完了</bold></green>", "<gray>次回から自動表示しません。</gray>"));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>閉じる</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -1511,11 +1439,11 @@ MinecraftBankAPI {
             String stamp = new SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date());
             File destFile = new File(backupsDir, "data-" + stamp + ".db");
             Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            this.getLogger().info("[\u81ea\u52d5\u30d0\u30c3\u30af\u30a2\u30c3\u30d7] " + destFile.getName() + " \u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002");
+            this.getLogger().info("[自動バックアップ] " + destFile.getName() + " を作成しました。");
             this.pruneOldBackups(backupsDir);
         }
         catch (IOException e) {
-            this.getLogger().warning("[\u81ea\u52d5\u30d0\u30c3\u30af\u30a2\u30c3\u30d7] \u30d0\u30c3\u30af\u30a2\u30c3\u30d7\u306e\u4f5c\u6210\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + e.getMessage());
+            this.getLogger().warning("[自動バックアップ] バックアップの作成に失敗しました: " + e.getMessage());
         }
     }
 
@@ -1528,7 +1456,7 @@ MinecraftBankAPI {
         int toDelete = files.length - this.cfgBackupRetentionCount;
         for (int i = 0; i < toDelete; ++i) {
             if (files[i].delete()) continue;
-            this.getLogger().warning("[\u81ea\u52d5\u30d0\u30c3\u30af\u30a2\u30c3\u30d7] \u53e4\u3044\u30d0\u30c3\u30af\u30a2\u30c3\u30d7\u306e\u524a\u9664\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + files[i].getName());
+            this.getLogger().warning("[自動バックアップ] 古いバックアップの削除に失敗しました: " + files[i].getName());
         }
     }
 
@@ -1540,15 +1468,15 @@ MinecraftBankAPI {
             return;
         }
         this.saveData();
-        this.getLogger().warning("[\u5b9a\u671f\u81ea\u5df1\u8a3a\u65ad] " + issues.size() + " \u4ef6\u306e\u4e0d\u6574\u5408\u3092\u691c\u51fa\u3057\u3001\u81ea\u52d5\u4fee\u5fa9\u3057\u307e\u3057\u305f:");
+        this.getLogger().warning("[定期自己診断] " + issues.size() + " 件の不整合を検出し、自動修復しました:");
         for (String issue : issues) {
-            this.getLogger().warning("[\u5b9a\u671f\u81ea\u5df1\u8a3a\u65ad] " + issue);
+            this.getLogger().warning("[定期自己診断] " + issue);
         }
-        StringBuilder sb = new StringBuilder("\u26a0\ufe0f **\u5b9a\u671f\u81ea\u5df1\u8a3a\u65ad**: " + issues.size() + " \u4ef6\u306e\u4e0d\u6574\u5408\u3092\u691c\u51fa\u3057\u3001\u81ea\u52d5\u4fee\u5fa9\u3057\u307e\u3057\u305f\u3002\n");
+        StringBuilder sb = new StringBuilder("⚠️ **定期自己診断**: " + issues.size() + " 件の不整合を検出し、自動修復しました。\n");
         int shown = 0;
         for (String issue : issues) {
             if (shown >= 10) {
-                sb.append("...\u4ed6 ").append(issues.size() - shown).append(" \u4ef6");
+                sb.append("...他 ").append(issues.size() - shown).append(" 件");
                 break;
             }
             sb.append("- ").append(issue).append("\n");
@@ -1561,7 +1489,7 @@ MinecraftBankAPI {
         this.saveData();
         if (this.webDashboardServer != null) {
             this.webDashboardServer.stop(0);
-            this.getLogger().info("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] HTTP\u30b5\u30fc\u30d0\u30fc\u3092\u505c\u6b62\u3057\u307e\u3057\u305f\u3002");
+            this.getLogger().info("[Webダッシュボード] HTTPサーバーを停止しました。");
         }
         this.getServer().getServicesManager().unregister(MinecraftBankAPI.class, (Object)this);
         if (this.db != null) {
@@ -1598,7 +1526,7 @@ MinecraftBankAPI {
             c.set(prefix, null);
         }
         this.saveConfig();
-        this.getLogger().info("[SQLite\u79fb\u884c] config.yml\u306e\u30d7\u30ec\u30a4\u30e4\u30fc/\u7d4c\u6e08\u30c7\u30fc\u30bf(" + MANAGED_DATA_PREFIXES.size() + "\u500b\u306e\u30d7\u30ec\u30d5\u30a3\u30c3\u30af\u30b9)\u3092data.db(SQLite)\u3078\u79fb\u884c\u3057\u307e\u3057\u305f\u3002\u4eca\u5f8c\u306fdata.db\u304c\u6b63\u3068\u306a\u308a\u3001config.yml\u306b\u306f\u8a2d\u5b9a\u9805\u76ee\u306e\u307f\u304c\u6b8b\u308a\u307e\u3059\u3002");
+        this.getLogger().info("[SQLite移行] config.ymlのプレイヤー/経済データ(" + MANAGED_DATA_PREFIXES.size() + "個のプレフィックス)をdata.db(SQLite)へ移行しました。今後はdata.dbが正となり、config.ymlには設定項目のみが残ります。");
     }
 
     private void legacyImportLoadDataFromYaml() {
@@ -1854,7 +1782,7 @@ MinecraftBankAPI {
                 this.guarantorProposalTime.put(UUID.fromString(key), c.getLong("guarantor_proposal_time." + key));
             }
         }
-        this.activeEconomyEvent = c.getString("economy-event.name", "\u901a\u5e38");
+        this.activeEconomyEvent = c.getString("economy-event.name", "通常");
         this.activeEconomyEventUntil = c.getLong("economy-event.until", 0L);
         this.tutorialSeen.addAll(c.getStringList("tutorial-seen").stream().map(UUID::fromString).toList());
         if (c.getConfigurationSection("world_stocks") != null) {
@@ -1980,7 +1908,7 @@ MinecraftBankAPI {
                     ((MerchantDeal)deal2).stockRemaining = c.getInt((String)base + "stock_remaining", 0);
                     this.merchantDeals.add((MerchantDeal)deal2);
                 }
-                catch (IllegalArgumentException deal2) {}
+                catch (IllegalArgumentException ex) {}
             }
         }
         this.vipShopRefreshAt = c.getLong("vip_shop.refresh_at", 0L);
@@ -2314,7 +2242,7 @@ MinecraftBankAPI {
         for (String key : this.db.getKeys("guarantor_proposal_time")) {
             this.guarantorProposalTime.put(UUID.fromString(key), this.db.getLong("guarantor_proposal_time", key, 0L));
         }
-        this.activeEconomyEvent = this.db.getString("economy-event", "name", "\u901a\u5e38");
+        this.activeEconomyEvent = this.db.getString("economy-event", "name", "通常");
         this.activeEconomyEventUntil = this.db.getLong("economy-event", "until", 0L);
         this.tutorialSeen.addAll(this.db.getStringList("tutorial-seen", "_").stream().map(UUID::fromString).toList());
         for (String uuidKey : this.db.getKeys("world_stocks")) {
@@ -2409,7 +2337,7 @@ MinecraftBankAPI {
                 ((MerchantDeal)deal2).stockRemaining = this.db.getInt("traveling_merchant", base + "stock_remaining", 0);
                 this.merchantDeals.add((MerchantDeal)deal2);
             }
-            catch (IllegalArgumentException deal2) {}
+            catch (IllegalArgumentException ex) {}
         }
         this.vipShopRefreshAt = this.db.getLong("vip_shop", "refresh_at", 0L);
         for (String key : this.db.getKeys("vip_shop", "deals")) {
@@ -2942,7 +2870,7 @@ MinecraftBankAPI {
         int s = Math.max(0, Math.min(800, this.getScore(u) + amount));
         this.creditScore.put(u, s);
         if (s >= 700) {
-            this.unlockAchievement(u, "credit_master", "\u4fe1\u7528\u306e\u9451");
+            this.unlockAchievement(u, "credit_master", "信用の鑑");
         }
     }
 
@@ -3070,13 +2998,13 @@ MinecraftBankAPI {
 
     private String worldStockNativePrice(WorldStockQuote q) {
         if (q.currency == null || q.currency.equalsIgnoreCase("JPY")) {
-            return String.format("%,.2f", q.price) + "\u5186";
+            return String.format("%,.2f", q.price) + "円";
         }
         return String.format("%,.2f", q.price) + " " + q.currency;
     }
 
     private String worldStockNativeAmountLabel(WorldStockQuote q, int qty) {
-        return this.worldStockNativePrice(q) + "/\u682a";
+        return this.worldStockNativePrice(q) + "/株";
     }
 
     private double worldStockPositionValue(WorldStockQuote q, double avgCostFallback, int qty) {
@@ -3085,15 +3013,15 @@ MinecraftBankAPI {
     }
 
     private String worldStockPnlLine(double pnl) {
-        return pnl >= 0.0 ? "<green>\u8a55\u4fa1\u640d\u76ca: +" + (long)pnl + "\u5186</green>" : "<red>\u8a55\u4fa1\u640d\u76ca: " + (long)pnl + "\u5186</red>";
+        return pnl >= 0.0 ? "<green>評価損益: +" + (long)pnl + "円</green>" : "<red>評価損益: " + (long)pnl + "円</red>";
     }
 
     private String worldStockPriceLine(String prefix, WorldStockQuote q) {
         double yen = this.worldStockYenPrice(q);
         if (q.currency == null || q.currency.equalsIgnoreCase("JPY")) {
-            return prefix + "<white>" + String.format("%,.2f", q.price) + "\u5186</white>";
+            return prefix + "<white>" + String.format("%,.2f", q.price) + "円</white>";
         }
-        return prefix + "<white>" + String.format("%,.2f", q.price) + " " + q.currency + "</white> <gray>(\u2248 " + this.fmtYenAmount(yen) + ")</gray>";
+        return prefix + "<white>" + String.format("%,.2f", q.price) + " " + q.currency + "</white> <gray>(≈ " + this.fmtYenAmount(yen) + ")</gray>";
     }
 
     private void executeWorldStockBuy(OfflinePlayer actor, String symbol, int qty, InvestmentFund fund) {
@@ -3151,11 +3079,11 @@ MinecraftBankAPI {
             this.msgKey(online, "worldstock.bought", "symbol", symbol, "qty", String.valueOf(qty), "amount", String.format("%.2f", totalCost), "fee", String.format("%.2f", totalFee), "native", this.worldStockNativeAmountLabel(q, qty));
         }
         if (fund != null) {
-            this.addLog(actorU, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d: " + symbol + " \u3092" + qty + "\u682a\u8cfc\u5165 -" + (long)totalCost + "\u5186(\u624b\u6570\u6599\u8fbc\u307f\u3001\u30d5\u30a1\u30f3\u30c9\u8cc7\u91d1)");
-            this.sendDiscordWebhook("\ud83d\udcca **" + actor.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3067\u73fe\u5b9f\u682a **" + symbol + "** \u3092" + qty + "\u682a\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\u4fa1\u683c: " + String.format("%.2f", totalCost) + "\u5186(\u624b\u6570\u6599\u8fbc\u307f)");
+            this.addLog(actorU, "共同投資ファンド「" + fund.name + "」: " + symbol + " を" + qty + "株購入 -" + (long)totalCost + "円(手数料込み、ファンド資金)");
+            this.sendDiscordWebhook("📊 **" + actor.getName() + "** が共同投資ファンド「" + fund.name + "」で現実株 **" + symbol + "** を" + qty + "株購入しました。価格: " + String.format("%.2f", totalCost) + "円(手数料込み)");
         } else {
-            this.addLog(actorU, "\u4e16\u754c\u682a\u5f0f\u5e02\u5834: " + symbol + " \u3092" + qty + "\u682a\u8cfc\u5165 -" + (long)totalCost + "\u5186(\u624b\u6570\u6599\u8fbc\u307f)" + (online == null ? "(Web/\u30aa\u30d5\u30e9\u30a4\u30f3)" : ""));
-            this.sendDiscordWebhook("\ud83d\udcc8 **" + actor.getName() + "** \u304c\u73fe\u5b9f\u682a **" + symbol + "** \u3092" + qty + "\u682a\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\u4fa1\u683c: " + String.format("%.2f", totalCost) + "\u5186(\u624b\u6570\u6599\u8fbc\u307f)");
+            this.addLog(actorU, "世界株式市場: " + symbol + " を" + qty + "株購入 -" + (long)totalCost + "円(手数料込み)" + (online == null ? "(Web/オフライン)" : ""));
+            this.sendDiscordWebhook("📈 **" + actor.getName() + "** が現実株 **" + symbol + "** を" + qty + "株購入しました。価格: " + String.format("%.2f", totalCost) + "円(手数料込み)");
         }
         if (online != null) {
             online.playSound(online.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
@@ -3225,11 +3153,11 @@ MinecraftBankAPI {
         this.recordWorldStockTrade(trackedUuid, symbol, totalProceeds, bulkProfit);
         this.msgKey(actor, "worldstock.sold", "symbol", symbol, "qty", String.valueOf(qty), "amount", String.format("%.2f", totalProceeds), "pnl", (bulkProfit >= 0.0 ? "+" : "") + String.format("%.2f", bulkProfit), "fee", String.format("%.2f", totalFee), "native", this.worldStockNativeAmountLabel(q, qty));
         if (fund != null) {
-            this.addLog(actorU, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d: " + symbol + " \u3092" + qty + "\u682a\u58f2\u5374 +" + (long)totalProceeds + "\u5186(\u624b\u6570\u6599\u8fbc\u307f\u3001\u30d5\u30a1\u30f3\u30c9\u8cc7\u91d1)");
-            this.sendDiscordWebhook("\ud83d\udcca **" + actor.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3067\u73fe\u5b9f\u682a **" + symbol + "** \u3092" + qty + "\u682a\u58f2\u5374\u3057\u307e\u3057\u305f\u3002\u58f2\u5374\u984d: " + String.format("%.2f", totalProceeds) + "\u5186(\u624b\u6570\u6599\u8fbc\u307f)");
+            this.addLog(actorU, "共同投資ファンド「" + fund.name + "」: " + symbol + " を" + qty + "株売却 +" + (long)totalProceeds + "円(手数料込み、ファンド資金)");
+            this.sendDiscordWebhook("📊 **" + actor.getName() + "** が共同投資ファンド「" + fund.name + "」で現実株 **" + symbol + "** を" + qty + "株売却しました。売却額: " + String.format("%.2f", totalProceeds) + "円(手数料込み)");
         } else {
-            this.addLog(actorU, "\u4e16\u754c\u682a\u5f0f\u5e02\u5834: " + symbol + " \u3092" + qty + "\u682a\u58f2\u5374 +" + (long)totalProceeds + "\u5186(\u624b\u6570\u6599\u8fbc\u307f)");
-            this.sendDiscordWebhook("\ud83d\udcc9 **" + actor.getName() + "** \u304c\u73fe\u5b9f\u682a **" + symbol + "** \u3092" + qty + "\u682a\u58f2\u5374\u3057\u307e\u3057\u305f\u3002\u58f2\u5374\u984d: " + String.format("%.2f", totalProceeds) + "\u5186(\u624b\u6570\u6599\u8fbc\u307f)");
+            this.addLog(actorU, "世界株式市場: " + symbol + " を" + qty + "株売却 +" + (long)totalProceeds + "円(手数料込み)");
+            this.sendDiscordWebhook("📉 **" + actor.getName() + "** が現実株 **" + symbol + "** を" + qty + "株売却しました。売却額: " + String.format("%.2f", totalProceeds) + "円(手数料込み)");
         }
         actor.playSound(actor.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
         if (fund != null) {
@@ -3343,9 +3271,9 @@ MinecraftBankAPI {
         this.removeMaterialFromInventory(p, mat, qty);
         econ.depositPlayer((OfflinePlayer)p, total);
         this.applyResourceTradeImpact(mat, qty, false);
-        this.addLog(u, "\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7: " + this.resourceDisplayName(mat) + " \u3092" + qty + "\u500b\u58f2\u5374 +" + this.fmtCur(total));
+        this.addLog(u, "資源相場ショップ: " + this.resourceDisplayName(mat) + " を" + qty + "個売却 +" + this.fmtCur(total));
         if (qty >= 16) {
-            this.sendDiscordWebhook("\ud83d\udce6 **" + p.getName() + "** \u304c\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u3067 **" + this.resourceDisplayName(mat) + "** \u3092" + qty + "\u500b\u58f2\u5374\u3057\u307e\u3057\u305f\u3002\uff08+" + (long)total + "\u5186\uff09");
+            this.sendDiscordWebhook("📦 **" + p.getName() + "** が資源相場ショップで **" + this.resourceDisplayName(mat) + "** を" + qty + "個売却しました。（+" + (long)total + "円）");
         }
         this.msgKey(p, "resourceshop.sold", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", String.format("%.2f", total));
         this.clickSound(p);
@@ -3368,9 +3296,9 @@ MinecraftBankAPI {
         }
         this.applyResourceTradeImpact(mat, qty, true);
         this.applyResourcePersonalImpact(u, mat, qty);
-        this.addLog(u, "\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7: " + this.resourceDisplayName(mat) + " \u3092" + qty + "\u500b\u8cfc\u5165 -" + this.fmtCur(total));
+        this.addLog(u, "資源相場ショップ: " + this.resourceDisplayName(mat) + " を" + qty + "個購入 -" + this.fmtCur(total));
         if (qty >= 16) {
-            this.sendDiscordWebhook("\ud83d\udce6 **" + p.getName() + "** \u304c\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u3067 **" + this.resourceDisplayName(mat) + "** \u3092" + qty + "\u500b\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08-" + (long)total + "\u5186\uff09");
+            this.sendDiscordWebhook("📦 **" + p.getName() + "** が資源相場ショップで **" + this.resourceDisplayName(mat) + "** を" + qty + "個購入しました。（-" + (long)total + "円）");
         }
         this.msgKey(p, "resourceshop.bought", "material", this.resourceDisplayName(mat), "qty", String.valueOf(qty), "amount", String.format("%.2f", total));
         this.clickSound(p);
@@ -3391,9 +3319,9 @@ MinecraftBankAPI {
         this.lotteryPool += toPool;
         this.treasury += toTreasury;
         this.lotteryTickets.merge(u, qty, Integer::sum);
-        this.addLog(u, "\u5b9d\u304f\u3058 " + qty + "\u679a\u8cfc\u5165 -" + this.fmtCur(totalCost));
+        this.addLog(u, "宝くじ " + qty + "枚購入 -" + this.fmtCur(totalCost));
         if (qty >= 16) {
-            this.sendDiscordWebhook("\ud83c\udf9f\ufe0f **" + p.getName() + "** \u304c\u5b9d\u304f\u3058\u3092" + qty + "\u679a\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08-" + (long)totalCost + "\u5186\uff09");
+            this.sendDiscordWebhook("🎟️ **" + p.getName() + "** が宝くじを" + qty + "枚購入しました。（-" + (long)totalCost + "円）");
         }
         this.msgKey(p, "lottery.ticket-bought", "count", String.valueOf(qty), "amount", String.valueOf((long)totalCost));
         this.clickSound(p);
@@ -3433,15 +3361,15 @@ MinecraftBankAPI {
         }
         double payout = this.lotteryPool;
         econ.depositPlayer(Bukkit.getOfflinePlayer(winnerUuid), payout);
-        this.addLog(winnerUuid, "\u5b9d\u304f\u3058\u5f53\u9078 +" + this.fmtCur(payout));
+        this.addLog(winnerUuid, "宝くじ当選 +" + this.fmtCur(payout));
         String winnerName = Bukkit.getOfflinePlayer((UUID)winnerUuid).getName();
         this.lastLotteryWinnerName = winnerName != null ? winnerName : "unknown";
         this.lastLotteryWinnerAmount = payout;
-        this.broadcastNews("<gold><bold>\u3010\u5b9d\u304f\u3058\u62bd\u9078\u3011</bold> <yellow>" + this.lastLotteryWinnerName + "</yellow> \u3055\u3093\u304c\u8cde\u91d1 " + (long)payout + "\u5186 \u3092\u7372\u5f97\u3057\u307e\u3057\u305f\uff01</gold>");
+        this.broadcastNews("<gold><bold>【宝くじ抽選】</bold> <yellow>" + this.lastLotteryWinnerName + "</yellow> さんが賞金 " + (long)payout + "円 を獲得しました！</gold>");
         if (jackpotBoosted) {
-            this.broadcastNews("<gold>\uff08\u4eca\u56de\u306e\u8cde\u91d1\u306b\u306f\u56fd\u5eab\u304b\u3089\u306e\u7279\u5225\u4e0a\u4e57\u305b " + (long)this.cfgLotteryJackpotBoostAmount + "\u5186 \u304c\u542b\u307e\u308c\u3066\u3044\u307e\u3059\uff09</gold>");
+            this.broadcastNews("<gold>（今回の賞金には国庫からの特別上乗せ " + (long)this.cfgLotteryJackpotBoostAmount + "円 が含まれています）</gold>");
         }
-        this.sendDiscordWebhook("\ud83c\udf89 **" + this.lastLotteryWinnerName + "** \u304c\u5b9d\u304f\u3058\u306b\u5f53\u305b\u3093\u3057\u307e\u3057\u305f\uff01 \u8cde\u91d1: " + this.fmtCur(payout) + (String)(jackpotBoosted ? "\uff08\u3046\u3061\u56fd\u5eab\u4e0a\u4e57\u305b " + (long)this.cfgLotteryJackpotBoostAmount + "\u5186\uff09" : ""));
+        this.sendDiscordWebhook("🎉 **" + this.lastLotteryWinnerName + "** が宝くじに当せんしました！ 賞金: " + this.fmtCur(payout) + (String)(jackpotBoosted ? "（うち国庫上乗せ " + (long)this.cfgLotteryJackpotBoostAmount + "円）" : ""));
         this.lotteryTickets.clear();
         this.lotteryPool = 0.0;
         this.lotteryDrawAt = now + (long)this.cfgLotteryDrawIntervalHours * 3600000L;
@@ -3463,12 +3391,12 @@ MinecraftBankAPI {
             if (this.treasury < amount) break;
             this.treasury -= amount;
             econ.depositPlayer((OfflinePlayer)p, amount);
-            this.addLog(p.getUniqueId(), "\u5e02\u6c11\u914d\u5f53 +" + this.fmtCur(amount));
+            this.addLog(p.getUniqueId(), "市民配当 +" + this.fmtCur(amount));
             this.msgKey(p, "treasury.citizen-dividend", "amount", String.valueOf((long)amount));
             ++paid;
         }
         if (paid > 0) {
-            this.broadcastNews("<gold><bold>\u3010\u5e02\u6c11\u914d\u5f53\u3011</bold> \u56fd\u5eab\u304b\u3089 " + paid + "\u4eba\u306e\u30aa\u30f3\u30e9\u30a4\u30f3\u30d7\u30ec\u30a4\u30e4\u30fc\u3078 1\u4eba\u3042\u305f\u308a " + (long)amount + "\u5186 \u3092\u914d\u5f53\u3057\u307e\u3057\u305f\u3002</gold>");
+            this.broadcastNews("<gold><bold>【市民配当】</bold> 国庫から " + paid + "人のオンラインプレイヤーへ 1人あたり " + (long)amount + "円 を配当しました。</gold>");
         }
     }
 
@@ -3494,7 +3422,7 @@ MinecraftBankAPI {
             this.treasury -= amount;
             econ.depositPlayer((OfflinePlayer)p, amount);
             this.welfareCountToday.put(u, usedToday + 1);
-            this.addLog(u, "\u751f\u6d3b\u652f\u63f4\u91d1 +" + this.fmtCur(amount));
+            this.addLog(u, "生活支援金 +" + this.fmtCur(amount));
             this.msgKey(p, "treasury.welfare", "amount", String.valueOf((long)amount));
         }
     }
@@ -3531,7 +3459,7 @@ MinecraftBankAPI {
                         }
                     }
                     if ((online = Bukkit.getPlayer((UUID)owner)) == null || !online.isOnline()) continue;
-                    this.msgKey(online, "worldstock.alert-triggered", "symbol", alert.symbol, "percent", String.format("%.1f", alert.thresholdPercent), "price", this.worldStockNativePrice((WorldStockQuote)quote) + (String)(quote.currency != null && !quote.currency.equalsIgnoreCase("JPY") ? " (\u2248 " + this.fmtYenAmount(this.worldStockYenPrice((WorldStockQuote)quote)) + ")" : ""));
+                    this.msgKey(online, "worldstock.alert-triggered", "symbol", alert.symbol, "percent", String.format("%.1f", alert.thresholdPercent), "price", this.worldStockNativePrice((WorldStockQuote)quote) + (String)(quote.currency != null && !quote.currency.equalsIgnoreCase("JPY") ? " (≈ " + this.fmtYenAmount(this.worldStockYenPrice((WorldStockQuote)quote)) + ")" : ""));
                     online.playSound(online.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 }
             });
@@ -3542,7 +3470,7 @@ MinecraftBankAPI {
         LinkedList<String> logs;
         OfflinePlayer target = Bukkit.getOfflinePlayer((String)playerName);
         if (target.getName() == null || !target.hasPlayedBefore() && !target.isOnline()) {
-            sender.sendMessage("\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + playerName);
+            sender.sendMessage("プレイヤーが見つかりません: " + playerName);
             return;
         }
         UUID targetId = target.getUniqueId();
@@ -3551,12 +3479,12 @@ MinecraftBankAPI {
         int score = this.getScore(targetId);
         double gDebt = this.govDebt.getOrDefault(targetId, 0.0);
         int achievements = this.unlockedAchievements.getOrDefault(targetId, new HashSet()).size();
-        sender.sendMessage("=== " + target.getName() + " \u306e\u7d4c\u6e08\u60c5\u5831 ===");
-        sender.sendMessage("\u6240\u6301\u91d1: " + this.fmtCur(pocket));
-        sender.sendMessage("\u9810\u91d1: " + this.fmtCur(bank));
-        sender.sendMessage("\u4fe1\u7528\u30b9\u30b3\u30a2: " + score);
-        sender.sendMessage("\u653f\u5e9c\u50b5\u52d9: " + this.fmtCur(gDebt));
-        sender.sendMessage("\u5b9f\u7e3e\u89e3\u9664\u6570: " + achievements);
+        sender.sendMessage("=== " + target.getName() + " の経済情報 ===");
+        sender.sendMessage("所持金: " + this.fmtCur(pocket));
+        sender.sendMessage("預金: " + this.fmtCur(bank));
+        sender.sendMessage("信用スコア: " + score);
+        sender.sendMessage("政府債務: " + this.fmtCur(gDebt));
+        sender.sendMessage("実績解除数: " + achievements);
         HashMap holdings = this.playerWorldStocks.getOrDefault(targetId, new HashMap());
         HashMap avgCosts = this.playerWorldStockAvgCost.getOrDefault(targetId, new HashMap());
         boolean anyStock = false;
@@ -3566,13 +3494,13 @@ MinecraftBankAPI {
             String symbol = (String)h.getKey();
             WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             double value = this.worldStockPositionValue(q, avgCosts.getOrDefault(symbol, 0.0), (Integer)h.getValue());
-            sender.sendMessage("  \u682a " + symbol + ": " + String.valueOf(h.getValue()) + "\u682a (\u8a55\u4fa1\u984d " + (long)value + "\u5186)");
+            sender.sendMessage("  株 " + symbol + ": " + String.valueOf(h.getValue()) + "株 (評価額 " + (long)value + "円)");
         }
         if (!anyStock) {
-            sender.sendMessage("\u4fdd\u6709\u682a: \u306a\u3057");
+            sender.sendMessage("保有株: なし");
         }
         if ((logs = this.transactionLogs.get(targetId)) != null && !logs.isEmpty()) {
-            sender.sendMessage("\u76f4\u8fd1\u306e\u53d6\u5f15\u5c65\u6b74:");
+            sender.sendMessage("直近の取引履歴:");
             int shown = 0;
             for (String line : logs) {
                 if (shown++ >= 10) break;
@@ -3584,23 +3512,23 @@ MinecraftBankAPI {
     private void sendPlayerWebpageLinkToConsole(CommandSender sender, String playerName) {
         OfflinePlayer target = Bukkit.getOfflinePlayer((String)playerName);
         if (target.getName() == null) {
-            sender.sendMessage("\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093: " + playerName);
+            sender.sendMessage("プレイヤーが見つかりません: " + playerName);
             return;
         }
         if (!this.cfgWebDashboardEnabled) {
-            sender.sendMessage("Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9\u304c\u7121\u52b9\u3067\u3059\u3002config.yml\u306ewebdashboard.enabled\u3092true\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+            sender.sendMessage("Webダッシュボードが無効です。config.ymlのwebdashboard.enabledをtrueにしてください。");
             return;
         }
         UUID targetId = target.getUniqueId();
         String token = this.dashboardTokens.computeIfAbsent(targetId, k -> UUID.randomUUID().toString().replace("-", ""));
-        String base = this.cfgWebDashboardPublicUrl != null && !this.cfgWebDashboardPublicUrl.isBlank() ? this.cfgWebDashboardPublicUrl.replaceAll("/$", "") : "http://<\u30b5\u30fc\u30d0\u30fc\u306eIP>:" + this.cfgWebDashboardPort;
+        String base = this.cfgWebDashboardPublicUrl != null && !this.cfgWebDashboardPublicUrl.isBlank() ? this.cfgWebDashboardPublicUrl.replaceAll("/$", "") : "http://<サーバーのIP>:" + this.cfgWebDashboardPort;
         String url = base + "/me.html?token=" + token;
         String newPassword = this.generateRandomPassword(10);
         this.webAdminPasswordHash.put(targetId, this.hashWebPassword(newPassword));
-        sender.sendMessage("=== " + target.getName() + " \u306eWeb\u500b\u4eba\u30da\u30fc\u30b8 ===");
+        sender.sendMessage("=== " + target.getName() + " のWeb個人ページ ===");
         sender.sendMessage("URL: " + url);
-        sender.sendMessage("\u88cf\u30d1\u30b9\u30ef\u30fc\u30c9(\u3053\u306e\u30b3\u30f3\u30bd\u30fc\u30eb\u30ed\u30b0\u306b\u3057\u304b\u8868\u793a\u3055\u308c\u307e\u305b\u3093\u3002\u672c\u4eba\u306b\u306f\u77e5\u3089\u3055\u308c\u307e\u305b\u3093): " + newPassword);
-        sender.sendMessage("\u203b \u672c\u4eba\u304c\u30b2\u30fc\u30e0\u5185\u3067\u8a2d\u5b9a\u3057\u305f\u30d1\u30b9\u30ef\u30fc\u30c9\u306b\u306f\u5f71\u97ff\u3057\u307e\u305b\u3093(\u3053\u306e\u88cf\u30d1\u30b9\u30ef\u30fc\u30c9\u306f\u5225\u67a0\u3067\u3059)\u3002");
+        sender.sendMessage("裏パスワード(このコンソールログにしか表示されません。本人には知らされません): " + newPassword);
+        sender.sendMessage("※ 本人がゲーム内で設定したパスワードには影響しません(この裏パスワードは別枠です)。");
     }
 
     private String generateRandomPassword(int length) {
@@ -3621,7 +3549,7 @@ MinecraftBankAPI {
             } else if (args.length >= 2 && args[0].equalsIgnoreCase("webpage")) {
                 this.sendPlayerWebpageLinkToConsole(sender, args[1]);
             } else {
-                sender.sendMessage("\u3053\u306e\u30b3\u30de\u30f3\u30c9\u306f\u30b2\u30fc\u30e0\u5185\u30d7\u30ec\u30a4\u30e4\u30fc\u5c02\u7528\u3067\u3059\u3002\u30b3\u30f3\u30bd\u30fc\u30eb\u304b\u3089\u306f\u4ee5\u4e0b\u306e\u307f\u5b9f\u884c\u3067\u304d\u307e\u3059: /meco info <\u30d7\u30ec\u30a4\u30e4\u30fc\u540d> / /meco webpage <\u30d7\u30ec\u30a4\u30e4\u30fc\u540d>");
+                sender.sendMessage("このコマンドはゲーム内プレイヤー専用です。コンソールからは以下のみ実行できます: /meco info <プレイヤー名> / /meco webpage <プレイヤー名>");
             }
             return true;
         }
@@ -3794,7 +3722,7 @@ MinecraftBankAPI {
                     return true;
                 }
                 String token = this.dashboardTokens.computeIfAbsent(u, k -> UUID.randomUUID().toString().replace("-", ""));
-                String base = this.cfgWebDashboardPublicUrl != null && !this.cfgWebDashboardPublicUrl.isBlank() ? this.cfgWebDashboardPublicUrl.replaceAll("/$", "") : "http://<\u30b5\u30fc\u30d0\u30fc\u306eIP>:" + this.cfgWebDashboardPort;
+                String base = this.cfgWebDashboardPublicUrl != null && !this.cfgWebDashboardPublicUrl.isBlank() ? this.cfgWebDashboardPublicUrl.replaceAll("/$", "") : "http://<サーバーのIP>:" + this.cfgWebDashboardPort;
                 String url = base + "/me.html?token=" + token;
                 this.msgKey(p, "webpage.link", "url", url);
                 this.msgKey(p, this.webPasswordHash.containsKey(u) ? "webpage.password-status-set" : "webpage.password-status-unset", new String[0]);
@@ -3884,8 +3812,8 @@ MinecraftBankAPI {
                     double amount = Double.parseDouble(args[3]);
                     econ.depositPlayer(target2, amount);
                     this.msgKey(p, "admin.give-success", "player", target2.getName(), "amount", String.valueOf((long)amount));
-                    this.addLog(tUuid, "[\u7ba1\u7406\u8005\u64cd\u4f5c] " + p.getName() + " \u304b\u3089 +" + this.fmtCur(amount));
-                    this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + target2.getName() + "** \u306b " + (long)amount + "\u5186 \u3092\u4ed8\u4e0e\u3057\u307e\u3057\u305f\u3002");
+                    this.addLog(tUuid, "[管理者操作] " + p.getName() + " から +" + this.fmtCur(amount));
+                    this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + target2.getName() + "** に " + (long)amount + "円 を付与しました。");
                 }
                 catch (NumberFormatException ex) {
                     this.msgKey(p, "common.invalid-amount-number", new String[0]);
@@ -3901,8 +3829,8 @@ MinecraftBankAPI {
                     double amount = Double.parseDouble(args[3]);
                     econ.withdrawPlayer(target2, amount);
                     this.msgKey(p, "admin.take-success", "player", target2.getName(), "amount", String.valueOf((long)amount));
-                    this.addLog(tUuid, "[\u7ba1\u7406\u8005\u64cd\u4f5c] " + p.getName() + " \u306b\u3088\u308a -" + this.fmtCur(amount));
-                    this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + target2.getName() + "** \u304b\u3089 " + (long)amount + "\u5186 \u3092\u6ca1\u53ce\u3057\u307e\u3057\u305f\u3002");
+                    this.addLog(tUuid, "[管理者操作] " + p.getName() + " により -" + this.fmtCur(amount));
+                    this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + target2.getName() + "** から " + (long)amount + "円 を没収しました。");
                 }
                 catch (NumberFormatException ex) {
                     this.msgKey(p, "common.invalid-amount-number", new String[0]);
@@ -3918,7 +3846,7 @@ MinecraftBankAPI {
                     int score = Math.max(0, Math.min(800, Integer.parseInt(args[3])));
                     this.creditScore.put(tUuid, score);
                     this.msgKey(p, "admin.setcredit-success", "player", target2.getName(), "score", String.valueOf(score));
-                    this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + target2.getName() + "** \u306e\u4fe1\u7528\u30b9\u30b3\u30a2\u3092 " + score + " \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002");
+                    this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + target2.getName() + "** の信用スコアを " + score + " に設定しました。");
                 }
                 catch (NumberFormatException ex) {
                     this.msgKey(p, "admin.invalid-score-number", new String[0]);
@@ -3940,8 +3868,8 @@ MinecraftBankAPI {
                         this.govDebtDueTime.put(tUuid, System.currentTimeMillis() + this.cfgGovLoanDurationMs);
                     }
                     this.msgKey(p, "admin.setgovdebt-success", "player", target2.getName(), "amount", String.valueOf((long)amount));
-                    this.addLog(tUuid, "[\u7ba1\u7406\u8005\u64cd\u4f5c] " + p.getName() + " \u304c\u56fd\u55b6\u30ed\u30fc\u30f3\u6b8b\u50b5\u3092 " + (long)amount + "\u5186 \u306b\u88dc\u6b63");
-                    this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + target2.getName() + "** \u306e\u56fd\u55b6\u30ed\u30fc\u30f3\u6b8b\u50b5\u3092 " + (long)amount + "\u5186 \u306b\u88dc\u6b63\u3057\u307e\u3057\u305f\u3002");
+                    this.addLog(tUuid, "[管理者操作] " + p.getName() + " が国営ローン残債を " + (long)amount + "円 に補正");
+                    this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + target2.getName() + "** の国営ローン残債を " + (long)amount + "円 に補正しました。");
                 }
                 catch (NumberFormatException ex) {
                     this.msgKey(p, "common.invalid-amount-number", new String[0]);
@@ -3951,7 +3879,7 @@ MinecraftBankAPI {
             if (adminSub.equals("reset")) {
                 this.resetPlayerEconomyData(tUuid);
                 this.msgKey(p, "admin.reset-success", "player", target2.getName());
-                this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + target2.getName() + "** \u306e\u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u30ea\u30bb\u30c3\u30c8\u3057\u307e\u3057\u305f\u3002");
+                this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + target2.getName() + "** の経済データをリセットしました。");
                 this.msgKey(p, "admin.reset-note", new String[0]);
                 return true;
             }
@@ -3961,10 +3889,10 @@ MinecraftBankAPI {
                     return true;
                 }
                 String event = switch (args[2].toLowerCase()) {
-                    case "boom" -> "\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5";
-                    case "tax" -> "\u624b\u6570\u6599\u9ad8\u9a30";
-                    case "bonus" -> "\u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc";
-                    case "recession" -> "\u51ac\u306e\u6642\u4ee3";
+                    case "boom" -> "黄金ラッシュ";
+                    case "tax" -> "手数料高騰";
+                    case "bonus" -> "ボーナス支給デー";
+                    case "recession" -> "冬の時代";
                     default -> "random";
                 };
                 this.fireEconomyEvent(event);
@@ -3978,7 +3906,7 @@ MinecraftBankAPI {
                         return true;
                     }
                     this.msgKey(p, "admin.discord-test-sending", new String[0]);
-                    this.sendDiscordWebhook("\ud83d\udd14 **" + p.getName() + "** \u304c `/meco admin discord test` \u3092\u5b9f\u884c\u3057\u307e\u3057\u305f\u3002\u3053\u308c\u304c\u5c4a\u3044\u3066\u3044\u308c\u3070\u758e\u901aOK\u3067\u3059\u3002");
+                    this.sendDiscordWebhook("🔔 **" + p.getName() + "** が `/meco admin discord test` を実行しました。これが届いていれば疎通OKです。");
                 } else {
                     this.msgKey(p, "admin.usage-discord-test", new String[0]);
                 }
@@ -3990,7 +3918,7 @@ MinecraftBankAPI {
                 if (issues.isEmpty()) {
                     this.msgKey(p, "admin.selfcheck-ok", new String[0]);
                 } else {
-                    this.msgKey(p, "admin.selfcheck-issues", "count", String.valueOf(issues.size()), "note", autoFix ? "\uff08\u81ea\u52d5\u4fee\u5fa9\u3057\u307e\u3057\u305f\uff09" : "\uff08/meco admin selfcheck fix \u3067\u81ea\u52d5\u4fee\u5fa9\u3067\u304d\u307e\u3059\uff09");
+                    this.msgKey(p, "admin.selfcheck-issues", "count", String.valueOf(issues.size()), "note", autoFix ? "（自動修復しました）" : "（/meco admin selfcheck fix で自動修復できます）");
                     int shown = 0;
                     for (String issue : issues) {
                         if (shown++ >= 30) {
@@ -4000,7 +3928,7 @@ MinecraftBankAPI {
                         this.msgKey(p, "admin.selfcheck-issue-line", "issue", issue);
                     }
                     for (String issue : issues) {
-                        this.getLogger().warning("[\u81ea\u5df1\u8a3a\u65ad] " + issue);
+                        this.getLogger().warning("[自己診断] " + issue);
                     }
                     if (autoFix) {
                         this.saveData();
@@ -4064,7 +3992,7 @@ MinecraftBankAPI {
                     for (Player target3 : online) {
                         econ.depositPlayer((OfflinePlayer)target3, each);
                     }
-                    this.broadcastNews("<gold><bold>\u3010\u56fd\u5eab\u652f\u51fa\u3011</bold> \u56fd\u5eab\u304b\u3089\u7dcf\u984d " + (long)amount + "\u5186\u3092\u5168\u30aa\u30f3\u30e9\u30a4\u30f3\u30d7\u30ec\u30a4\u30e4\u30fc\u3078\u914d\u5e03\u3057\u307e\u3057\u305f\u3002</gold>");
+                    this.broadcastNews("<gold><bold>【国庫支出】</bold> 国庫から総額 " + (long)amount + "円を全オンラインプレイヤーへ配布しました。</gold>");
                     return true;
                 }
                 catch (NumberFormatException ex) {
@@ -4081,7 +4009,7 @@ MinecraftBankAPI {
                     }
                     this.treasury = amount;
                     this.msgKey(p, "treasury.set", "amount", String.valueOf((long)this.treasury));
-                    this.sendDiscordWebhook("\ud83c\udfdb\ufe0f \u56fd\u5eab\u6b8b\u9ad8\u304c\u7ba1\u7406\u8005\u306b\u3088\u308a " + (long)this.treasury + "\u5186 \u306b\u8a2d\u5b9a\u3055\u308c\u307e\u3057\u305f\u3002");
+                    this.sendDiscordWebhook("🏛️ 国庫残高が管理者により " + (long)this.treasury + "円 に設定されました。");
                     return true;
                 }
                 catch (NumberFormatException ex) {
@@ -4125,8 +4053,8 @@ MinecraftBankAPI {
                 this.treasury += amount2;
                 this.grantDonationCreditScore(u, amount2);
                 this.msgKey(p, "donate.treasury-thanks", "amount", String.valueOf((long)amount2));
-                this.addLog(u, "\u56fd\u5eab\u3078\u5bc4\u4ed8: -" + this.fmtCur(amount2));
-                this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** \u304c\u56fd\u5eab\u3078 " + (long)amount2 + "\u5186 \u3092\u5bc4\u4ed8\u3057\u307e\u3057\u305f\u3002");
+                this.addLog(u, "国庫へ寄付: -" + this.fmtCur(amount2));
+                this.sendDiscordWebhook("🎁 **" + p.getName() + "** が国庫へ " + (long)amount2 + "円 を寄付しました。");
                 p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
                 return true;
             }
@@ -4164,8 +4092,8 @@ MinecraftBankAPI {
             this.grantDonationCreditScore(u, amount);
             this.msgKey(p, "donate.player-success", "player", target.getName(), "amount", String.valueOf((long)amount));
             this.msgKey(target, "donate.player-received", "player", p.getName(), "amount", String.valueOf((long)amount));
-            this.addLog(u, "\u5bc4\u4ed8: " + target.getName() + " \u3078 -" + this.fmtCur(amount));
-            this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** \u304c **" + target.getName() + "** \u3078 " + (long)amount + "\u5186 \u3092\u5bc4\u4ed8\u3057\u307e\u3057\u305f\u3002");
+            this.addLog(u, "寄付: " + target.getName() + " へ -" + this.fmtCur(amount));
+            this.sendDiscordWebhook("🎁 **" + p.getName() + "** が **" + target.getName() + "** へ " + (long)amount + "円 を寄付しました。");
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
             return true;
         }
@@ -4198,8 +4126,8 @@ MinecraftBankAPI {
                 if (borrowerOnline != null) {
                     this.msgKey(borrowerOnline, "guarantor.became-notice", "player", p.getName());
                 }
-                this.addLog(u, Bukkit.getOfflinePlayer((UUID)borrower).getName() + " \u306e\u4fdd\u8a3c\u4eba\u306b\u306a\u3063\u305f");
-                this.sendDiscordWebhook("\ud83e\udd1d **" + p.getName() + "** \u304c **" + Bukkit.getOfflinePlayer((UUID)borrower).getName() + "** \u306e\u878d\u8cc7\u4fdd\u8a3c\u4eba\u306b\u306a\u308a\u307e\u3057\u305f\u3002");
+                this.addLog(u, Bukkit.getOfflinePlayer((UUID)borrower).getName() + " の保証人になった");
+                this.sendDiscordWebhook("🤝 **" + p.getName() + "** が **" + Bukkit.getOfflinePlayer((UUID)borrower).getName() + "** の融資保証人になりました。");
                 return true;
             }
             if (args[1].equalsIgnoreCase("decline")) {
@@ -4343,8 +4271,8 @@ MinecraftBankAPI {
                 this.playerGroupAccounts.computeIfAbsent(tu, k -> new HashSet()).add(acc.id);
                 this.msgKey(p, "group.invited", "player", target4.getName());
                 this.msgKey(target4, "group.invite-received", "group", acc.name, "player", p.getName());
-                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u306b " + target4.getName() + " \u3092\u62db\u5f85");
-                this.sendDiscordWebhook("\ud83d\udc5b **" + p.getName() + "** \u304c\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u306b **" + target4.getName() + "** \u3092\u62db\u5f85\u3057\u307e\u3057\u305f\u3002");
+                this.addLog(u, "グループ貯金箱「" + acc.name + "」に " + target4.getName() + " を招待");
+                this.sendDiscordWebhook("👛 **" + p.getName() + "** がグループ貯金箱「" + acc.name + "」に **" + target4.getName() + "** を招待しました。");
                 return true;
             }
             if (gsub.equals("kick")) {
@@ -4376,7 +4304,7 @@ MinecraftBankAPI {
                 if (targetOnline != null) {
                     this.msgKey(targetOnline, "group.kicked-notice", "group", acc.name);
                 }
-                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u304b\u3089 " + targetName + " \u3092\u8ffd\u653e");
+                this.addLog(u, "グループ貯金箱「" + acc.name + "」から " + targetName + " を追放");
                 return true;
             }
             if (gsub.equals("leave")) {
@@ -4406,7 +4334,7 @@ MinecraftBankAPI {
                 if (ownerOnline != null) {
                     this.msgKey(ownerOnline, "group.kicked-notice", "group", acc.name);
                 }
-                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u304b\u3089\u8131\u9000");
+                this.addLog(u, "グループ貯金箱「" + acc.name + "」から脱退");
                 return true;
             }
             if (gsub.equals("disband")) {
@@ -4468,8 +4396,8 @@ MinecraftBankAPI {
                 this.playerInvestmentFunds.computeIfAbsent(tu, k -> new HashSet()).add(fund.id);
                 this.msgKey(p, "fund.invited", "player", target6.getName());
                 this.msgKey(target6, "fund.invite-received", "fund", fund.name, "player", p.getName());
-                this.addLog(u, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u306b " + target6.getName() + " \u3092\u62db\u5f85");
-                this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u306b **" + target6.getName() + "** \u3092\u62db\u5f85\u3057\u307e\u3057\u305f\u3002");
+                this.addLog(u, "共同投資ファンド「" + fund.name + "」に " + target6.getName() + " を招待");
+                this.sendDiscordWebhook("📊 **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」に **" + target6.getName() + "** を招待しました。");
                 return true;
             }
             if (fsub.equals("contribute")) {
@@ -4503,8 +4431,8 @@ MinecraftBankAPI {
                 fund.cashBalance += amount;
                 fund.contributions.merge(u, amount, Double::sum);
                 this.msgKey(p, "fund.contributed", "amount", String.valueOf((long)amount), "fund", fund.name);
-                this.addLog(u, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3078\u51fa\u8cc7 -" + this.fmtCur(amount));
-                this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3078 " + (long)amount + "\u5186 \u51fa\u8cc7\u3057\u307e\u3057\u305f\u3002");
+                this.addLog(u, "共同投資ファンド「" + fund.name + "」へ出資 -" + this.fmtCur(amount));
+                this.sendDiscordWebhook("📊 **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」へ " + (long)amount + "円 出資しました。");
                 return true;
             }
             if (fsub.equals("redeem")) {
@@ -4679,7 +4607,7 @@ MinecraftBankAPI {
     private String formatHoursMinutes(long millis, boolean japaneseStyle) {
         long h = millis / 3600000L;
         long m = millis / 60000L % 60L;
-        return japaneseStyle ? h + "\u6642\u9593" + m + "\u5206" : h + "h " + m + "m";
+        return japaneseStyle ? h + "時間" + m + "分" : h + "h " + m + "m";
     }
 
     private long questCooldownRemainMinutes(long cooldownUntil, long now) {
@@ -4688,20 +4616,20 @@ MinecraftBankAPI {
 
     private String fixedDepositStatusText(double amount, long diffMs) {
         if (amount == 0.0) {
-            return "<gray>\u9810\u91d1\u306a\u3057</gray>";
+            return "<gray>預金なし</gray>";
         }
         if (diffMs > 0L) {
-            return "<red>\u6b8b\u308a " + diffMs / 1000L + "\u79d2</red>";
+            return "<red>残り " + diffMs / 1000L + "秒</red>";
         }
-        return "<green>\u6e80\u671f\uff01\u5f15\u51fa\u53ef\u80fd</green>";
+        return "<green>満期！引出可能</green>";
     }
 
     private ItemStack createHubItem() {
         ItemStack item = new ItemStack(Material.BOOK);
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.displayName(this.mm("<white><bold>\ud83d\udcd6 \u7d4c\u6e08\u624b\u5e33</bold></white>"));
-            meta.lore(List.of(this.mm("<gray>\u53f3\u30af\u30ea\u30c3\u30af\u3067\u7d4c\u6e08\u7dcf\u5408\u30e1\u30cb\u30e5\u30fc\u3092\u958b\u304d\u307e\u3059</gray>"), this.mm("<dark_gray>\u306a\u304f\u3057\u305f\u5834\u5408\u306f /meco item \u3067\u518d\u767a\u884c\u3067\u304d\u307e\u3059</dark_gray>")));
+            meta.displayName(this.mm("<white><bold>📖 経済手帳</bold></white>"));
+            meta.lore(List.of(this.mm("<gray>右クリックで経済総合メニューを開きます</gray>"), this.mm("<dark_gray>なくした場合は /meco item で再発行できます</dark_gray>")));
             Enchantment unbreaking = (Enchantment)Registry.ENCHANTMENT.get(NamespacedKey.minecraft((String)"unbreaking"));
             if (unbreaking != null) {
                 meta.addEnchant(unbreaking, 1, true);
@@ -4716,13 +4644,13 @@ MinecraftBankAPI {
 
     private void openHubGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tHub);
-        gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<aqua><bold>\ud83c\udfe6 \u9280\u884c</bold></aqua>", "<gray>\u500b\u4eba\u53e3\u5ea7\u30fb\u878d\u8cc7\u30fb\u56fd\u55b6\u516c\u5eab\u30fb\u5b9a\u671f\u9810\u91d1\u30fb\u8cea\u5c4b\u30fb\u4fdd\u967a</gray>"));
-        gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>\ud83d\uded2 \u30de\u30fc\u30b1\u30c3\u30c8</bold></green>", "<gray>\u4e16\u754c\u682a\u5f0f\u5e02\u5834\u30fb\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u30fb\u5de1\u56de\u5546\u4eba\u30fb\u30aa\u30fc\u30af\u30b7\u30e7\u30f3</gray>"));
-        gui.setItem(15, this.createItem(Material.TARGET, "<yellow><bold>\ud83c\udfaf \u3084\u308b\u3053\u3068</bold></yellow>", "<gray>\u4f9d\u983c\u30dc\u30fc\u30c9\u30fb\u5b9d\u304f\u3058\u30fb\u30ec\u30f3\u30bf\u30eb\u5009\u5eab</gray>"));
-        gui.setItem(20, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>\ud83d\udcb3 \u30de\u30a4\u30da\u30fc\u30b8</bold></light_purple>", "<gray>\u4fe1\u7528\u60c5\u5831\u30fb\u5b9f\u7e3e\u30fb\u30e9\u30f3\u30ad\u30f3\u30b0\u30fb\u53d6\u5f15\u5c65\u6b74</gray>"));
-        gui.setItem(22, this.createItem(Material.CRAFTING_TABLE, "<gray><bold>\ud83d\uddc2 \u30af\u30e9\u30b7\u30c3\u30af\u30e1\u30cb\u30e5\u30fc</bold></gray>", "<dark_gray>\u65e7\u30d0\u30fc\u30b8\u30e7\u30f3\u306e\u4e00\u89a7\u8868\u793a\u5f62\u5f0f</dark_gray>"));
+        gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<aqua><bold>🏦 銀行</bold></aqua>", "<gray>個人口座・融資・国営公庫・定期預金・質屋・保険</gray>"));
+        gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>🛒 マーケット</bold></green>", "<gray>世界株式市場・資源相場ショップ・巡回商人・オークション</gray>"));
+        gui.setItem(15, this.createItem(Material.TARGET, "<yellow><bold>🎯 やること</bold></yellow>", "<gray>依頼ボード・宝くじ・レンタル倉庫</gray>"));
+        gui.setItem(20, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>💳 マイページ</bold></light_purple>", "<gray>信用情報・実績・ランキング・取引履歴</gray>"));
+        gui.setItem(22, this.createItem(Material.CRAFTING_TABLE, "<gray><bold>🗂 クラシックメニュー</bold></gray>", "<dark_gray>旧バージョンの一覧表示形式</dark_gray>"));
         if (p.hasPermission(PERM_ADMIN)) {
-            gui.setItem(31, this.createItem(Material.COMMAND_BLOCK, "<red><bold>\ud83d\udee0 \u7ba1\u7406\u8005\u30d1\u30cd\u30eb</bold></red>", "<gray>\u30d7\u30ec\u30a4\u30e4\u30fc\u30fb\u30b5\u30fc\u30d0\u30fc\u306e\u7ba1\u7406\u64cd\u4f5c</gray>"));
+            gui.setItem(31, this.createItem(Material.COMMAND_BLOCK, "<red><bold>🛠 管理者パネル</bold></red>", "<gray>プレイヤー・サーバーの管理操作</gray>"));
         }
         this.fillGlass(gui);
         p.openInventory(gui);
@@ -4730,25 +4658,25 @@ MinecraftBankAPI {
 
     private void openMarketHubGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tMarketHub);
-        gui.setItem(12, this.createItem(Material.NETHER_STAR, "<blue><bold>\ud83d\udcc8 \u4e16\u754c\u682a\u5f0f\u5e02\u5834</bold></blue>", "<gray>\u73fe\u5b9f\u306e\u682a\u3092\u691c\u7d22\u3057\u3066\u58f2\u8cb7</gray>"));
-        gui.setItem(14, this.createItem(Material.HOPPER, "<green><bold>\ud83c\udf3e \u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7</bold></green>", "<gray>\u9271\u77f3\u30fb\u8fb2\u4f5c\u7269\u30fb\u30c9\u30ed\u30c3\u30d7\u54c1\u3092\u58f2\u8cb7</gray>"));
-        gui.setItem(20, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>\ud83e\uddf3 \u5de1\u56de\u5546\u4eba</bold></gold>", "<gray>\u73fe\u5728\u5730\u3092\u78ba\u8a8d\u3059\u308b(\u8cfc\u5165\u306f\u73fe\u5730\u306eNPC\u304b\u3089)</gray>"));
-        gui.setItem(22, this.createItem(Material.ITEM_FRAME, "<green><bold>\ud83d\udd28 \u30aa\u30fc\u30af\u30b7\u30e7\u30f3</bold></green>", "<gray>\u30a2\u30a4\u30c6\u30e0\u306e\u51fa\u54c1\u30fb\u5165\u672d</gray>"));
-        gui.setItem(16, this.createItem(Material.DIAMOND, "<light_purple><bold>\ud83d\udc8e VIP\u30e9\u30a6\u30f3\u30b8</bold></light_purple>", "<gray>\u4fe1\u7528\u30b9\u30b3\u30a2\u306b\u5fdc\u3058\u305f\u4f1a\u54e1\u7279\u5178(\u624b\u6570\u6599\u5272\u5f15\u30fb\u9650\u5b9a\u30b7\u30e7\u30c3\u30d7\u30fb\u65e5\u6b21\u624b\u5f53\u30fb\u53d6\u5f15\u67a0\u62e1\u5927)</gray>"));
-        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(12, this.createItem(Material.NETHER_STAR, "<blue><bold>📈 世界株式市場</bold></blue>", "<gray>現実の株を検索して売買</gray>"));
+        gui.setItem(14, this.createItem(Material.HOPPER, "<green><bold>🌾 資源相場ショップ</bold></green>", "<gray>鉱石・農作物・ドロップ品を売買</gray>"));
+        gui.setItem(20, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>🧳 巡回商人</bold></gold>", "<gray>現在地を確認する(購入は現地のNPCから)</gray>"));
+        gui.setItem(22, this.createItem(Material.ITEM_FRAME, "<green><bold>🔨 オークション</bold></green>", "<gray>アイテムの出品・入札</gray>"));
+        gui.setItem(16, this.createItem(Material.DIAMOND, "<light_purple><bold>💎 VIPラウンジ</bold></light_purple>", "<gray>信用スコアに応じた会員特典(手数料割引・限定ショップ・日次手当・取引枠拡大)</gray>"));
+        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
 
     private void openTodoHubGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tTodoHub);
-        gui.setItem(12, this.createItem(Material.OAK_SIGN, "<dark_aqua><bold>\ud83d\udccb \u4f9d\u983c\u30dc\u30fc\u30c9</bold></dark_aqua>", "<gray>\u63a2\u7d22\u4f9d\u983c\u306e\u6295\u7a3f\u30fb\u53d7\u6ce8</gray>"));
-        gui.setItem(14, this.createItem(Material.FIREWORK_STAR, "<gold><bold>\ud83c\udf9f \u5b9d\u304f\u3058</bold></gold>", "<gray>\u30c1\u30b1\u30c3\u30c8\u3092\u8cfc\u5165\u3057\u3066\u5b9a\u671f\u62bd\u9078\u306b\u53c2\u52a0</gray>"));
-        gui.setItem(16, this.createItem(Material.BARREL, "<gold><bold>\ud83c\udfec \u30ec\u30f3\u30bf\u30eb\u5009\u5eab</bold></gold>", "<gray>\u5bb6\u8cc3\u3092\u6255\u3063\u3066\u5c02\u7528\u306e\u53ce\u7d0d\u5009\u5eab\u3092\u501f\u308a\u3089\u308c\u307e\u3059</gray>"));
-        gui.setItem(22, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>\ud83e\udd1d \u30a2\u30a4\u30c6\u30e0\u4ea4\u63db</bold></light_purple>", "<gray>\u4ed6\u30d7\u30ec\u30a4\u30e4\u30fc\u3068\u5b89\u5168\u306b\u30a2\u30a4\u30c6\u30e0\u30fb\u304a\u91d1\u3092\u4ea4\u63db</gray>"));
-        gui.setItem(20, this.createItem(Material.ENDER_CHEST, "<gold><bold>\ud83d\udc5b \u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1</bold></gold>", "<gray>\u53cb\u4eba\u30fb\u5c0f\u3055\u306a\u30b0\u30eb\u30fc\u30d7\u3067\u5171\u6709\u3059\u308b\u5171\u540c\u53e3\u5ea7</gray>"));
-        gui.setItem(24, this.createItem(Material.DIAMOND, "<dark_green><bold>\ud83d\udcca \u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9</bold></dark_green>", "<gray>\u8907\u6570\u4eba\u3067\u51fa\u8cc7\u3057\u3001\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u304c\u4e16\u754c\u682a\u5f0f\u5e02\u5834\u3067\u307e\u3068\u3081\u3066\u904b\u7528</gray>"));
-        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(12, this.createItem(Material.OAK_SIGN, "<dark_aqua><bold>📋 依頼ボード</bold></dark_aqua>", "<gray>探索依頼の投稿・受注</gray>"));
+        gui.setItem(14, this.createItem(Material.FIREWORK_STAR, "<gold><bold>🎟 宝くじ</bold></gold>", "<gray>チケットを購入して定期抽選に参加</gray>"));
+        gui.setItem(16, this.createItem(Material.BARREL, "<gold><bold>🏬 レンタル倉庫</bold></gold>", "<gray>家賃を払って専用の収納倉庫を借りられます</gray>"));
+        gui.setItem(22, this.createItem(Material.PLAYER_HEAD, "<light_purple><bold>🤝 アイテム交換</bold></light_purple>", "<gray>他プレイヤーと安全にアイテム・お金を交換</gray>"));
+        gui.setItem(20, this.createItem(Material.ENDER_CHEST, "<gold><bold>👛 グループ貯金箱</bold></gold>", "<gray>友人・小さなグループで共有する共同口座</gray>"));
+        gui.setItem(24, this.createItem(Material.DIAMOND, "<dark_green><bold>📊 共同投資ファンド</bold></dark_green>", "<gray>複数人で出資し、マネージャーが世界株式市場でまとめて運用</gray>"));
+        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -4805,8 +4733,8 @@ MinecraftBankAPI {
         this.groupAccounts.put(acc.id, acc);
         this.playerGroupAccounts.computeIfAbsent(u, k -> new HashSet()).add(acc.id);
         this.msgKey(p, "group.created", "name", acc.name, "id", acc.id.toString());
-        this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u3092\u4f5c\u6210 (-" + (long)cost + "\u5186)");
-        this.sendDiscordWebhook("\ud83d\udc5b **" + p.getName() + "** \u304c\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002");
+        this.addLog(u, "グループ貯金箱「" + acc.name + "」を作成 (-" + (long)cost + "円)");
+        this.sendDiscordWebhook("👛 **" + p.getName() + "** がグループ貯金箱「" + acc.name + "」を作成しました。");
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         return true;
     }
@@ -4833,8 +4761,8 @@ MinecraftBankAPI {
         }
         this.groupAccounts.remove(acc.id);
         this.msgKey(p, "group.disbanded", "amount", String.valueOf((long)share));
-        this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u3092\u89e3\u6563 (\u6b8b\u9ad8 " + (long)acc.balance + "\u5186 \u3092 " + allMembers.size() + "\u4eba\u3067\u5747\u7b49\u5272\u308a)");
-        this.sendDiscordWebhook("\ud83d\udc5b **" + p.getName() + "** \u304c\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u3092\u89e3\u6563\u3057\u307e\u3057\u305f\u3002\uff08\u6b8b\u9ad8" + (long)acc.balance + "\u5186\u3092" + allMembers.size() + "\u4eba\u3067\u5747\u7b49\u5272\u308a\uff09");
+        this.addLog(u, "グループ貯金箱「" + acc.name + "」を解散 (残高 " + (long)acc.balance + "円 を " + allMembers.size() + "人で均等割り)");
+        this.sendDiscordWebhook("👛 **" + p.getName() + "** がグループ貯金箱「" + acc.name + "」を解散しました。（残高" + (long)acc.balance + "円を" + allMembers.size() + "人で均等割り）");
     }
 
     private void openGroupListGUI(Player p) {
@@ -4847,7 +4775,7 @@ MinecraftBankAPI {
             if (acc == null) continue;
             if (slot >= 45) break;
             boolean isOwner = acc.owner.equals(u);
-            ItemStack icon = this.createItem(Material.CHEST, "<gold><bold>" + acc.name + "</bold></gold>", "<gray>\u6b8b\u9ad8:</gray> <white>" + (long)acc.balance + "\u5186</white>", "<gray>\u30e1\u30f3\u30d0\u30fc\u6570:</gray> <white>" + (1 + acc.members.size()) + "\u4eba</white> <dark_gray>(\u4e0a\u9650" + this.cfgGroupAccountMaxMembers + "\u4eba)</dark_gray>", isOwner ? "<yellow>\u3042\u306a\u305f\u306f\u30aa\u30fc\u30ca\u30fc\u3067\u3059</yellow>" : "<aqua>\u3042\u306a\u305f\u306f\u30e1\u30f3\u30d0\u30fc\u3067\u3059</aqua>", "<dark_gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u958b\u304f</dark_gray>");
+            ItemStack icon = this.createItem(Material.CHEST, "<gold><bold>" + acc.name + "</bold></gold>", "<gray>残高:</gray> <white>" + (long)acc.balance + "円</white>", "<gray>メンバー数:</gray> <white>" + (1 + acc.members.size()) + "人</white> <dark_gray>(上限" + this.cfgGroupAccountMaxMembers + "人)</dark_gray>", isOwner ? "<yellow>あなたはオーナーです</yellow>" : "<aqua>あなたはメンバーです</aqua>", "<dark_gray>クリックして開く</dark_gray>");
             ItemMeta im = icon.getItemMeta();
             if (im != null) {
                 im.getPersistentDataContainer().set(this.groupAccountKey, PersistentDataType.STRING, (Object)acc.id.toString());
@@ -4856,10 +4784,10 @@ MinecraftBankAPI {
             gui.setItem(slot++, icon);
         }
         if (slot == 0) {
-            gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>\u6240\u5c5e\u3057\u3066\u3044\u308b\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u304c\u3042\u308a\u307e\u305b\u3093</bold></red>", "<gray>/meco group create <\u540d\u524d> \u3067\u65b0\u3057\u304f\u4f5c\u6210\u3067\u304d\u307e\u3059</gray>"));
+            gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>所属しているグループ貯金箱がありません</bold></red>", "<gray>/meco group create <名前> で新しく作成できます</gray>"));
         }
-        gui.setItem(45, this.createItem(Material.WRITABLE_BOOK, "<green><bold>\u270f \u65b0\u3057\u304f\u4f5c\u308b</bold></green>", "<gray>\u30c1\u30e3\u30c3\u30c8\u306b\u540d\u524d\u3092\u5165\u529b\u3057\u3066\u4f5c\u6210\u3057\u307e\u3059</gray>", "<dark_gray>\u4f5c\u6210\u8cbb\u7528: " + (long)this.cfgGroupAccountCreateCost + "\u5186</dark_gray>"));
-        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(45, this.createItem(Material.WRITABLE_BOOK, "<green><bold>✏ 新しく作る</bold></green>", "<gray>チャットに名前を入力して作成します</gray>", "<dark_gray>作成費用: " + (long)this.cfgGroupAccountCreateCost + "円</dark_gray>"));
+        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -4878,19 +4806,19 @@ MinecraftBankAPI {
         this.groupAccountViewing.put(u, acc.id);
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tGroupAccount);
         StringBuilder memberList = new StringBuilder();
-        memberList.append(Bukkit.getOfflinePlayer((UUID)acc.owner).getName()).append("(\u30aa\u30fc\u30ca\u30fc)");
+        memberList.append(Bukkit.getOfflinePlayer((UUID)acc.owner).getName()).append("(オーナー)");
         for (UUID m : acc.members) {
             String name = Bukkit.getOfflinePlayer((UUID)m).getName();
             memberList.append(", ").append(name != null ? name : m.toString());
         }
-        gui.setItem(4, this.createItem(Material.CHEST, "<gold><bold>" + acc.name + "</bold></gold>", "<gray>\u6b8b\u9ad8:</gray> <white>" + (long)acc.balance + "\u5186</white>", "<gray>\u30e1\u30f3\u30d0\u30fc:</gray> <white>" + String.valueOf(memberList) + "</white>", acc.owner.equals(u) ? "<yellow>\u3042\u306a\u305f\u306f\u30aa\u30fc\u30ca\u30fc\u3067\u3059</yellow>" : "<aqua>\u3042\u306a\u305f\u306f\u30e1\u30f3\u30d0\u30fc\u3067\u3059</aqua>"));
-        gui.setItem(11, this.createItem(Material.EMERALD, "<green><bold>\u5165\u91d1\u3059\u308b</bold></green>", "<gray>\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u5165\u91d1\u3057\u307e\u3059</gray>"));
-        gui.setItem(15, this.createItem(Material.GOLD_INGOT, "<gold><bold>\u5f15\u304d\u51fa\u3059</bold></gold>", "<gray>\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u5f15\u304d\u51fa\u3057\u307e\u3059</gray>", "<dark_gray>\u30e1\u30f3\u30d0\u30fc\u306a\u3089\u8ab0\u3067\u3082\u5f15\u304d\u51fa\u305b\u307e\u3059(\u4fe1\u983c\u5236)</dark_gray>"));
+        gui.setItem(4, this.createItem(Material.CHEST, "<gold><bold>" + acc.name + "</bold></gold>", "<gray>残高:</gray> <white>" + (long)acc.balance + "円</white>", "<gray>メンバー:</gray> <white>" + String.valueOf(memberList) + "</white>", acc.owner.equals(u) ? "<yellow>あなたはオーナーです</yellow>" : "<aqua>あなたはメンバーです</aqua>"));
+        gui.setItem(11, this.createItem(Material.EMERALD, "<green><bold>入金する</bold></green>", "<gray>チャットに金額を入力して入金します</gray>"));
+        gui.setItem(15, this.createItem(Material.GOLD_INGOT, "<gold><bold>引き出す</bold></gold>", "<gray>チャットに金額を入力して引き出します</gray>", "<dark_gray>メンバーなら誰でも引き出せます(信頼制)</dark_gray>"));
         if (acc.owner.equals(u)) {
-            gui.setItem(13, this.createItem(Material.PLAYER_HEAD, "<aqua><bold>\ud83d\udc65 \u30e1\u30f3\u30d0\u30fc\u7ba1\u7406</bold></aqua>", "<gray>\u30e1\u30f3\u30d0\u30fc\u306e\u62db\u5f85\u30fb\u8ffd\u653e(\u30aa\u30fc\u30ca\u30fc\u5c02\u7528)</gray>"));
-            gui.setItem(22, this.createItem(Material.BARRIER, "<dark_red><bold>\u89e3\u6563\u3059\u308b</bold></dark_red>", "<gray>\u6b8b\u9ad8\u306f\u30e1\u30f3\u30d0\u30fc\u5168\u54e1\u306b\u5747\u7b49\u5272\u308a\u3055\u308c\u307e\u3059</gray>", "<red>\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u78ba\u5b9a\u3057\u307e\u3059(30\u79d2\u4ee5\u5185)</red>"));
+            gui.setItem(13, this.createItem(Material.PLAYER_HEAD, "<aqua><bold>👥 メンバー管理</bold></aqua>", "<gray>メンバーの招待・追放(オーナー専用)</gray>"));
+            gui.setItem(22, this.createItem(Material.BARRIER, "<dark_red><bold>解散する</bold></dark_red>", "<gray>残高はメンバー全員に均等割りされます</gray>", "<red>もう一度クリックすると確定します(30秒以内)</red>"));
         }
-        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -4903,12 +4831,12 @@ MinecraftBankAPI {
         }
         this.groupAccountViewing.put(p.getUniqueId(), acc.id);
         Inventory gui = Bukkit.createInventory(null, (int)54, (Component)this.tGroupMembers);
-        gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>" + acc.name + " \u306e\u30e1\u30f3\u30d0\u30fc\u7ba1\u7406</bold></gold>", "<gray>\u4e0a\u6bb5: \u73fe\u5728\u306e\u30e1\u30f3\u30d0\u30fc(\u30af\u30ea\u30c3\u30af\u3067\u8ffd\u653e)</gray>", "<gray>\u4e0b\u6bb5: \u62db\u5f85\u3067\u304d\u308b\u30aa\u30f3\u30e9\u30a4\u30f3\u30d7\u30ec\u30a4\u30e4\u30fc(\u30af\u30ea\u30c3\u30af\u3067\u62db\u5f85)</gray>", "<dark_gray>\u30aa\u30fc\u30ca\u30fc\u81ea\u8eab\u306f\u8ffd\u653e\u3067\u304d\u307e\u305b\u3093\u3002</dark_gray>"));
+        gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>" + acc.name + " のメンバー管理</bold></gold>", "<gray>上段: 現在のメンバー(クリックで追放)</gray>", "<gray>下段: 招待できるオンラインプレイヤー(クリックで招待)</gray>", "<dark_gray>オーナー自身は追放できません。</dark_gray>"));
         int slot = 9;
         for (UUID m : acc.members) {
             if (slot >= 18) break;
             String name = Bukkit.getOfflinePlayer((UUID)m).getName();
-            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<red><bold>" + (name != null ? name : m.toString()) + "</bold></red>", "<gray>\u73fe\u5728\u306e\u30e1\u30f3\u30d0\u30fc</gray>", "<yellow>\u30af\u30ea\u30c3\u30af\u3067\u8ffd\u653e</yellow>");
+            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<red><bold>" + (name != null ? name : m.toString()) + "</bold></red>", "<gray>現在のメンバー</gray>", "<yellow>クリックで追放</yellow>");
             ItemMeta hm = head.getItemMeta();
             if (hm != null) {
                 hm.getPersistentDataContainer().set(this.groupTargetKey, PersistentDataType.STRING, (Object)m.toString());
@@ -4921,7 +4849,7 @@ MinecraftBankAPI {
             if (inviteSlot >= 45) break;
             UUID ou = online.getUniqueId();
             if (this.isGroupAccountMember(acc, ou)) continue;
-            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<green><bold>" + online.getName() + "</bold></green>", "<gray>\u30aa\u30f3\u30e9\u30a4\u30f3</gray>", "<yellow>\u30af\u30ea\u30c3\u30af\u3067\u62db\u5f85</yellow>");
+            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<green><bold>" + online.getName() + "</bold></green>", "<gray>オンライン</gray>", "<yellow>クリックで招待</yellow>");
             ItemMeta hm = head.getItemMeta();
             if (hm != null) {
                 hm.getPersistentDataContainer().set(this.groupTargetKey, PersistentDataType.STRING, (Object)ou.toString());
@@ -4929,7 +4857,7 @@ MinecraftBankAPI {
             }
             gui.setItem(inviteSlot++, head);
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5012,8 +4940,8 @@ MinecraftBankAPI {
         this.investmentFunds.put(fund.id, fund);
         this.playerInvestmentFunds.computeIfAbsent(u, k -> new HashSet()).add(fund.id);
         this.msgKey(p, "fund.created", "name", fund.name, "id", fund.id.toString());
-        this.addLog(u, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3092\u4f5c\u6210 (-" + (long)cost + "\u5186)");
-        this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002");
+        this.addLog(u, "共同投資ファンド「" + fund.name + "」を作成 (-" + (long)cost + "円)");
+        this.sendDiscordWebhook("📊 **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」を作成しました。");
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         return true;
     }
@@ -5047,8 +4975,8 @@ MinecraftBankAPI {
             econ.depositPlayer((OfflinePlayer)p, myShare);
         }
         this.msgKey(p, "fund.redeemed", "amount", String.valueOf((long)myShare));
-        this.addLog(u, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u304b\u3089\u89e3\u7d04 +" + this.fmtCur(myShare));
-        this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u304b\u3089\u89e3\u7d04\u3057\u307e\u3057\u305f\u3002(+" + (long)myShare + "\u5186)");
+        this.addLog(u, "共同投資ファンド「" + fund.name + "」から解約 +" + this.fmtCur(myShare));
+        this.sendDiscordWebhook("📊 **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」から解約しました。(+" + (long)myShare + "円)");
         p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
     }
 
@@ -5094,14 +5022,14 @@ MinecraftBankAPI {
         this.worldStockDailyResetAt.remove(fund.id);
         this.worldStockLastTradeTime.remove(fund.id);
         this.msgKey(p, "fund.disbanded", "amount", String.valueOf((long)issuerShare));
-        this.addLog(u, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3092\u89e3\u6563(\u73fe\u91d1" + (long)totalCash + "\u5186\u3092\u51fa\u8cc7\u6bd4\u7387\u3067\u5206\u914d)");
-        this.sendDiscordWebhook("\ud83d\udcca **" + p.getName() + "** \u304c\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u3092\u89e3\u6563\u3057\u307e\u3057\u305f\u3002(\u73fe\u91d1" + (long)totalCash + "\u5186\u3092\u51fa\u8cc7\u6bd4\u7387\u3067\u5206\u914d)");
+        this.addLog(u, "共同投資ファンド「" + fund.name + "」を解散(現金" + (long)totalCash + "円を出資比率で分配)");
+        this.sendDiscordWebhook("📊 **" + p.getName() + "** が共同投資ファンド「" + fund.name + "」を解散しました。(現金" + (long)totalCash + "円を出資比率で分配)");
     }
 
     private void openFundListGUI(Player p) {
         UUID u = p.getUniqueId();
         Inventory gui = Bukkit.createInventory(null, (int)54, (Component)this.tFundList);
-        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<dark_green><bold>\u3010\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u3011</bold></dark_green>", "<gray>\u8907\u6570\u4eba\u3067\u73fe\u91d1\u3092\u51fa\u8cc7\u3057\u3001\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u304c\u4e16\u754c\u682a\u5f0f\u5e02\u5834\u3067\u307e\u3068\u3081\u3066\u904b\u7528\u3057\u307e\u3059\u3002</gray>", "<gray>\u6301\u3061\u5206(\u53d6\u308a\u5206)\u306f\u51fa\u8cc7\u984d\u306e\u6bd4\u7387\u3067\u6c7a\u307e\u308a\u307e\u3059\u3002</gray>", "<dark_gray>\u4f5c\u6210: /meco fund create <\u540d\u524d></dark_gray>", "<dark_gray>\u62db\u5f85: /meco fund invite <\u30d5\u30a1\u30f3\u30c9\u540d> <\u30d7\u30ec\u30a4\u30e4\u30fc></dark_gray>", "<dark_gray>\u51fa\u8cc7: /meco fund contribute <\u30d5\u30a1\u30f3\u30c9\u540d> <\u91d1\u984d></dark_gray>"));
+        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<dark_green><bold>【共同投資ファンド】</bold></dark_green>", "<gray>複数人で現金を出資し、マネージャーが世界株式市場でまとめて運用します。</gray>", "<gray>持ち分(取り分)は出資額の比率で決まります。</gray>", "<dark_gray>作成: /meco fund create <名前></dark_gray>", "<dark_gray>招待: /meco fund invite <ファンド名> <プレイヤー></dark_gray>", "<dark_gray>出資: /meco fund contribute <ファンド名> <金額></dark_gray>"));
         HashSet mine = this.playerInvestmentFunds.getOrDefault(u, new HashSet());
         int slot = 9;
         for (UUID id : mine) {
@@ -5115,19 +5043,19 @@ MinecraftBankAPI {
             double myStakeValue = totalContrib > 0.0 ? myContrib / totalContrib * nav : 0.0;
             String managerName = Bukkit.getOfflinePlayer((UUID)fund.manager).getName();
             if (managerName == null) {
-                managerName = "\u4e0d\u660e";
+                managerName = "不明";
             }
             ArrayList<Object> lore = new ArrayList<Object>();
-            lore.add("<gray>\u30de\u30cd\u30fc\u30b8\u30e3\u30fc:</gray> <aqua>" + managerName + "</aqua>");
-            lore.add("<gray>\u30d5\u30a1\u30f3\u30c9\u8a55\u4fa1\u984d(NAV):</gray> <gold>" + (long)nav + "\u5186</gold>");
-            lore.add("<gray>\u73fe\u91d1\u6b8b\u9ad8:</gray> <white>" + (long)fund.cashBalance + "\u5186</white>");
+            lore.add("<gray>マネージャー:</gray> <aqua>" + managerName + "</aqua>");
+            lore.add("<gray>ファンド評価額(NAV):</gray> <gold>" + (long)nav + "円</gold>");
+            lore.add("<gray>現金残高:</gray> <white>" + (long)fund.cashBalance + "円</white>");
             if (isManager) {
-                lore.add("<yellow>\u3042\u306a\u305f\u306f\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u3067\u3059</yellow>");
-                lore.add("<dark_gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u904b\u7528\u753b\u9762\u3092\u958b\u304f</dark_gray>");
+                lore.add("<yellow>あなたはマネージャーです</yellow>");
+                lore.add("<dark_gray>クリックして運用画面を開く</dark_gray>");
             } else {
-                lore.add("<gray>\u3042\u306a\u305f\u306e\u51fa\u8cc7\u984d:</gray> <white>" + (long)myContrib + "\u5186</white>");
-                lore.add("<gray>\u3042\u306a\u305f\u306e\u6301\u5206\u8a55\u4fa1\u984d:</gray> <gold>" + (long)myStakeValue + "\u5186</gold>");
-                lore.add("<dark_gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u60c5\u5831\u753b\u9762\u3092\u958b\u304f</dark_gray>");
+                lore.add("<gray>あなたの出資額:</gray> <white>" + (long)myContrib + "円</white>");
+                lore.add("<gray>あなたの持分評価額:</gray> <gold>" + (long)myStakeValue + "円</gold>");
+                lore.add("<dark_gray>クリックして情報画面を開く</dark_gray>");
             }
             ItemStack icon = this.createItem(isManager ? Material.EMERALD_BLOCK : Material.EMERALD, "<dark_green><bold>" + fund.name + "</bold></dark_green>", lore.toArray(new String[0]));
             ItemMeta im = icon.getItemMeta();
@@ -5138,9 +5066,9 @@ MinecraftBankAPI {
             gui.setItem(slot++, icon);
         }
         if (slot == 9) {
-            gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>\u6240\u5c5e\u3057\u3066\u3044\u308b\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u304c\u3042\u308a\u307e\u305b\u3093</bold></red>", "<gray>/meco fund create <\u540d\u524d> \u3067\u65b0\u3057\u304f\u4f5c\u6210\u3067\u304d\u307e\u3059</gray>"));
+            gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>所属している共同投資ファンドがありません</bold></red>", "<gray>/meco fund create <名前> で新しく作成できます</gray>"));
         }
-        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5160,9 +5088,9 @@ MinecraftBankAPI {
         double myStakeValue = totalContrib > 0.0 ? myContrib / totalContrib * nav : 0.0;
         String managerName = Bukkit.getOfflinePlayer((UUID)fund.manager).getName();
         if (managerName == null) {
-            managerName = "\u4e0d\u660e";
+            managerName = "不明";
         }
-        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<dark_green><bold>" + fund.name + "</bold></dark_green>", "<gray>\u30de\u30cd\u30fc\u30b8\u30e3\u30fc:</gray> <aqua>" + managerName + "</aqua>", "<gray>\u30d5\u30a1\u30f3\u30c9\u8a55\u4fa1\u984d(NAV):</gray> <gold>" + (long)nav + "\u5186</gold>", "<gray>\u73fe\u91d1\u6b8b\u9ad8:</gray> <white>" + (long)fund.cashBalance + "\u5186</white>", "<gray>\u3042\u306a\u305f\u306e\u51fa\u8cc7\u984d:</gray> <white>" + (long)myContrib + "\u5186</white>", "<gray>\u3042\u306a\u305f\u306e\u6301\u5206\u8a55\u4fa1\u984d:</gray> <gold>" + (long)myStakeValue + "\u5186</gold>"));
+        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<dark_green><bold>" + fund.name + "</bold></dark_green>", "<gray>マネージャー:</gray> <aqua>" + managerName + "</aqua>", "<gray>ファンド評価額(NAV):</gray> <gold>" + (long)nav + "円</gold>", "<gray>現金残高:</gray> <white>" + (long)fund.cashBalance + "円</white>", "<gray>あなたの出資額:</gray> <white>" + (long)myContrib + "円</white>", "<gray>あなたの持分評価額:</gray> <gold>" + (long)myStakeValue + "円</gold>"));
         HashMap holdings = this.playerWorldStocks.getOrDefault(fund.id, new HashMap());
         HashMap avgCosts = this.playerWorldStockAvgCost.getOrDefault(fund.id, new HashMap());
         int slot = 9;
@@ -5172,15 +5100,15 @@ MinecraftBankAPI {
             WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             double avgCost = avgCosts.getOrDefault(symbol, 0.0);
             ArrayList<Object> hl = new ArrayList<Object>();
-            hl.add("<gray>\u4fdd\u6709:</gray> <white>" + String.valueOf(h.getValue()) + "\u682a</white>");
-            hl.add("<gray>\u5e73\u5747\u53d6\u5f97\u5358\u4fa1:</gray> <white>" + String.format("%.2f", avgCost) + "\u5186</white>");
+            hl.add("<gray>保有:</gray> <white>" + String.valueOf(h.getValue()) + "株</white>");
+            hl.add("<gray>平均取得単価:</gray> <white>" + String.format("%.2f", avgCost) + "円</white>");
             if (q != null) {
-                hl.add(this.worldStockPriceLine("<gray>\u73fe\u5728\u5024:</gray> ", q));
+                hl.add(this.worldStockPriceLine("<gray>現在値:</gray> ", q));
             }
             gui.setItem(slot++, this.createItem(Material.PAPER, "<aqua><bold>" + symbol + "</bold></aqua>", hl.toArray(new String[0])));
         }
-        gui.setItem(31, this.createItem(Material.GOLD_INGOT, "<gold><bold>\u89e3\u7d04\u3059\u308b(\u6301\u5206\u3092\u5168\u984d\u73fe\u91d1\u5316)</bold></gold>", "<gray>\u3042\u306a\u305f\u306e\u6301\u5206\u3092\u3059\u3079\u3066\u73fe\u91d1\u5316\u3057\u3066\u30d5\u30a1\u30f3\u30c9\u304b\u3089\u629c\u3051\u307e\u3059</gray>", "<dark_gray>\u30d5\u30a1\u30f3\u30c9\u306e\u73fe\u91d1\u6b8b\u9ad8\u304c\u8db3\u308a\u306a\u3044\u5834\u5408\u306f\u5931\u6557\u3057\u307e\u3059(\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u306b\u73fe\u7269\u58f2\u5374\u3092\u4f9d\u983c\u3057\u3066\u304f\u3060\u3055\u3044)</dark_gray>", "<red>\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u78ba\u5b9a\u3057\u307e\u3059(30\u79d2\u4ee5\u5185)</red>"));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(31, this.createItem(Material.GOLD_INGOT, "<gold><bold>解約する(持分を全額現金化)</bold></gold>", "<gray>あなたの持分をすべて現金化してファンドから抜けます</gray>", "<dark_gray>ファンドの現金残高が足りない場合は失敗します(マネージャーに現物売却を依頼してください)</dark_gray>", "<red>もう一度クリックすると確定します(30秒以内)</red>"));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5195,8 +5123,8 @@ MinecraftBankAPI {
         this.fundViewing.put(u, fund.id);
         Inventory gui = Bukkit.createInventory(null, (int)54, (Component)this.tFundStock);
         double nav = this.getFundNav(fund);
-        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<dark_green><bold>\u3010" + fund.name + "\u30fb\u904b\u7528\u3011</bold></dark_green>", "<gray>\u30d5\u30a1\u30f3\u30c9\u8a55\u4fa1\u984d(NAV):</gray> <gold>" + (long)nav + "\u5186</gold>", "<gray>\u73fe\u91d1\u6b8b\u9ad8:</gray> <white>" + (long)fund.cashBalance + "\u5186</white>", "<gray>\u51fa\u8cc7\u8005\u6570:</gray> <white>" + fund.contributions.size() + "\u4eba</white>", "<gray>\u5b9f\u5728\u3059\u308b\u9298\u67c4\u306e\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u3092\u691c\u7d22\u3057\u3066\u3001\u30d5\u30a1\u30f3\u30c9\u306e\u8cc7\u91d1\u3067\u58f2\u8cb7\u3067\u304d\u307e\u3059\u3002</gray>", "<dark_gray>\u53d6\u5f15\u56de\u6570/\u53d6\u5f15\u91d1\u984d\u306e1\u65e5\u3042\u305f\u308a\u4e0a\u9650\u306f\u3001\u3042\u306a\u305f\u500b\u4eba\u306e\u4e0a\u9650\u3068\u306f\u5225\u306b\u3053\u306e\u30d5\u30a1\u30f3\u30c9\u5c02\u7528\u3067\u30ab\u30a6\u30f3\u30c8\u3055\u308c\u307e\u3059\u3002</dark_gray>"));
-        gui.setItem(49, this.createItem(Material.COMPASS, "<gold><bold>\ud83d\udd0d \u9298\u67c4\u3092\u691c\u7d22\u3057\u3066\u58f2\u8cb7</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u3092\u30c1\u30e3\u30c3\u30c8\u5165\u529b</gray>"));
+        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<dark_green><bold>【" + fund.name + "・運用】</bold></dark_green>", "<gray>ファンド評価額(NAV):</gray> <gold>" + (long)nav + "円</gold>", "<gray>現金残高:</gray> <white>" + (long)fund.cashBalance + "円</white>", "<gray>出資者数:</gray> <white>" + fund.contributions.size() + "人</white>", "<gray>実在する銘柄のティッカーシンボルを検索して、ファンドの資金で売買できます。</gray>", "<dark_gray>取引回数/取引金額の1日あたり上限は、あなた個人の上限とは別にこのファンド専用でカウントされます。</dark_gray>"));
+        gui.setItem(49, this.createItem(Material.COMPASS, "<gold><bold>🔍 銘柄を検索して売買</bold></gold>", "<gray>クリックしてティッカーシンボルをチャット入力</gray>"));
         HashMap holdings = this.playerWorldStocks.getOrDefault(fund.id, new HashMap());
         HashMap avgCosts = this.playerWorldStockAvgCost.getOrDefault(fund.id, new HashMap());
         int slot = 9;
@@ -5207,24 +5135,24 @@ MinecraftBankAPI {
             double avgCost = avgCosts.getOrDefault(symbol, 0.0);
             WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             ArrayList<Object> lore = new ArrayList<Object>();
-            lore.add("<gray>\u4fdd\u6709:</gray> <white>" + qty + "\u682a</white>");
-            lore.add("<gray>\u5e73\u5747\u53d6\u5f97\u5358\u4fa1:</gray> <white>" + String.format("%.2f", avgCost) + "\u5186</white>");
+            lore.add("<gray>保有:</gray> <white>" + qty + "株</white>");
+            lore.add("<gray>平均取得単価:</gray> <white>" + String.format("%.2f", avgCost) + "円</white>");
             if (q != null) {
                 double value = this.worldStockYenPrice(q) * (double)qty;
                 double pnl = value - avgCost * (double)qty;
-                lore.add(this.worldStockPriceLine("<gray>\u73fe\u5728\u5024:</gray> ", q));
-                lore.add("<gray>\u8a55\u4fa1\u984d:</gray> <gold>" + (long)value + "\u5186</gold>");
+                lore.add(this.worldStockPriceLine("<gray>現在値:</gray> ", q));
+                lore.add("<gray>評価額:</gray> <gold>" + (long)value + "円</gold>");
                 lore.add(this.worldStockPnlLine(pnl));
             } else {
-                lore.add("<gray>\u73fe\u5728\u5024: \u53d6\u5f97\u4e2d... \u30af\u30ea\u30c3\u30af\u3057\u3066\u66f4\u65b0</gray>");
+                lore.add("<gray>現在値: 取得中... クリックして更新</gray>");
             }
-            lore.add("<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u58f2\u8cb7\u753b\u9762\u3078</yellow>");
+            lore.add("<yellow>クリックして売買画面へ</yellow>");
             ItemStack item = this.createItem(Material.PAPER, "<aqua><bold>" + symbol + "</bold></aqua>", lore.toArray(new String[0]));
             this.setWorldStockTag(item, symbol);
             gui.setItem(slot++, item);
             this.fetchWorldStockQuote(symbol, quote -> {});
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5251,30 +5179,30 @@ MinecraftBankAPI {
         double avgCost = this.playerWorldStockAvgCost.getOrDefault(trackedUuid, new HashMap()).getOrDefault(symbol, 0.0);
         ArrayList<Object> infoLore = new ArrayList<Object>();
         if (q != null) {
-            infoLore.add(this.worldStockPriceLine("<gray>\u73fe\u5728\u5024: </gray>", q));
+            infoLore.add(this.worldStockPriceLine("<gray>現在値: </gray>", q));
             if (q.currency != null && !q.currency.equalsIgnoreCase("JPY")) {
-                infoLore.add("<dark_gray>\u70ba\u66ff: 1 " + q.currency + " \u2248 " + String.format("%,.2f", this.fxRateToJpy(q.currency)) + "\u5186</dark_gray>");
+                infoLore.add("<dark_gray>為替: 1 " + q.currency + " ≈ " + String.format("%,.2f", this.fxRateToJpy(q.currency)) + "円</dark_gray>");
             }
-            infoLore.add("<gray>\u53d6\u5f15\u6240: </gray><white>" + q.exchangeName + "</white>");
+            infoLore.add("<gray>取引所: </gray><white>" + q.exchangeName + "</white>");
         } else {
-            infoLore.add("<red>\u73fe\u5728\u5024\u3092\u53d6\u5f97\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f</red>");
-            infoLore.add("<gray>\u5b58\u5728\u3057\u306a\u3044\u30c6\u30a3\u30c3\u30ab\u30fc\u304b\u3001\u901a\u4fe1\u30a8\u30e9\u30fc\u306e\u53ef\u80fd\u6027\u304c\u3042\u308a\u307e\u3059</gray>");
+            infoLore.add("<red>現在値を取得できませんでした</red>");
+            infoLore.add("<gray>存在しないティッカーか、通信エラーの可能性があります</gray>");
         }
         if (fund != null) {
-            infoLore.add("<gray>\u30d5\u30a1\u30f3\u30c9\u73fe\u91d1\u6b8b\u9ad8: </gray><white>" + (long)fund.cashBalance + "\u5186</white>");
+            infoLore.add("<gray>ファンド現金残高: </gray><white>" + (long)fund.cashBalance + "円</white>");
         }
-        infoLore.add("<gray>\u4fdd\u6709: </gray><white>" + qty + "\u682a</white>");
+        infoLore.add("<gray>保有: </gray><white>" + qty + "株</white>");
         if (qty > 0) {
-            infoLore.add("<gray>\u5e73\u5747\u53d6\u5f97\u5358\u4fa1: </gray><white>" + String.format("%.2f", avgCost) + "\u5186</white>");
+            infoLore.add("<gray>平均取得単価: </gray><white>" + String.format("%.2f", avgCost) + "円</white>");
         }
         if (this.getVipTier(feeContextUuid) >= 1) {
-            String vipLabel = fund != null ? "\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u306eVIP\u624b\u6570\u6599\u5272\u5f15 " : "VIP\u624b\u6570\u6599\u5272\u5f15: ";
-            infoLore.add("<light_purple>\ud83d\udc8e " + vipLabel + String.format("%.0f", (1.0 - this.vipFeeMultiplier(feeContextUuid)) * 100.0) + "%OFF \u9069\u7528\u4e2d</light_purple>");
+            String vipLabel = fund != null ? "マネージャーのVIP手数料割引 " : "VIP手数料割引: ";
+            infoLore.add("<light_purple>💎 " + vipLabel + String.format("%.0f", (1.0 - this.vipFeeMultiplier(feeContextUuid)) * 100.0) + "%OFF 適用中</light_purple>");
         }
         ItemStack infoItem = this.createItem(Material.NETHER_STAR, "<aqua><bold>" + symbol + "</bold></aqua>", infoLore.toArray(new String[0]));
         this.setWorldStockTag(infoItem, symbol);
         gui.setItem(4, infoItem);
-        String string = suffix = fund != null ? "(\u30d5\u30a1\u30f3\u30c9\u8cc7\u91d1)" : "";
+        String string = suffix = fund != null ? "(ファンド資金)" : "";
         if (q != null) {
             double feeRate = this.effectiveWorldStockFeeRate(feeContextUuid);
             double yenPrice = this.worldStockYenPrice(q);
@@ -5285,44 +5213,44 @@ MinecraftBankAPI {
             int[] sellSlots = new int[]{15, 16, 17};
             for (int i = 0; i < tiers.length; ++i) {
                 int tq = tiers[i];
-                ItemStack buyItem = this.createItem(Material.PAPER, "<green><bold>" + tq + "\u682a\u8cfc\u5165" + suffix + "</bold></green>", "<gray>\u652f\u6255\u984d: </gray><gold>" + String.format("%.2f", perBuy * (double)tq) + "\u5186</gold> <dark_gray>(\u624b\u6570\u6599\u8fbc\u307f)</dark_gray>", "<dark_gray>(\u73fe\u5728\u5024 " + String.format("%,.0f", yenPrice) + "\u5186 \u00d7 " + tq + "\u682a + \u624b\u6570\u6599 " + String.format("%.1f", feeRate * 100.0) + "%)</dark_gray>");
+                ItemStack buyItem = this.createItem(Material.PAPER, "<green><bold>" + tq + "株購入" + suffix + "</bold></green>", "<gray>支払額: </gray><gold>" + String.format("%.2f", perBuy * (double)tq) + "円</gold> <dark_gray>(手数料込み)</dark_gray>", "<dark_gray>(現在値 " + String.format("%,.0f", yenPrice) + "円 × " + tq + "株 + 手数料 " + String.format("%.1f", feeRate * 100.0) + "%)</dark_gray>");
                 this.setWorldStockTag(buyItem, symbol);
                 this.setWorldStockActionTag(buyItem, "buy:" + tq);
                 gui.setItem(buySlots[i], buyItem);
             }
-            ItemStack buyQtyItem = this.createItem(Material.WRITABLE_BOOK, "<green><bold>\ud83d\udcd6 \u6570\u91cf\u3092\u6307\u5b9a\u3057\u3066\u8cfc\u5165" + suffix + "</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u682a\u6570\u3092\u5165\u529b</gray>");
+            ItemStack buyQtyItem = this.createItem(Material.WRITABLE_BOOK, "<green><bold>📖 数量を指定して購入" + suffix + "</bold></green>", "<gray>クリックしてチャットに株数を入力</gray>");
             this.setWorldStockTag(buyQtyItem, symbol);
             this.setWorldStockActionTag(buyQtyItem, "buyqty");
             gui.setItem(12, buyQtyItem);
             if (qty > 0) {
                 for (int i = 0; i < tiers.length; ++i) {
                     int tq = tiers[i];
-                    ItemStack sellItem = this.createItem(Material.REDSTONE, "<red><bold>" + tq + "\u682a\u58f2\u5374" + suffix + "</bold></red>", "<gray>\u53d7\u53d6\u984d: </gray><gold>" + String.format("%.2f", perSell * (double)tq) + "\u5186</gold> <dark_gray>(\u624b\u6570\u6599\u5dee\u5f15\u5f8c)</dark_gray>", "<dark_gray>(\u73fe\u5728\u5024 " + String.format("%,.0f", yenPrice) + "\u5186 \u00d7 " + tq + "\u682a - \u624b\u6570\u6599 " + String.format("%.1f", feeRate * 100.0) + "%)</dark_gray>");
+                    ItemStack sellItem = this.createItem(Material.REDSTONE, "<red><bold>" + tq + "株売却" + suffix + "</bold></red>", "<gray>受取額: </gray><gold>" + String.format("%.2f", perSell * (double)tq) + "円</gold> <dark_gray>(手数料差引後)</dark_gray>", "<dark_gray>(現在値 " + String.format("%,.0f", yenPrice) + "円 × " + tq + "株 - 手数料 " + String.format("%.1f", feeRate * 100.0) + "%)</dark_gray>");
                     this.setWorldStockTag(sellItem, symbol);
                     this.setWorldStockActionTag(sellItem, "sell:" + tq);
                     gui.setItem(sellSlots[i], sellItem);
                 }
-                ItemStack sellQtyItem = this.createItem(Material.WRITABLE_BOOK, "<red><bold>\ud83d\udcd6 \u6570\u91cf\u3092\u6307\u5b9a\u3057\u3066\u58f2\u5374" + suffix + "</bold></red>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u682a\u6570\u3092\u5165\u529b</gray>");
+                ItemStack sellQtyItem = this.createItem(Material.WRITABLE_BOOK, "<red><bold>📖 数量を指定して売却" + suffix + "</bold></red>", "<gray>クリックしてチャットに株数を入力</gray>");
                 this.setWorldStockTag(sellQtyItem, symbol);
                 this.setWorldStockActionTag(sellQtyItem, "sellqty");
                 gui.setItem(14, sellQtyItem);
             } else {
-                ItemStack noSell = this.createItem(Material.GRAY_DYE, "<dark_gray>\u58f2\u5374</dark_gray>", "<dark_gray>\u4fdd\u6709\u3057\u3066\u3044\u307e\u305b\u3093</dark_gray>");
+                ItemStack noSell = this.createItem(Material.GRAY_DYE, "<dark_gray>売却</dark_gray>", "<dark_gray>保有していません</dark_gray>");
                 this.setWorldStockTag(noSell, symbol);
                 gui.setItem(16, noSell);
             }
         }
-        ItemStack refreshItem = this.createItem(Material.CLOCK, "<yellow><bold>\ud83d\udd04 \u4fa1\u683c\u3092\u518d\u53d6\u5f97</bold></yellow>", "<gray>\u30ad\u30e3\u30c3\u30b7\u30e5\u3092\u7121\u8996\u3057\u3066\u6700\u65b0\u5024\u3092\u53d6\u5f97</gray>");
+        ItemStack refreshItem = this.createItem(Material.CLOCK, "<yellow><bold>🔄 価格を再取得</bold></yellow>", "<gray>キャッシュを無視して最新値を取得</gray>");
         this.setWorldStockTag(refreshItem, symbol);
         gui.setItem(22, refreshItem);
         if (fund == null) {
             List myAlerts = this.worldStockAlerts.getOrDefault(actorU, new ArrayList());
             WorldStockAlert existingAlert = myAlerts.stream().filter(a -> a.symbol.equals(symbol)).findFirst().orElse(null);
-            ItemStack bellItem = existingAlert != null ? this.createItem(Material.BELL, "<yellow><bold>\ud83d\udd14 \u5024\u52d5\u304d\u30a2\u30e9\u30fc\u30c8\u8a2d\u5b9a\u4e2d</bold></yellow>", "<gray>\u57fa\u6e96\u5024: </gray><white>" + String.format("%.2f", existingAlert.baselinePrice) + "</white>", "<gray>\u95be\u5024: </gray><white>\u00b1" + String.format("%.1f", existingAlert.thresholdPercent) + "%</white>", "<red>\u30af\u30ea\u30c3\u30af\u3057\u3066\u89e3\u9664</red>") : this.createItem(Material.BELL, "<yellow><bold>\ud83d\udd14 \u5024\u52d5\u304d\u30a2\u30e9\u30fc\u30c8\u3092\u8a2d\u5b9a</bold></yellow>", "<gray>\u57fa\u6e96\u5024\u304b\u3089\u6307\u5b9a%\u4ee5\u4e0a\u5909\u52d5\u3057\u305f\u3089\u30c1\u30e3\u30c3\u30c8\u3067\u901a\u77e5\u3057\u307e\u3059</gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u95be\u5024(%)\u3092\u5165\u529b</gray>");
+            ItemStack bellItem = existingAlert != null ? this.createItem(Material.BELL, "<yellow><bold>🔔 値動きアラート設定中</bold></yellow>", "<gray>基準値: </gray><white>" + String.format("%.2f", existingAlert.baselinePrice) + "</white>", "<gray>閾値: </gray><white>±" + String.format("%.1f", existingAlert.thresholdPercent) + "%</white>", "<red>クリックして解除</red>") : this.createItem(Material.BELL, "<yellow><bold>🔔 値動きアラートを設定</bold></yellow>", "<gray>基準値から指定%以上変動したらチャットで通知します</gray>", "<gray>クリックしてチャットに閾値(%)を入力</gray>");
             this.setWorldStockTag(bellItem, symbol);
             gui.setItem(13, bellItem);
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5424,7 +5352,7 @@ MinecraftBankAPI {
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (online.getUniqueId().equals(p.getUniqueId())) continue;
             if (slot >= 45) break;
-            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<yellow><bold>" + online.getName() + "</bold></yellow>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u4ea4\u63db\u3092\u7533\u3057\u8fbc\u3080</gray>");
+            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<yellow><bold>" + online.getName() + "</bold></yellow>", "<gray>クリックして交換を申し込む</gray>");
             ItemMeta hm = head.getItemMeta();
             if (hm != null) {
                 hm.getPersistentDataContainer().set(this.tradeTargetKey, PersistentDataType.STRING, (Object)online.getUniqueId().toString());
@@ -5433,9 +5361,9 @@ MinecraftBankAPI {
             gui.setItem(slot++, head);
         }
         if (slot == 0) {
-            gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>\u4ed6\u306b\u30aa\u30f3\u30e9\u30a4\u30f3\u306e\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u3044\u307e\u305b\u3093</bold></red>", new String[0]));
+            gui.setItem(22, this.createItem(Material.BARRIER, "<red><bold>他にオンラインのプレイヤーがいません</bold></red>", new String[0]));
         }
-        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5498,12 +5426,12 @@ MinecraftBankAPI {
         OfflinePlayer b = Bukkit.getOfflinePlayer((UUID)session.playerB);
         String nameA = a.getName() != null ? a.getName() : session.playerA.toString();
         String nameB = b.getName() != null ? b.getName() : session.playerB.toString();
-        inv.setItem(20, this.createItem(Material.GOLD_NUGGET, "<gold><bold>\ud83d\udcb0 " + nameA + " \u306e\u63d0\u793a\u91d1\u984d</bold></gold>", "<gray>\u73fe\u5728:</gray> <yellow>" + (long)session.moneyOfferedA + "\u5186</yellow>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</yellow>"));
-        inv.setItem(24, this.createItem(Material.GOLD_NUGGET, "<gold><bold>\ud83d\udcb0 " + nameB + " \u306e\u63d0\u793a\u91d1\u984d</bold></gold>", "<gray>\u73fe\u5728:</gray> <yellow>" + (long)session.moneyOfferedB + "\u5186</yellow>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</yellow>"));
-        inv.setItem(22, this.createItem(Material.PAPER, "<white><bold>\ud83d\udcc4 \u53d6\u5f15\u30b9\u30c6\u30fc\u30bf\u30b9</bold></white>", "<gray>" + nameA + ":</gray> " + (session.confirmedA ? "<green>\u78ba\u8a8d\u6e08\u307f</green>" : "<red>\u672a\u78ba\u8a8d</red>"), "<gray>" + nameB + ":</gray> " + (session.confirmedB ? "<green>\u78ba\u8a8d\u6e08\u307f</green>" : "<red>\u672a\u78ba\u8a8d</red>"), "<dark_gray>\u53cc\u65b9\u304c\u78ba\u8a8d\u3059\u308b\u3068\u53d6\u5f15\u304c\u6210\u7acb\u3057\u307e\u3059</dark_gray>", "<dark_gray>\u63d0\u793a\u5185\u5bb9\u3092\u5909\u66f4\u3059\u308b\u3068\u78ba\u8a8d\u306f\u89e3\u9664\u3055\u308c\u307e\u3059</dark_gray>"));
-        inv.setItem(45, this.createItem(session.confirmedA ? Material.LIME_CONCRETE : Material.LIME_DYE, (String)(session.confirmedA ? "<green><bold>\u2714 " + nameA + ": \u78ba\u8a8d\u6e08\u307f</bold></green>" : "<yellow><bold>\u30af\u30ea\u30c3\u30af\u3057\u3066\u78ba\u8a8d\u3059\u308b</bold></yellow>"), "<gray>(" + nameA + "\u7528)</gray>"));
-        inv.setItem(53, this.createItem(session.confirmedB ? Material.LIME_CONCRETE : Material.LIME_DYE, (String)(session.confirmedB ? "<green><bold>\u2714 " + nameB + ": \u78ba\u8a8d\u6e08\u307f</bold></green>" : "<yellow><bold>\u30af\u30ea\u30c3\u30af\u3057\u3066\u78ba\u8a8d\u3059\u308b</bold></yellow>"), "<gray>(" + nameB + "\u7528)</gray>"));
-        inv.setItem(49, this.createItem(Material.BARRIER, "<red><bold>\u2716 \u53d6\u5f15\u3092\u30ad\u30e3\u30f3\u30bb\u30eb</bold></red>", "<gray>\u3069\u3061\u3089\u304b\u304c\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u53d6\u5f15\u306f\u4e2d\u6b62\u3055\u308c\u307e\u3059</gray>"));
+        inv.setItem(20, this.createItem(Material.GOLD_NUGGET, "<gold><bold>💰 " + nameA + " の提示金額</bold></gold>", "<gray>現在:</gray> <yellow>" + (long)session.moneyOfferedA + "円</yellow>", "<yellow>クリックしてチャットに金額を入力</yellow>"));
+        inv.setItem(24, this.createItem(Material.GOLD_NUGGET, "<gold><bold>💰 " + nameB + " の提示金額</bold></gold>", "<gray>現在:</gray> <yellow>" + (long)session.moneyOfferedB + "円</yellow>", "<yellow>クリックしてチャットに金額を入力</yellow>"));
+        inv.setItem(22, this.createItem(Material.PAPER, "<white><bold>📄 取引ステータス</bold></white>", "<gray>" + nameA + ":</gray> " + (session.confirmedA ? "<green>確認済み</green>" : "<red>未確認</red>"), "<gray>" + nameB + ":</gray> " + (session.confirmedB ? "<green>確認済み</green>" : "<red>未確認</red>"), "<dark_gray>双方が確認すると取引が成立します</dark_gray>", "<dark_gray>提示内容を変更すると確認は解除されます</dark_gray>"));
+        inv.setItem(45, this.createItem(session.confirmedA ? Material.LIME_CONCRETE : Material.LIME_DYE, (String)(session.confirmedA ? "<green><bold>✔ " + nameA + ": 確認済み</bold></green>" : "<yellow><bold>クリックして確認する</bold></yellow>"), "<gray>(" + nameA + "用)</gray>"));
+        inv.setItem(53, this.createItem(session.confirmedB ? Material.LIME_CONCRETE : Material.LIME_DYE, (String)(session.confirmedB ? "<green><bold>✔ " + nameB + ": 確認済み</bold></green>" : "<yellow><bold>クリックして確認する</bold></yellow>"), "<gray>(" + nameB + "用)</gray>"));
+        inv.setItem(49, this.createItem(Material.BARRIER, "<red><bold>✖ 取引をキャンセル</bold></red>", "<gray>どちらかがクリックすると取引は中止されます</gray>"));
     }
 
     private void handleTradeClick(InventoryClickEvent e) {
@@ -5624,7 +5552,7 @@ MinecraftBankAPI {
             }
             return;
         }
-        boolean bl2 = isA ? rawSlot >= 0 && rawSlot <= 17 : (ownRegion = rawSlot >= 27 && rawSlot <= 44);
+        ownRegion = isA ? rawSlot >= 0 && rawSlot <= 17 : rawSlot >= 27 && rawSlot <= 44;
         if (ownRegion) {
             this.resetTradeConfirmations(session);
             return;
@@ -5653,14 +5581,14 @@ MinecraftBankAPI {
         this.activeTradeSessions.remove(session.playerB);
         if (a != null && a.isOnline()) {
             this.msgKey(a, "trade.cancelled", new String[0]);
-            this.addLog(session.playerA, "\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u30ad\u30e3\u30f3\u30bb\u30eb(" + reason + ")");
+            this.addLog(session.playerA, "アイテム交換キャンセル(" + reason + ")");
             if (a.getOpenInventory().getTopInventory().equals((Object)session.inventory)) {
                 a.closeInventory();
             }
         }
         if (b != null && b.isOnline()) {
             this.msgKey(b, "trade.cancelled", new String[0]);
-            this.addLog(session.playerB, "\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u30ad\u30e3\u30f3\u30bb\u30eb(" + reason + ")");
+            this.addLog(session.playerB, "アイテム交換キャンセル(" + reason + ")");
             if (b.getOpenInventory().getTopInventory().equals((Object)session.inventory)) {
                 b.closeInventory();
             }
@@ -5729,9 +5657,9 @@ MinecraftBankAPI {
                 b.closeInventory();
             }
         }
-        this.addLog(session.playerA, "\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u6210\u7acb: " + nameB + " \u3068\u306e\u9593\u3067 \u30a2\u30a4\u30c6\u30e0" + itemsFromA.size() + "\u70b9" + (String)(session.moneyOfferedA > 0.0 ? "+" + this.fmtCur(session.moneyOfferedA) : "") + " \u3092\u6e21\u3057\u3001\u30a2\u30a4\u30c6\u30e0" + itemsFromB.size() + "\u70b9" + (String)(session.moneyOfferedB > 0.0 ? "+" + this.fmtCur(session.moneyOfferedB) : "") + " \u3092\u53d7\u3051\u53d6\u3063\u305f");
-        this.addLog(session.playerB, "\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u6210\u7acb: " + nameA + " \u3068\u306e\u9593\u3067 \u30a2\u30a4\u30c6\u30e0" + itemsFromB.size() + "\u70b9" + (String)(session.moneyOfferedB > 0.0 ? "+" + this.fmtCur(session.moneyOfferedB) : "") + " \u3092\u6e21\u3057\u3001\u30a2\u30a4\u30c6\u30e0" + itemsFromA.size() + "\u70b9" + (String)(session.moneyOfferedA > 0.0 ? "+" + this.fmtCur(session.moneyOfferedA) : "") + " \u3092\u53d7\u3051\u53d6\u3063\u305f");
-        this.sendDiscordWebhook("\ud83e\udd1d **" + nameA + "** \u3068 **" + nameB + "** \u306e\u9593\u3067\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u304c\u6210\u7acb\u3057\u307e\u3057\u305f\u3002(" + nameA + ": \u30a2\u30a4\u30c6\u30e0" + itemsFromA.size() + "\u70b9" + (String)(session.moneyOfferedA > 0.0 ? "+" + this.fmtCur(session.moneyOfferedA) : "") + " \u21d4 " + nameB + ": \u30a2\u30a4\u30c6\u30e0" + itemsFromB.size() + "\u70b9" + (String)(session.moneyOfferedB > 0.0 ? "+" + this.fmtCur(session.moneyOfferedB) : "") + ")");
+        this.addLog(session.playerA, "アイテム交換成立: " + nameB + " との間で アイテム" + itemsFromA.size() + "点" + (String)(session.moneyOfferedA > 0.0 ? "+" + this.fmtCur(session.moneyOfferedA) : "") + " を渡し、アイテム" + itemsFromB.size() + "点" + (String)(session.moneyOfferedB > 0.0 ? "+" + this.fmtCur(session.moneyOfferedB) : "") + " を受け取った");
+        this.addLog(session.playerB, "アイテム交換成立: " + nameA + " との間で アイテム" + itemsFromB.size() + "点" + (String)(session.moneyOfferedB > 0.0 ? "+" + this.fmtCur(session.moneyOfferedB) : "") + " を渡し、アイテム" + itemsFromA.size() + "点" + (String)(session.moneyOfferedA > 0.0 ? "+" + this.fmtCur(session.moneyOfferedA) : "") + " を受け取った");
+        this.sendDiscordWebhook("🤝 **" + nameA + "** と **" + nameB + "** の間でアイテム交換が成立しました。(" + nameA + ": アイテム" + itemsFromA.size() + "点" + (String)(session.moneyOfferedA > 0.0 ? "+" + this.fmtCur(session.moneyOfferedA) : "") + " ⇔ " + nameB + ": アイテム" + itemsFromB.size() + "点" + (String)(session.moneyOfferedB > 0.0 ? "+" + this.fmtCur(session.moneyOfferedB) : "") + ")");
     }
 
     private List<ItemStack> collectTradeItems(Inventory inv, int startSlot, int endSlot) {
@@ -5765,19 +5693,19 @@ MinecraftBankAPI {
 
     private void openBankHubGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tBankHub);
-        gui.setItem(10, this.createItem(Material.CHEST, "<aqua><bold>\u500b\u4eba\u53e3\u5ea7\u30fb\u9810\u91d1</bold></aqua>", new String[0]));
-        gui.setItem(12, this.createItem(Material.EMERALD, "<green><bold>\u878d\u8cc7\u5e02\u5834\uff08\u501f\u308a\u308b\uff09</bold></green>", new String[0]));
-        gui.setItem(14, this.createItem(Material.GOLD_INGOT, "<yellow><bold>\u501f\u91d1\u8fd4\u6e08\u7a93\u53e3\uff08\u8fd4\u3059\uff09</bold></yellow>", new String[0]));
+        gui.setItem(10, this.createItem(Material.CHEST, "<aqua><bold>個人口座・預金</bold></aqua>", new String[0]));
+        gui.setItem(12, this.createItem(Material.EMERALD, "<green><bold>融資市場（借りる）</bold></green>", new String[0]));
+        gui.setItem(14, this.createItem(Material.GOLD_INGOT, "<yellow><bold>借金返済窓口（返す）</bold></yellow>", new String[0]));
         if (this.bankers.contains(p.getUniqueId())) {
-            gui.setItem(16, this.createItem(Material.NETHER_STAR, "<red><bold>\u982d\u53d6\u30b3\u30f3\u30c8\u30ed\u30fc\u30eb\u30d1\u30cd\u30eb</bold></red>", new String[0]));
+            gui.setItem(16, this.createItem(Material.NETHER_STAR, "<red><bold>頭取コントロールパネル</bold></red>", new String[0]));
         } else {
-            gui.setItem(16, this.createItem(Material.ENDER_EYE, "<dark_purple><bold>\u9280\u884c\u8a2d\u7acb\u30aa\u30d5\u30a3\u30b9</bold></dark_purple>", new String[0]));
+            gui.setItem(16, this.createItem(Material.ENDER_EYE, "<dark_purple><bold>銀行設立オフィス</bold></dark_purple>", new String[0]));
         }
-        gui.setItem(19, this.createItem(Material.DIAMOND, "<aqua><bold>\u56fd\u55b6\u516c\u5eab (\u30b5\u30fc\u30d0\u30fc\u30ed\u30fc\u30f3)</bold></aqua>", new String[0]));
-        gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\u9ad8\u91d1\u5229\u30fb\u5b9a\u671f\u9810\u91d1</bold></gold>", new String[0]));
-        gui.setItem(23, this.createItem(Material.ANVIL, "<dark_purple><bold>\ud83c\udffa \u8cea\u5c4b\u30fb\u62c5\u4fdd\u4ed8\u304d\u878d\u8cc7</bold></dark_purple>", "<gray>\u30ec\u30a2\u30a2\u30a4\u30c6\u30e0\u3092\u62c5\u4fdd\u306b\u304a\u91d1\u3092\u501f\u308a\u3089\u308c\u307e\u3059</gray>"));
-        gui.setItem(25, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>\ud83d\udee1 \u751f\u547d\u4fdd\u967a\u7a93\u53e3</bold></blue>", "<gray>\u6b7b\u4ea1\u6642\u306e\u30ed\u30b9\u306b\u5099\u3048\u3066\u52a0\u5165\u3067\u304d\u307e\u3059</gray>"));
-        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(19, this.createItem(Material.DIAMOND, "<aqua><bold>国営公庫 (サーバーローン)</bold></aqua>", new String[0]));
+        gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>高金利・定期預金</bold></gold>", new String[0]));
+        gui.setItem(23, this.createItem(Material.ANVIL, "<dark_purple><bold>🏺 質屋・担保付き融資</bold></dark_purple>", "<gray>レアアイテムを担保にお金を借りられます</gray>"));
+        gui.setItem(25, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>🛡 生命保険窓口</bold></blue>", "<gray>死亡時のロスに備えて加入できます</gray>"));
+        gui.setItem(31, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5785,33 +5713,33 @@ MinecraftBankAPI {
     private void openMyPageGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tMyPage);
         UUID u = p.getUniqueId();
-        gui.setItem(10, this.createItem(Material.EMERALD_BLOCK, "<green><bold>\u500b\u4eba\u4fe1\u7528\u60c5\u5831\u30bb\u30f3\u30bf\u30fc</bold></green>", new String[0]));
-        gui.setItem(12, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>\ud83c\udf96 \u5b9f\u7e3e\u30fb\u79f0\u53f7\u30b3\u30ec\u30af\u30b7\u30e7\u30f3</bold></gold>", new String[0]));
-        gui.setItem(14, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>\ud83c\udfc6 \u8cc7\u7523\u30e9\u30f3\u30ad\u30f3\u30b0</bold></yellow>", new String[0]));
-        gui.setItem(16, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>\ud83d\udcdc \u53d6\u5f15\u5c65\u6b74\u3092\u898b\u308b</bold></aqua>", new String[0]));
+        gui.setItem(10, this.createItem(Material.EMERALD_BLOCK, "<green><bold>個人信用情報センター</bold></green>", new String[0]));
+        gui.setItem(12, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>🎖 実績・称号コレクション</bold></gold>", new String[0]));
+        gui.setItem(14, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>🏆 資産ランキング</bold></yellow>", new String[0]));
+        gui.setItem(16, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>📜 取引履歴を見る</bold></aqua>", new String[0]));
         boolean newsOff = this.newsBroadcastOff.contains(u);
         if (newsOff) {
-            gui.setItem(19, this.createItem(Material.NOTE_BLOCK, "<gray><bold>\ud83d\udd15 \u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001: OFF</bold></gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3067ON\u306b\u5207\u308a\u66ff\u3048</gray>"));
+            gui.setItem(19, this.createItem(Material.NOTE_BLOCK, "<gray><bold>🔕 経済ニュース放送: OFF</bold></gray>", "<gray>クリックでONに切り替え</gray>"));
         } else {
-            gui.setItem(19, this.createItem(Material.BELL, "<green><bold>\ud83d\udd14 \u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001: ON</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3067OFF\u306b\u5207\u308a\u66ff\u3048</gray>"));
+            gui.setItem(19, this.createItem(Material.BELL, "<green><bold>🔔 経済ニュース放送: ON</bold></green>", "<gray>クリックでOFFに切り替え</gray>"));
         }
-        gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\ud83c\udfdb \u56fd\u5eab\u6b8b\u9ad8\u3092\u898b\u308b</bold></gold>", "<gray>\u30b5\u30fc\u30d0\u30fc\u5168\u4f53\u306e\u7a0e\u53ce\u30d7\u30fc\u30eb\u3092\u78ba\u8a8d\u3057\u307e\u3059</gray>"));
-        gui.setItem(23, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>\ud83d\udcd8 \u521d\u5fc3\u8005\u30ac\u30a4\u30c9\u3092\u958b\u304f</bold></light_purple>", new String[0]));
+        gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>🏛 国庫残高を見る</bold></gold>", "<gray>サーバー全体の税収プールを確認します</gray>"));
+        gui.setItem(23, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>📘 初心者ガイドを開く</bold></light_purple>", new String[0]));
         long remain = this.hubItemReissueCooldown.getOrDefault(u, 0L) - System.currentTimeMillis();
         if (remain > 0L) {
-            gui.setItem(25, this.createItem(Material.BARRIER, "<dark_red><bold>\ud83d\udcd6 \u7d4c\u6e08\u624b\u5e33\u306e\u518d\u767a\u884c</bold></dark_red>", "<gray>\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d: \u6b8b\u308a" + (remain / 1000L + 1L) + "\u79d2</gray>"));
+            gui.setItem(25, this.createItem(Material.BARRIER, "<dark_red><bold>📖 経済手帳の再発行</bold></dark_red>", "<gray>クールダウン中: 残り" + (remain / 1000L + 1L) + "秒</gray>"));
         } else {
-            gui.setItem(25, this.createItem(Material.BOOK, "<white><bold>\ud83d\udcd6 \u7d4c\u6e08\u624b\u5e33\u306e\u518d\u767a\u884c</bold></white>", "<gray>\u306a\u304f\u3057\u305f\u5834\u5408\u3001\u624b\u6301\u3061\u306b\u518d\u767a\u884c\u3057\u307e\u3059</gray>"));
+            gui.setItem(25, this.createItem(Material.BOOK, "<white><bold>📖 経済手帳の再発行</bold></white>", "<gray>なくした場合、手持ちに再発行します</gray>"));
         }
-        gui.setItem(27, this.createItem(Material.SUNFLOWER, "<gold><bold>\ud83c\udf81 \u56fd\u5eab\u3078\u5bc4\u4ed8\u3059\u308b</bold></gold>", "<gray>\u56fd\u5eab\u3078\u4efb\u610f\u306e\u91d1\u984d\u3092\u5bc4\u4ed8\u3067\u304d\u307e\u3059</gray>"));
+        gui.setItem(27, this.createItem(Material.SUNFLOWER, "<gold><bold>🎁 国庫へ寄付する</bold></gold>", "<gray>国庫へ任意の金額を寄付できます</gray>"));
         List<InstallmentPlan> myPlans = this.installmentPlans.get(u);
         int planCount = myPlans == null ? 0 : myPlans.size();
-        gui.setItem(29, this.createItem(Material.CLOCK, "<light_purple><bold>\ud83d\udcc5 \u5206\u5272\u6255\u3044\u306e\u72b6\u6cc1</bold></light_purple>", "<gray>\u73fe\u5728\u306e\u5206\u5272\u6255\u3044\u30d7\u30e9\u30f3\u6570:</gray> <yellow>" + planCount + "\u4ef6</yellow>"));
-        gui.setItem(31, this.createItem(Material.ENDER_CHEST, "<aqua><bold>\ud83d\udce6 \u53d7\u53d6\u7bb1\u3092\u78ba\u8a8d</bold></aqua>", "<gray>\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u843d\u672d\u54c1\u306a\u3069\u3092\u518d\u53d7\u53d6\u3057\u307e\u3059</gray>"));
+        gui.setItem(29, this.createItem(Material.CLOCK, "<light_purple><bold>📅 分割払いの状況</bold></light_purple>", "<gray>現在の分割払いプラン数:</gray> <yellow>" + planCount + "件</yellow>"));
+        gui.setItem(31, this.createItem(Material.ENDER_CHEST, "<aqua><bold>📦 受取箱を確認</bold></aqua>", "<gray>オークション落札品などを再受取します</gray>"));
         boolean pwSet = this.webPasswordHash.containsKey(u);
-        gui.setItem(33, this.createItem(Material.MAP, "<light_purple><bold>\ud83c\udf10 Web\u500b\u4eba\u30da\u30fc\u30b8\u306e\u30ea\u30f3\u30af</bold></light_purple>", "<gray>\u30af\u30ea\u30c3\u30af\u3067\u30ea\u30f3\u30af\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u8868\u793a</gray>"));
-        gui.setItem(32, this.createItem(Material.TRIPWIRE_HOOK, "<light_purple><bold>\ud83d\udd11 \u30aa\u30d5\u30e9\u30a4\u30f3\u64cd\u4f5c\u7528\u30d1\u30b9\u30ef\u30fc\u30c9</bold></light_purple>", pwSet ? "<gray>\u73fe\u5728: <green>\u8a2d\u5b9a\u6e08\u307f</green></gray>" : "<gray>\u73fe\u5728: <red>\u672a\u8a2d\u5b9a</red></gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3067\u30c1\u30e3\u30c3\u30c8\u5165\u529b\u306b\u5207\u308a\u66ff\u3048</gray>"));
-        gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(33, this.createItem(Material.MAP, "<light_purple><bold>🌐 Web個人ページのリンク</bold></light_purple>", "<gray>クリックでリンクをチャットに表示</gray>"));
+        gui.setItem(32, this.createItem(Material.TRIPWIRE_HOOK, "<light_purple><bold>🔑 オフライン操作用パスワード</bold></light_purple>", pwSet ? "<gray>現在: <green>設定済み</green></gray>" : "<gray>現在: <red>未設定</red></gray>", "<gray>クリックでチャット入力に切り替え</gray>"));
+        gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5822,7 +5750,7 @@ MinecraftBankAPI {
         List<InstallmentPlan> plans = this.installmentPlans.get(u);
         long now = System.currentTimeMillis();
         if (plans == null || plans.isEmpty()) {
-            gui.setItem(22, this.createItem(Material.BARRIER, "<gray><bold>\u5206\u5272\u6255\u3044\u306e\u30d7\u30e9\u30f3\u306f\u3042\u308a\u307e\u305b\u3093</bold></gray>", new String[0]));
+            gui.setItem(22, this.createItem(Material.BARRIER, "<gray><bold>分割払いのプランはありません</bold></gray>", new String[0]));
         } else {
             int slot = 0;
             for (InstallmentPlan plan : plans) {
@@ -5831,37 +5759,37 @@ MinecraftBankAPI {
                 long remainH = remainMs / 3600000L;
                 long remainM = remainMs / 60000L % 60L;
                 String dueStr = new SimpleDateFormat("MM/dd HH:mm").format(new Date(plan.nextDueTime));
-                gui.setItem(slot++, this.createItem(Material.PAPER, "<light_purple><bold>" + plan.description + "</bold></light_purple>", "<gray>1\u56de\u3042\u305f\u308a\u306e\u652f\u6255\u984d:</gray> <gold>" + String.format("%.2f", plan.installmentAmount) + "\u5186</gold>", "<gray>\u6b8b\u308a\u56de\u6570:</gray> <yellow>" + plan.installmentsRemaining + "\u56de</yellow>", "<gray>\u6b21\u56de\u671f\u65e5:</gray> <white>" + dueStr + "</white> <dark_gray>(\u3042\u3068 " + remainH + "h" + remainM + "m)</dark_gray>"));
+                gui.setItem(slot++, this.createItem(Material.PAPER, "<light_purple><bold>" + plan.description + "</bold></light_purple>", "<gray>1回あたりの支払額:</gray> <gold>" + String.format("%.2f", plan.installmentAmount) + "円</gold>", "<gray>残り回数:</gray> <yellow>" + plan.installmentsRemaining + "回</yellow>", "<gray>次回期日:</gray> <white>" + dueStr + "</white> <dark_gray>(あと " + remainH + "h" + remainM + "m)</dark_gray>"));
             }
         }
-        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(49, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
 
     private void openMainGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)36, (Component)this.tMain);
-        gui.setItem(10, this.createItem(Material.CHEST, "<aqua><bold>\u500b\u4eba\u53e3\u5ea7\u30fb\u9810\u91d1</bold></aqua>", new String[0]));
-        gui.setItem(12, this.createItem(Material.EMERALD, "<green><bold>\u878d\u8cc7\u5e02\u5834\uff08\u501f\u308a\u308b\uff09</bold></green>", new String[0]));
-        gui.setItem(14, this.createItem(Material.GOLD_INGOT, "<yellow><bold>\u501f\u91d1\u8fd4\u6e08\u7a93\u53e3\uff08\u8fd4\u3059\uff09</bold></yellow>", new String[0]));
+        gui.setItem(10, this.createItem(Material.CHEST, "<aqua><bold>個人口座・預金</bold></aqua>", new String[0]));
+        gui.setItem(12, this.createItem(Material.EMERALD, "<green><bold>融資市場（借りる）</bold></green>", new String[0]));
+        gui.setItem(14, this.createItem(Material.GOLD_INGOT, "<yellow><bold>借金返済窓口（返す）</bold></yellow>", new String[0]));
         if (this.bankers.contains(p.getUniqueId())) {
-            gui.setItem(16, this.createItem(Material.NETHER_STAR, "<red><bold>\u982d\u53d6\u30b3\u30f3\u30c8\u30ed\u30fc\u30eb\u30d1\u30cd\u30eb</bold></red>", new String[0]));
+            gui.setItem(16, this.createItem(Material.NETHER_STAR, "<red><bold>頭取コントロールパネル</bold></red>", new String[0]));
         } else {
-            gui.setItem(16, this.createItem(Material.ENDER_EYE, "<dark_purple><bold>\u9280\u884c\u8a2d\u7acb\u30aa\u30d5\u30a3\u30b9</bold></dark_purple>", new String[0]));
+            gui.setItem(16, this.createItem(Material.ENDER_EYE, "<dark_purple><bold>銀行設立オフィス</bold></dark_purple>", new String[0]));
         }
-        gui.setItem(19, this.createItem(Material.DIAMOND, "<aqua><bold>\u56fd\u55b6\u516c\u5eab (\u30b5\u30fc\u30d0\u30fc\u30ed\u30fc\u30f3)</bold></aqua>", new String[0]));
-        gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\u9ad8\u91d1\u5229\u30fb\u5b9a\u671f\u9810\u91d1</bold></gold>", new String[0]));
-        gui.setItem(23, this.createItem(Material.EMERALD_BLOCK, "<green><bold>\u500b\u4eba\u4fe1\u7528\u60c5\u5831\u30bb\u30f3\u30bf\u30fc</bold></green>", new String[0]));
-        gui.setItem(31, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>\ud83c\udfc6 \u8cc7\u7523\u30e9\u30f3\u30ad\u30f3\u30b0</bold></yellow>", "<gray>\u30b5\u30fc\u30d0\u30fc\u5185\u306e\u8cc7\u7523\u5bb6\u30c8\u30c3\u30d710\u3092\u8868\u793a</gray>"));
-        gui.setItem(27, this.createItem(Material.ANVIL, "<dark_purple><bold>\ud83c\udffa \u8cea\u5c4b\u30fb\u62c5\u4fdd\u4ed8\u304d\u878d\u8cc7</bold></dark_purple>", "<gray>\u30ec\u30a2\u30a2\u30a4\u30c6\u30e0\u3092\u62c5\u4fdd\u306b\u304a\u91d1\u3092\u501f\u308a\u3089\u308c\u307e\u3059</gray>"));
-        gui.setItem(29, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>\ud83d\udee1 \u751f\u547d\u4fdd\u967a\u7a93\u53e3</bold></blue>", "<gray>\u6b7b\u4ea1\u6642\u306e\u30ed\u30b9\u306b\u5099\u3048\u3066\u52a0\u5165\u3067\u304d\u307e\u3059</gray>"));
-        gui.setItem(33, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>\ud83c\udf96 \u5b9f\u7e3e\u30fb\u79f0\u53f7\u30b3\u30ec\u30af\u30b7\u30e7\u30f3</bold></gold>", "<gray>\u89e3\u653e\u3057\u305f\u5b9f\u7e3e\u3092\u78ba\u8a8d\u3067\u304d\u307e\u3059</gray>"));
-        gui.setItem(28, this.createItem(Material.ITEM_FRAME, "<green><bold>\ud83d\udd28 \u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30cf\u30a6\u30b9</bold></green>", "<gray>\u30a2\u30a4\u30c6\u30e0\u3092\u51fa\u54c1\u30fb\u5165\u672d\u3067\u304d\u307e\u3059</gray>"));
-        gui.setItem(25, this.createItem(Material.COMPASS, "<blue><bold>\ud83d\udcc8 \u4e16\u754c\u682a\u5f0f\u5e02\u5834</bold></blue>", "<gray>\u73fe\u5b9f\u306e\u682a\u3092\u691c\u7d22\u3057\u3066\u58f2\u8cb7</gray>"));
-        gui.setItem(17, this.createItem(Material.HOPPER, "<green><bold>\ud83c\udf3e \u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7</bold></green>", "<gray>\u9271\u77f3\u30fb\u8fb2\u4f5c\u7269\u30fb\u30c9\u30ed\u30c3\u30d7\u54c1\u3092\u58f2\u8cb7</gray>"));
-        gui.setItem(15, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>\ud83e\uddf3 \u5de1\u56de\u5546\u4eba</bold></gold>", "<gray>\u73fe\u5728\u5730\u3092\u78ba\u8a8d\u3059\u308b(\u8cfc\u5165\u306f\u73fe\u5730\u306eNPC\u304b\u3089)</gray>"));
-        gui.setItem(32, this.createItem(Material.FIREWORK_STAR, "<gold><bold>\ud83c\udf9f \u5b9d\u304f\u3058</bold></gold>", "<gray>\u30c1\u30b1\u30c3\u30c8\u3092\u8cfc\u5165\u3057\u3066\u5b9a\u671f\u62bd\u9078\u306b\u53c2\u52a0</gray>"));
-        gui.setItem(26, this.createItem(Material.BARREL, "<gold><bold>\ud83c\udfec \u30ec\u30f3\u30bf\u30eb\u5009\u5eab</bold></gold>", "<gray>\u5bb6\u8cc3\u3092\u6255\u3063\u3066\u5c02\u7528\u306e\u53ce\u7d0d\u5009\u5eab\u3092\u501f\u308a\u3089\u308c\u307e\u3059</gray>"));
+        gui.setItem(19, this.createItem(Material.DIAMOND, "<aqua><bold>国営公庫 (サーバーローン)</bold></aqua>", new String[0]));
+        gui.setItem(21, this.createItem(Material.GOLD_BLOCK, "<gold><bold>高金利・定期預金</bold></gold>", new String[0]));
+        gui.setItem(23, this.createItem(Material.EMERALD_BLOCK, "<green><bold>個人信用情報センター</bold></green>", new String[0]));
+        gui.setItem(31, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>🏆 資産ランキング</bold></yellow>", "<gray>サーバー内の資産家トップ10を表示</gray>"));
+        gui.setItem(27, this.createItem(Material.ANVIL, "<dark_purple><bold>🏺 質屋・担保付き融資</bold></dark_purple>", "<gray>レアアイテムを担保にお金を借りられます</gray>"));
+        gui.setItem(29, this.createItem(Material.GOLDEN_APPLE, "<blue><bold>🛡 生命保険窓口</bold></blue>", "<gray>死亡時のロスに備えて加入できます</gray>"));
+        gui.setItem(33, this.createItem(Material.FIREWORK_ROCKET, "<gold><bold>🎖 実績・称号コレクション</bold></gold>", "<gray>解放した実績を確認できます</gray>"));
+        gui.setItem(28, this.createItem(Material.ITEM_FRAME, "<green><bold>🔨 オークションハウス</bold></green>", "<gray>アイテムを出品・入札できます</gray>"));
+        gui.setItem(25, this.createItem(Material.COMPASS, "<blue><bold>📈 世界株式市場</bold></blue>", "<gray>現実の株を検索して売買</gray>"));
+        gui.setItem(17, this.createItem(Material.HOPPER, "<green><bold>🌾 資源相場ショップ</bold></green>", "<gray>鉱石・農作物・ドロップ品を売買</gray>"));
+        gui.setItem(15, this.createItem(Material.LEATHER_HORSE_ARMOR, "<gold><bold>🧳 巡回商人</bold></gold>", "<gray>現在地を確認する(購入は現地のNPCから)</gray>"));
+        gui.setItem(32, this.createItem(Material.FIREWORK_STAR, "<gold><bold>🎟 宝くじ</bold></gold>", "<gray>チケットを購入して定期抽選に参加</gray>"));
+        gui.setItem(26, this.createItem(Material.BARREL, "<gold><bold>🏬 レンタル倉庫</bold></gold>", "<gray>家賃を払って専用の収納倉庫を借りられます</gray>"));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5897,10 +5825,10 @@ MinecraftBankAPI {
                 name = "unknown";
             }
             Material mat = rank == 1 ? Material.GOLD_BLOCK : (rank == 2 ? Material.IRON_BLOCK : (rank == 3 ? Material.COPPER_BLOCK : Material.PAPER));
-            gui.setItem(slot++, this.createItem(mat, "<gold><bold>#" + rank + " " + name + "</bold></gold>", "<gray>\u7dcf\u8cc7\u7523:</gray> <green>" + (long)((Double)entry.getValue()).doubleValue() + "\u5186</green>"));
+            gui.setItem(slot++, this.createItem(mat, "<gold><bold>#" + rank + " " + name + "</bold></gold>", "<gray>総資産:</gray> <green>" + (long)((Double)entry.getValue()).doubleValue() + "円</green>"));
             ++rank;
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5913,7 +5841,7 @@ MinecraftBankAPI {
             if (item == null || item.getType() == Material.AIR) continue;
             gui.setItem(i, item.clone());
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5926,8 +5854,8 @@ MinecraftBankAPI {
             if (item == null || item.getType() == Material.AIR) continue;
             gui.setItem(i, item.clone());
         }
-        gui.setItem(49, this.createItem(Material.NETHER_STAR, "<green><bold>\u51fa\u54c1\u3059\u308b\u30a2\u30a4\u30c6\u30e0\u3092\u9078\u3093\u3067\u304f\u3060\u3055\u3044</bold></green>", "<gray>\u4e0b\u306b\u8868\u793a\u3055\u308c\u3066\u3044\u308b\u306e\u306f\u3042\u306a\u305f\u306e\u6301\u3061\u7269\u3067\u3059\u3002</gray>", "<gray>\u51fa\u54c1\u3057\u305f\u3044\u30a2\u30a4\u30c6\u30e0\u3092\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u3001</gray>", "<gray>\u305d\u306e\u30a2\u30a4\u30c6\u30e0\u304c\u624b\u5143\u304b\u3089\u53d6\u308a\u51fa\u3055\u308c\u3001\u958b\u59cb\u4fa1\u683c\u306e\u5165\u529b\u306b\u9032\u307f\u307e\u3059\u3002</gray>", "<dark_gray>(\u3053\u306e\u753b\u9762\u81ea\u4f53\u306b\u306f\u4fa1\u683c\u5165\u529b\u6b04\u306f\u3042\u308a\u307e\u305b\u3093\u3002\u6b21\u306f\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u307e\u3059)</dark_gray>"));
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(49, this.createItem(Material.NETHER_STAR, "<green><bold>出品するアイテムを選んでください</bold></green>", "<gray>下に表示されているのはあなたの持ち物です。</gray>", "<gray>出品したいアイテムをクリックすると、</gray>", "<gray>そのアイテムが手元から取り出され、開始価格の入力に進みます。</gray>", "<dark_gray>(この画面自体には価格入力欄はありません。次はチャットに入力します)</dark_gray>"));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -5941,28 +5869,28 @@ MinecraftBankAPI {
             double totalRepay = loan * (1.0 + this.cfgCollateralInterest / 100.0);
             long due = this.collateralDueTime.getOrDefault(u, 0L);
             long remain = due - System.currentTimeMillis();
-            String timeStr = remain > 0L ? "<green>\u6b8b\u308a " + remain / 60000L + "\u5206</green>" : "<red>\u671f\u9650\u5207\u308c\uff08\u307e\u3082\u306a\u304f\u6ca1\u53ce\uff09</red>";
+            String timeStr = remain > 0L ? "<green>残り " + remain / 60000L + "分</green>" : "<red>期限切れ（まもなく没収）</red>";
             ItemStack display = item.clone();
             ItemMeta dm = display.getItemMeta();
             if (dm != null) {
-                dm.displayName(this.mm("<light_purple><bold>\u3010\u9810\u3051\u3066\u3044\u308b\u62c5\u4fdd\u3011</bold></light_purple>"));
-                dm.lore(List.of(this.mm("<gray>\u501f\u5165\u984d:</gray> <aqua>" + (long)loan + "\u5186</aqua>"), this.mm("<gray>\u8fd4\u6e08\u7dcf\u984d:</gray> <gold>" + (long)totalRepay + "\u5186</gold>"), this.mm("<gray>\u671f\u9650:</gray> " + timeStr)));
+                dm.displayName(this.mm("<light_purple><bold>【預けている担保】</bold></light_purple>"));
+                dm.lore(List.of(this.mm("<gray>借入額:</gray> <aqua>" + (long)loan + "円</aqua>"), this.mm("<gray>返済総額:</gray> <gold>" + (long)totalRepay + "円</gold>"), this.mm("<gray>期限:</gray> " + timeStr)));
                 display.setItemMeta(dm);
             }
             gui.setItem(11, display);
-            gui.setItem(15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\u8fd4\u6e08\u3057\u3066\u62c5\u4fdd\u3092\u53d6\u308a\u623b\u3059</bold></gold>", "<gray>\u8fd4\u6e08\u7dcf\u984d:</gray> <gold>" + (long)totalRepay + "\u5186</gold>"));
+            gui.setItem(15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>返済して担保を取り戻す</bold></gold>", "<gray>返済総額:</gray> <gold>" + (long)totalRepay + "円</gold>"));
         } else {
             ItemStack selected = this.collateralSelection.get(u);
-            gui.setItem(11, selected == null ? this.createItem(Material.NAME_TAG, "<gray>\u62c5\u4fdd\u30a2\u30a4\u30c6\u30e0\u672a\u9078\u629e</gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u304b\u3089\u9078\u629e</gray>") : selected.clone());
+            gui.setItem(11, selected == null ? this.createItem(Material.NAME_TAG, "<gray>担保アイテム未選択</gray>", "<gray>クリックしてインベントリから選択</gray>") : selected.clone());
             if (selected != null) {
                 double value = this.evaluateItemValue(selected);
                 double loan = value * this.cfgCollateralLtv;
-                gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>\u9078\u629e\u3057\u305f\u30a2\u30a4\u30c6\u30e0\u3092\u62c5\u4fdd\u306b\u501f\u308a\u308b</bold></green>", "<gray>\u30a2\u30a4\u30c6\u30e0:</gray> <white>" + selected.getType().name() + " \u00d7" + selected.getAmount() + "</white>", "<gray>\u9451\u5b9a\u8a55\u4fa1\u984d:</gray> <gold>" + (long)value + "\u5186</gold>", "<gray>\u501f\u5165\u53ef\u80fd\u984d(LTV" + (int)(this.cfgCollateralLtv * 100.0) + "%):</gray> <aqua>" + (long)loan + "\u5186</aqua>", "<gray>\u91d1\u5229:</gray> <red>" + (int)this.cfgCollateralInterest + "%</red>", "<gray>\u8fd4\u6e08\u671f\u9650:</gray> <yellow>" + this.cfgCollateralDurationMs / 60000L + "\u5206</yellow>"));
+                gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>選択したアイテムを担保に借りる</bold></green>", "<gray>アイテム:</gray> <white>" + selected.getType().name() + " ×" + selected.getAmount() + "</white>", "<gray>鑑定評価額:</gray> <gold>" + (long)value + "円</gold>", "<gray>借入可能額(LTV" + (int)(this.cfgCollateralLtv * 100.0) + "%):</gray> <aqua>" + (long)loan + "円</aqua>", "<gray>金利:</gray> <red>" + (int)this.cfgCollateralInterest + "%</red>", "<gray>返済期限:</gray> <yellow>" + this.cfgCollateralDurationMs / 60000L + "分</yellow>"));
             } else {
-                gui.setItem(13, this.createItem(Material.ANVIL, "<yellow>\u62c5\u4fdd\u3092\u9078\u629e</yellow>", "<gray>\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u304b\u3089\u62c5\u4fdd\u306b\u3059\u308b\u30a2\u30a4\u30c6\u30e0\u3092\u9078\u3073\u307e\u3059\u3002</gray>"));
+                gui.setItem(13, this.createItem(Material.ANVIL, "<yellow>担保を選択</yellow>", "<gray>インベントリから担保にするアイテムを選びます。</gray>"));
             }
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6026,27 +5954,27 @@ MinecraftBankAPI {
             UUID bidder = this.auctionBidder.get(id2);
             Double buyout = this.auctionBuyoutPrice.get(id2);
             long remain = this.auctionEndTime.getOrDefault(id2, 0L) - System.currentTimeMillis();
-            String remainStr = remain > 0L ? remain / 60000L + "\u5206" + remain / 1000L % 60L + "\u79d2" : "\u307e\u3082\u306a\u304f\u7d42\u4e86";
+            String remainStr = remain > 0L ? remain / 60000L + "分" + remain / 1000L % 60L + "秒" : "まもなく終了";
             boolean endingSoon = remain > 0L && remain <= 60000L;
             String remainColor = endingSoon ? "red" : "yellow";
             ItemStack display = orig.clone();
             ItemMeta dm = display.getItemMeta();
             if (dm != null) {
                 ArrayList<Component> lore = new ArrayList<Component>();
-                lore.add(this.mm("<gray>\u51fa\u54c1\u8005:</gray> <white>" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "</white>"));
-                lore.add(this.mm("<gray>\u73fe\u5728\u4fa1\u683c:</gray> <gold>" + (long)bid + "\u5186</gold>"));
+                lore.add(this.mm("<gray>出品者:</gray> <white>" + Bukkit.getOfflinePlayer((UUID)seller).getName() + "</white>"));
+                lore.add(this.mm("<gray>現在価格:</gray> <gold>" + (long)bid + "円</gold>"));
                 if (buyout != null) {
-                    lore.add(this.mm("<gray>\u5373\u6c7a\u4fa1\u683c:</gray> <light_purple>" + (long)buyout.doubleValue() + "\u5186</light_purple>"));
+                    lore.add(this.mm("<gray>即決価格:</gray> <light_purple>" + (long)buyout.doubleValue() + "円</light_purple>"));
                 }
-                lore.add(this.mm("<gray>\u5165\u672d\u8005:</gray> " + (String)(bidder != null ? "<aqua>" + Bukkit.getOfflinePlayer((UUID)bidder).getName() + "</aqua>" : "<gray>\u307e\u3060\u3044\u307e\u305b\u3093</gray>")));
-                lore.add(this.mm("<gray>\u6b8b\u308a\u6642\u9593:</gray> <" + remainColor + ">" + remainStr + (endingSoon ? " \u26a0\u7d42\u4e86\u9593\u8fd1" : "") + "</" + remainColor + ">"));
+                lore.add(this.mm("<gray>入札者:</gray> " + (String)(bidder != null ? "<aqua>" + Bukkit.getOfflinePlayer((UUID)bidder).getName() + "</aqua>" : "<gray>まだいません</gray>")));
+                lore.add(this.mm("<gray>残り時間:</gray> <" + remainColor + ">" + remainStr + (endingSoon ? " ⚠終了間近" : "") + "</" + remainColor + ">"));
                 if (!seller.equals(u)) {
-                    lore.add(this.mm("<green>\u30af\u30ea\u30c3\u30af\u3057\u3066\u5165\u672d</green>"));
+                    lore.add(this.mm("<green>クリックして入札</green>"));
                     if (buyout != null) {
-                        lore.add(this.mm("<light_purple>\u5373\u6c7a\u4fa1\u683c\u4ee5\u4e0a\u3092\u5165\u529b\u3059\u308b\u3068\u5373\u5ea7\u306b\u8cfc\u5165\u3067\u304d\u307e\u3059</light_purple>"));
+                        lore.add(this.mm("<light_purple>即決価格以上を入力すると即座に購入できます</light_purple>"));
                     }
                 } else {
-                    lore.add(this.mm("<dark_gray>(\u81ea\u5206\u306e\u51fa\u54c1)</dark_gray>"));
+                    lore.add(this.mm("<dark_gray>(自分の出品)</dark_gray>"));
                 }
                 dm.lore(lore);
                 dm.getPersistentDataContainer().set(this.auctionIdKey, PersistentDataType.STRING, (Object)id2.toString());
@@ -6055,39 +5983,39 @@ MinecraftBankAPI {
             gui.setItem(slot++, display);
         }
         String sortModeName = switch (sortMode) {
-            case 1 -> "\u4fa1\u683c\u304c\u5b89\u3044\u9806";
-            case 2 -> "\u4fa1\u683c\u304c\u9ad8\u3044\u9806";
-            default -> "\u7d42\u4e86\u304c\u8fd1\u3044\u9806";
+            case 1 -> "価格が安い順";
+            case 2 -> "価格が高い順";
+            default -> "終了が近い順";
         };
-        gui.setItem(45, this.createItem(Material.COMPASS, "<aqua><bold>\u4e26\u3073\u66ff\u3048</bold></aqua>", "<gray>\u73fe\u5728:</gray> <yellow>" + sortModeName + "</yellow>", "<gray>\u30af\u30ea\u30c3\u30af\u3067\u5207\u308a\u66ff\u3048</gray>"));
+        gui.setItem(45, this.createItem(Material.COMPASS, "<aqua><bold>並び替え</bold></aqua>", "<gray>現在:</gray> <yellow>" + sortModeName + "</yellow>", "<gray>クリックで切り替え</gray>"));
         if (query != null && !query.isEmpty()) {
-            gui.setItem(46, this.createItem(Material.NAME_TAG, "<aqua><bold>\u691c\u7d22</bold></aqua>", "<gray>\u73fe\u5728\u306e\u691c\u7d22\u8a9e:</gray> <white>" + query + "</white>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u691c\u7d22\u8a9e\u3092\u518d\u5165\u529b</gray>"));
+            gui.setItem(46, this.createItem(Material.NAME_TAG, "<aqua><bold>検索</bold></aqua>", "<gray>現在の検索語:</gray> <white>" + query + "</white>", "<gray>クリックして検索語を再入力</gray>"));
         } else {
-            gui.setItem(46, this.createItem(Material.NAME_TAG, "<aqua><bold>\u691c\u7d22</bold></aqua>", "<gray>\u30a2\u30a4\u30c6\u30e0\u540d\u3067\u7d5e\u308a\u8fbc\u307f\u307e\u3059</gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b</gray>"));
+            gui.setItem(46, this.createItem(Material.NAME_TAG, "<aqua><bold>検索</bold></aqua>", "<gray>アイテム名で絞り込みます</gray>", "<gray>クリックしてチャットに入力</gray>"));
         }
         if (myOnly) {
-            gui.setItem(47, this.createItem(Material.WRITTEN_BOOK, "<green><bold>\u81ea\u5206\u306e\u51fa\u54c1\u306e\u307f\u8868\u793a: ON</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3067\u3059\u3079\u3066\u8868\u793a\u306b\u623b\u3057\u307e\u3059</gray>"));
+            gui.setItem(47, this.createItem(Material.WRITTEN_BOOK, "<green><bold>自分の出品のみ表示: ON</bold></green>", "<gray>クリックですべて表示に戻します</gray>"));
         } else {
-            gui.setItem(47, this.createItem(Material.BOOK, "<gray><bold>\u81ea\u5206\u306e\u51fa\u54c1\u306e\u307f\u8868\u793a: OFF</bold></gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3067\u81ea\u5206\u306e\u51fa\u54c1\u3060\u3051\u8868\u793a\u3057\u307e\u3059</gray>"));
+            gui.setItem(47, this.createItem(Material.BOOK, "<gray><bold>自分の出品のみ表示: OFF</bold></gray>", "<gray>クリックで自分の出品だけ表示します</gray>"));
         }
-        gui.setItem(48, this.createItem(Material.PLAYER_HEAD, "<gold><bold>\u843d\u672d\u58f2\u4e0a\u30e9\u30f3\u30ad\u30f3\u30b0</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u8868\u793a</gray>"));
+        gui.setItem(48, this.createItem(Material.PLAYER_HEAD, "<gold><bold>落札売上ランキング</bold></gold>", "<gray>クリックして表示</gray>"));
         if (query != null && !query.isEmpty()) {
-            gui.setItem(50, this.createItem(Material.BARRIER, "<red>\u691c\u7d22\u3092\u30af\u30ea\u30a2</red>", "<gray>\u73fe\u5728\u306e\u691c\u7d22\u8a9e:</gray> <white>" + query + "</white>"));
+            gui.setItem(50, this.createItem(Material.BARRIER, "<red>検索をクリア</red>", "<gray>現在の検索語:</gray> <white>" + query + "</white>"));
         }
         if (totalPages > 1) {
             if (page > 0) {
-                gui.setItem(51, this.createItem(Material.ARROW, "<aqua><bold>\u25c0 \u524d\u306e\u30da\u30fc\u30b8</bold></aqua>", "<gray>" + page + " / " + totalPages + "\u30da\u30fc\u30b8</gray>"));
+                gui.setItem(51, this.createItem(Material.ARROW, "<aqua><bold>◀ 前のページ</bold></aqua>", "<gray>" + page + " / " + totalPages + "ページ</gray>"));
             }
             if (page < totalPages - 1) {
-                gui.setItem(52, this.createItem(Material.ARROW, "<aqua><bold>\u6b21\u306e\u30da\u30fc\u30b8 \u25b6</bold></aqua>", "<gray>" + (page + 2) + " / " + totalPages + "\u30da\u30fc\u30b8</gray>"));
+                gui.setItem(52, this.createItem(Material.ARROW, "<aqua><bold>次のページ ▶</bold></aqua>", "<gray>" + (page + 2) + " / " + totalPages + "ページ</gray>"));
             }
         }
         if ((myListings = this.auctionSeller.values().stream().filter(s -> s.equals(u)).count()) >= (long)this.cfgAuctionMaxListingsPerPlayer) {
-            gui.setItem(49, this.createItem(Material.BARRIER, "<red>\u540c\u6642\u51fa\u54c1\u6570\u306e\u4e0a\u9650\u3067\u3059</red>", "<gray>\u4e0a\u9650: " + this.cfgAuctionMaxListingsPerPlayer + "\u4ef6</gray>"));
+            gui.setItem(49, this.createItem(Material.BARRIER, "<red>同時出品数の上限です</red>", "<gray>上限: " + this.cfgAuctionMaxListingsPerPlayer + "件</gray>"));
         } else {
-            gui.setItem(49, this.createItem(Material.EMERALD, "<green><bold>\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u304b\u3089\u51fa\u54c1\u3059\u308b</bold></green>", "<gray>\u51fa\u54c1\u671f\u9593:</gray> <yellow>" + this.cfgAuctionDurationMs / 60000L + "\u5206</yellow>", "<gray>\u843d\u672d\u6642\u306e\u624b\u6570\u6599:</gray> <red>" + (int)(this.cfgAuctionFeeRate * 100.0) + "%</red>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u51fa\u54c1\u30a2\u30a4\u30c6\u30e0\u3092\u9078\u629e</yellow>"));
+            gui.setItem(49, this.createItem(Material.EMERALD, "<green><bold>インベントリから出品する</bold></green>", "<gray>出品期間:</gray> <yellow>" + this.cfgAuctionDurationMs / 60000L + "分</yellow>", "<gray>落札時の手数料:</gray> <red>" + (int)(this.cfgAuctionFeeRate * 100.0) + "%</red>", "<yellow>クリックして出品アイテムを選択</yellow>"));
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6102,26 +6030,26 @@ MinecraftBankAPI {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tAuctionCancelConfirm);
         double bid = this.auctionBid.getOrDefault(auctionId, 0.0);
         long remain = this.auctionEndTime.getOrDefault(auctionId, 0L) - System.currentTimeMillis();
-        String remainStr = remain > 0L ? remain / 60000L + "\u5206" + remain / 1000L % 60L + "\u79d2" : "\u307e\u3082\u306a\u304f\u7d42\u4e86";
+        String remainStr = remain > 0L ? remain / 60000L + "分" + remain / 1000L % 60L + "秒" : "まもなく終了";
         ItemStack display = orig.clone();
         ItemMeta dm = display.getItemMeta();
         if (dm != null) {
             ArrayList<Component> lore = new ArrayList<Component>();
-            lore.add(this.mm("<gray>\u958b\u59cb/\u73fe\u5728\u4fa1\u683c:</gray> <gold>" + (long)bid + "\u5186</gold>"));
-            lore.add(this.mm("<gray>\u5165\u672d\u8005:</gray> <gray>\u307e\u3060\u3044\u307e\u305b\u3093</gray>"));
-            lore.add(this.mm("<gray>\u6b8b\u308a\u6642\u9593:</gray> <yellow>" + remainStr + "</yellow>"));
+            lore.add(this.mm("<gray>開始/現在価格:</gray> <gold>" + (long)bid + "円</gold>"));
+            lore.add(this.mm("<gray>入札者:</gray> <gray>まだいません</gray>"));
+            lore.add(this.mm("<gray>残り時間:</gray> <yellow>" + remainStr + "</yellow>"));
             dm.lore(lore);
             display.setItemMeta(dm);
         }
         gui.setItem(13, display);
-        ItemStack confirmBtn = this.createItem(Material.EMERALD, "<green><bold>\u306f\u3044\u3001\u53d6\u308a\u4e0b\u3052\u308b</bold></green>", "<gray>\u51fa\u54c1\u3092\u53d6\u308a\u4e0b\u3052\u3066\u30a2\u30a4\u30c6\u30e0\u3092\u53d7\u53d6\u7bb1\u306b\u8fd4\u5374\u3057\u307e\u3059\u3002</gray>");
+        ItemStack confirmBtn = this.createItem(Material.EMERALD, "<green><bold>はい、取り下げる</bold></green>", "<gray>出品を取り下げてアイテムを受取箱に返却します。</gray>");
         ItemMeta cm = confirmBtn.getItemMeta();
         if (cm != null) {
             cm.getPersistentDataContainer().set(this.auctionIdKey, PersistentDataType.STRING, (Object)auctionId.toString());
             confirmBtn.setItemMeta(cm);
         }
         gui.setItem(11, confirmBtn);
-        gui.setItem(15, this.createItem(Material.BARRIER, "<red><bold>\u623b\u308b</bold></red>", "<gray>\u51fa\u54c1\u3092\u53d6\u308a\u4e0b\u3052\u305a\u306b\u4e00\u89a7\u3078\u623b\u308a\u307e\u3059\u3002</gray>"));
+        gui.setItem(15, this.createItem(Material.BARRIER, "<red><bold>戻る</bold></red>", "<gray>出品を取り下げずに一覧へ戻ります。</gray>"));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6143,15 +6071,15 @@ MinecraftBankAPI {
             }
             switch (rank) {
                 case 1: {
-                    Object object = "\ud83e\udd47";
+                    Object object = "🥇";
                     break;
                 }
                 case 2: {
-                    Object object = "\ud83e\udd48";
+                    Object object = "🥈";
                     break;
                 }
                 case 3: {
-                    Object object = "\ud83e\udd49";
+                    Object object = "🥉";
                     break;
                 }
                 default: {
@@ -6193,13 +6121,13 @@ MinecraftBankAPI {
                 }
             }
             String closeTag = string;
-            gui.setItem(slot++, this.createItem(Material.PLAYER_HEAD, openTag + "<bold>" + (String)medal + " " + name + "</bold>" + closeTag, "<gray>\u7d2f\u8a08\u843d\u672d\u58f2\u4e0a:</gray> <green>" + (long)((Double)entry.getValue()).doubleValue() + "\u5186</green>"));
+            gui.setItem(slot++, this.createItem(Material.PLAYER_HEAD, openTag + "<bold>" + (String)medal + " " + name + "</bold>" + closeTag, "<gray>累計落札売上:</gray> <green>" + (long)((Double)entry.getValue()).doubleValue() + "円</green>"));
             ++rank;
         }
         if (ranking.isEmpty()) {
-            gui.setItem(22, this.createItem(Material.BARRIER, "<gray>\u307e\u3060\u843d\u672d\u5b9f\u7e3e\u304c\u3042\u308a\u307e\u305b\u3093</gray>", new String[0]));
+            gui.setItem(22, this.createItem(Material.BARRIER, "<gray>まだ落札実績がありません</gray>", new String[0]));
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6212,11 +6140,11 @@ MinecraftBankAPI {
         boolean bl = active = expiry > System.currentTimeMillis();
         if (active) {
             long remain = expiry - System.currentTimeMillis();
-            gui.setItem(13, this.createItem(Material.SHIELD, "<blue><bold>\u4fdd\u967a\u52a0\u5165\u4e2d</bold></blue>", "<gray>\u6709\u52b9\u671f\u9650:</gray> <green>\u6b8b\u308a " + remain / 60000L + "\u5206</green>", "<gray>\u6b7b\u4ea1\u6642\u306e\u88dc\u586b\u984d:</gray> <gold>" + (long)this.cfgInsurancePayout + "\u5186</gold>", "<gray>\u203b\u6b7b\u4ea1\u3059\u308b\u30681\u56de\u6d88\u8cbb\u3055\u308c\u307e\u3059</gray>"));
+            gui.setItem(13, this.createItem(Material.SHIELD, "<blue><bold>保険加入中</bold></blue>", "<gray>有効期限:</gray> <green>残り " + remain / 60000L + "分</green>", "<gray>死亡時の補填額:</gray> <gold>" + (long)this.cfgInsurancePayout + "円</gold>", "<gray>※死亡すると1回消費されます</gray>"));
         } else {
-            gui.setItem(13, this.createItem(Material.GOLDEN_APPLE, "<green><bold>\u4fdd\u967a\u306b\u52a0\u5165\u3059\u308b</bold></green>", "<gray>\u4fdd\u967a\u6599:</gray> <red>" + (long)this.cfgInsurancePremium + "\u5186</red>", "<gray>\u6709\u52b9\u671f\u9593:</gray> <yellow>" + this.cfgInsuranceDurationMs / 60000L + "\u5206</yellow>", "<gray>\u6b7b\u4ea1\u6642\u306e\u88dc\u586b\u984d:</gray> <gold>" + (long)this.cfgInsurancePayout + "\u5186</gold>"));
+            gui.setItem(13, this.createItem(Material.GOLDEN_APPLE, "<green><bold>保険に加入する</bold></green>", "<gray>保険料:</gray> <red>" + (long)this.cfgInsurancePremium + "円</red>", "<gray>有効期間:</gray> <yellow>" + this.cfgInsuranceDurationMs / 60000L + "分</yellow>", "<gray>死亡時の補填額:</gray> <gold>" + (long)this.cfgInsurancePayout + "円</gold>"));
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6225,16 +6153,16 @@ MinecraftBankAPI {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tAchievement);
         UUID u = p.getUniqueId();
         HashSet unlocked = this.unlockedAchievements.getOrDefault(u, new HashSet());
-        String[][] defs = new String[][]{{"first_loan_repaid", "\u521d\u3081\u3066\u306e\u5b8c\u6e08", "\u30d7\u30ec\u30a4\u30e4\u30fc\u9593\u878d\u8cc7\u3092\u5b8c\u6e08\u3057\u305f"}, {"first_gov_loan_repaid", "\u516c\u5eab\u306e\u5e38\u9023", "\u56fd\u55b6\u30ed\u30fc\u30f3\u3092\u5b8c\u6e08\u3057\u305f"}, {"millionaire", "\u8cc7\u7523\u5bb6\u306e\u8a3c", "\u7dcf\u8cc7\u7523\u304c100\u4e07\u5186\u3092\u8d85\u3048\u305f"}, {"first_fixed_deposit", "\u5805\u5b9f\u306a\u6295\u8cc7\u5bb6", "\u5b9a\u671f\u9810\u91d1\u306e\u6e80\u671f\u3092\u8fce\u3048\u305f"}, {"credit_master", "\u4fe1\u7528\u306e\u9451", "\u4fe1\u7528\u30b9\u30b3\u30a2\u304c700\u306b\u5230\u9054\u3057\u305f"}};
+        String[][] defs = new String[][]{{"first_loan_repaid", "初めての完済", "プレイヤー間融資を完済した"}, {"first_gov_loan_repaid", "公庫の常連", "国営ローンを完済した"}, {"millionaire", "資産家の証", "総資産が100万円を超えた"}, {"first_fixed_deposit", "堅実な投資家", "定期預金の満期を迎えた"}, {"credit_master", "信用の鑑", "信用スコアが700に到達した"}};
         int slot = 0;
         for (String[] def : defs) {
             boolean has = unlocked.contains(def[0]);
             Material mat = has ? Material.NETHER_STAR : Material.GRAY_DYE;
-            String nameColor = has ? "<gold><bold>\ud83c\udf96 " + def[1] + "</bold></gold>" : "<dark_gray>\ud83d\udd12 ???</dark_gray>";
-            String desc = has ? "<gray>" + def[2] + "</gray>" : "<dark_gray>\u672a\u89e3\u653e</dark_gray>";
+            String nameColor = has ? "<gold><bold>🎖 " + def[1] + "</bold></gold>" : "<dark_gray>🔒 ???</dark_gray>";
+            String desc = has ? "<gray>" + def[2] + "</gray>" : "<dark_gray>未解放</dark_gray>";
             gui.setItem(slot++, this.createItem(mat, nameColor, desc));
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6244,21 +6172,21 @@ MinecraftBankAPI {
         UUID u = p.getUniqueId();
         double pocket = econ.getBalance((OfflinePlayer)p);
         double bank = this.personalBank.getOrDefault(u, 0.0);
-        gui.setItem(4, this.createItem(Material.BOOK, "<yellow>\u3010\u73fe\u5728\u306e\u8ca1\u52d9\u72b6\u6cc1\u3011</yellow>", "<gray>\u624b\u6301\u3061: </gray><green>" + (long)pocket + "\u5186</green>", "<gray>\u9810\u91d1\u6b8b\u9ad8: </gray><aqua>" + (long)bank + "\u5186</aqua>"));
-        gui.setItem(11, this.createItem(Material.LIME_DYE, "<green>+" + (long)this.cfgDepositStep + "\u5186 \u9810\u91d1</green>", new String[0]));
-        gui.setItem(12, this.createItem(Material.LIME_GLAZED_TERRACOTTA, "<green><bold>\u5168\u984d\u9810\u91d1</bold></green>", new String[0]));
-        gui.setItem(14, this.createItem(Material.RED_DYE, "<red>-" + (long)this.cfgDepositStep + "\u5186 \u5f15\u51fa</red>", new String[0]));
-        gui.setItem(15, this.createItem(Material.RED_GLAZED_TERRACOTTA, "<red><bold>\u5168\u984d\u5f15\u51fa</bold></red>", new String[0]));
-        gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>\u91d1\u984d\u3092\u6307\u5b9a\u3057\u3066\u9810\u91d1</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u5f8c\u3001\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</gray>"));
-        gui.setItem(21, this.createItem(Material.PAPER, "<gold><bold>\u91d1\u984d\u3092\u6307\u5b9a\u3057\u3066\u5f15\u51fa</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u5f8c\u3001\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</gray>"));
-        gui.setItem(6, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>\ud83d\udcdc \u53d6\u5f15\u5c65\u6b74\u3092\u898b\u308b</bold></aqua>", "<gray>\u76f4\u8fd1\u306e\u5165\u51fa\u91d1\u30fb\u878d\u8cc7\u30fb\u6295\u8cc7\u5c65\u6b74\u3092\u8868\u793a</gray>"));
+        gui.setItem(4, this.createItem(Material.BOOK, "<yellow>【現在の財務状況】</yellow>", "<gray>手持ち: </gray><green>" + (long)pocket + "円</green>", "<gray>預金残高: </gray><aqua>" + (long)bank + "円</aqua>"));
+        gui.setItem(11, this.createItem(Material.LIME_DYE, "<green>+" + (long)this.cfgDepositStep + "円 預金</green>", new String[0]));
+        gui.setItem(12, this.createItem(Material.LIME_GLAZED_TERRACOTTA, "<green><bold>全額預金</bold></green>", new String[0]));
+        gui.setItem(14, this.createItem(Material.RED_DYE, "<red>-" + (long)this.cfgDepositStep + "円 引出</red>", new String[0]));
+        gui.setItem(15, this.createItem(Material.RED_GLAZED_TERRACOTTA, "<red><bold>全額引出</bold></red>", new String[0]));
+        gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>金額を指定して預金</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
+        gui.setItem(21, this.createItem(Material.PAPER, "<gold><bold>金額を指定して引出</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
+        gui.setItem(6, this.createItem(Material.WRITTEN_BOOK, "<aqua><bold>📜 取引履歴を見る</bold></aqua>", "<gray>直近の入出金・融資・投資履歴を表示</gray>"));
         boolean newsOff = this.newsBroadcastOff.contains(u);
         if (newsOff) {
-            gui.setItem(7, this.createItem(Material.NOTE_BLOCK, "<gray><bold>\ud83d\udd15 \u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001: OFF</bold></gray>", "<gray>\u30af\u30ea\u30c3\u30af\u3067ON\u306b\u5207\u308a\u66ff\u3048</gray>"));
+            gui.setItem(7, this.createItem(Material.NOTE_BLOCK, "<gray><bold>🔕 経済ニュース放送: OFF</bold></gray>", "<gray>クリックでONに切り替え</gray>"));
         } else {
-            gui.setItem(7, this.createItem(Material.BELL, "<green><bold>\ud83d\udd14 \u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001: ON</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3067OFF\u306b\u5207\u308a\u66ff\u3048</gray>"));
+            gui.setItem(7, this.createItem(Material.BELL, "<green><bold>🔔 経済ニュース放送: ON</bold></green>", "<gray>クリックでOFFに切り替え</gray>"));
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6278,7 +6206,7 @@ MinecraftBankAPI {
             if (slot >= 45) break;
             gui.setItem(slot++, this.buildLoanMarketItem(entry.getKey(), entry.getValue(), 3));
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6287,7 +6215,7 @@ MinecraftBankAPI {
         String[] data = planData.split(":");
         double amount = Double.parseDouble(data[0]);
         double interest = Double.parseDouble(data[1]);
-        ItemStack item = this.createItem(Material.PAPER, "<green><bold>\u878d\u8cc7\u30d7\u30e9\u30f3: " + Bukkit.getOfflinePlayer((UUID)lenderId).getName() + "\u9280\u884c (" + slotNum + "\u67a0\u76ee)</bold></green>", "<gray>\u878d\u8cc7\u984d:</gray> <aqua>" + (long)amount + "\u5186</aqua>", "<gray>\u5229\u606f:</gray> <red>" + (long)interest + "%</red>", "<gray>\u8fd4\u6e08\u7dcf\u984d:</gray> <gold>" + (long)(amount * (1.0 + interest / 100.0)) + "\u5186</gold>", "", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u5951\u7d04\u6210\u7acb</yellow>");
+        ItemStack item = this.createItem(Material.PAPER, "<green><bold>融資プラン: " + Bukkit.getOfflinePlayer((UUID)lenderId).getName() + "銀行 (" + slotNum + "枠目)</bold></green>", "<gray>融資額:</gray> <aqua>" + (long)amount + "円</aqua>", "<gray>利息:</gray> <red>" + (long)interest + "%</red>", "<gray>返済総額:</gray> <gold>" + (long)(amount * (1.0 + interest / 100.0)) + "円</gold>", "", "<yellow>クリックして契約成立</yellow>");
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.getPersistentDataContainer().set(this.lenderKey, PersistentDataType.STRING, (Object)lenderId.toString());
@@ -6301,37 +6229,37 @@ MinecraftBankAPI {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tRepay);
         UUID u = p.getUniqueId();
         if (!this.activeDebts.containsKey(u)) {
-            gui.setItem(2, this.createItem(Material.SUNFLOWER, "<green>\u30d7\u30ec\u30a4\u30e4\u30fc\u9593\u306e\u501f\u91d1\u306a\u3057</green>", new String[0]));
+            gui.setItem(2, this.createItem(Material.SUNFLOWER, "<green>プレイヤー間の借金なし</green>", new String[0]));
         } else {
             String[] data = this.activeDebts.get(u).split(":");
             double pDebt = Double.parseDouble(data[1]);
-            gui.setItem(2, this.createItem(Material.ANVIL, "<red>\u3010\u5bfe\u30d7\u30ec\u30a4\u30e4\u30fc\u50b5\u52d9\u3011</red>", "<gray>\u50b5\u6a29\u8005:</gray> " + Bukkit.getOfflinePlayer((UUID)UUID.fromString(data[0])).getName(), "<gray>\u6b8b\u308a:</gray> <red>" + (long)pDebt + "\u5186</red>"));
-            gui.setItem(10, this.createItem(Material.GOLD_NUGGET, "<yellow>1,000\u5186 \u8fd4\u6e08</yellow>", new String[0]));
-            gui.setItem(11, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\u5168\u984d\u8fd4\u6e08</bold></gold>", new String[0]));
+            gui.setItem(2, this.createItem(Material.ANVIL, "<red>【対プレイヤー債務】</red>", "<gray>債権者:</gray> " + Bukkit.getOfflinePlayer((UUID)UUID.fromString(data[0])).getName(), "<gray>残り:</gray> <red>" + (long)pDebt + "円</red>"));
+            gui.setItem(10, this.createItem(Material.GOLD_NUGGET, "<yellow>1,000円 返済</yellow>", new String[0]));
+            gui.setItem(11, this.createItem(Material.GOLD_BLOCK, "<gold><bold>全額返済</bold></gold>", new String[0]));
             UUID guarantorId = this.loanGuarantor.get(u);
             if (guarantorId != null) {
-                gui.setItem(13, this.createItem(Material.SHIELD, "<aqua><bold>\u4fdd\u8a3c\u4eba\u8a2d\u5b9a\u6e08\u307f</bold></aqua>", "<gray>\u4fdd\u8a3c\u4eba:</gray> " + Bukkit.getOfflinePlayer((UUID)guarantorId).getName()));
+                gui.setItem(13, this.createItem(Material.SHIELD, "<aqua><bold>保証人設定済み</bold></aqua>", "<gray>保証人:</gray> " + Bukkit.getOfflinePlayer((UUID)guarantorId).getName()));
             } else {
-                gui.setItem(13, this.createItem(Material.IRON_HORSE_ARMOR, "<gray><bold>\u4fdd\u8a3c\u4eba\u306a\u3057</bold></gray>", "<gray>/meco guarantor request <\u30d7\u30ec\u30a4\u30e4\u30fc></gray>", "<gray>\u3067\u4fdd\u8a3c\u4eba\u3092\u4f9d\u983c\u3067\u304d\u307e\u3059</gray>"));
+                gui.setItem(13, this.createItem(Material.IRON_HORSE_ARMOR, "<gray><bold>保証人なし</bold></gray>", "<gray>/meco guarantor request <プレイヤー></gray>", "<gray>で保証人を依頼できます</gray>"));
             }
         }
         double gDebt = this.govDebt.getOrDefault(u, 0.0);
         if (gDebt <= 0.0) {
-            gui.setItem(6, this.createItem(Material.SUNFLOWER, "<green>\u56fd\u55b6\u516c\u5eab\u304b\u3089\u306e\u501f\u91d1\u306a\u3057</green>", new String[0]));
+            gui.setItem(6, this.createItem(Material.SUNFLOWER, "<green>国営公庫からの借金なし</green>", new String[0]));
         } else {
-            gui.setItem(6, this.createItem(Material.IRON_BARS, "<dark_red>\u3010\u56fd\u55b6\u516c\u5eab\u50b5\u52d9\u3011</dark_red>", "<gray>\u6b8b\u308a:</gray> <red>" + (long)gDebt + "\u5186</red>"));
-            gui.setItem(15, this.createItem(Material.GOLD_NUGGET, "<yellow>1,000\u5186 \u8fd4\u6e08</yellow>", new String[0]));
-            gui.setItem(16, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\u5168\u984d\u8fd4\u6e08</bold></gold>", new String[0]));
+            gui.setItem(6, this.createItem(Material.IRON_BARS, "<dark_red>【国営公庫債務】</dark_red>", "<gray>残り:</gray> <red>" + (long)gDebt + "円</red>"));
+            gui.setItem(15, this.createItem(Material.GOLD_NUGGET, "<yellow>1,000円 返済</yellow>", new String[0]));
+            gui.setItem(16, this.createItem(Material.GOLD_BLOCK, "<gold><bold>全額返済</bold></gold>", new String[0]));
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
 
     private void openEstablishGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tEstablish);
-        gui.setItem(13, this.createItem(Material.DIAMOND, "<light_purple><bold>\u3010\u9280\u884c\u3092\u8a2d\u7acb\u3059\u308b\u3011</bold></light_purple>", "<gray>\u8a2d\u7acb\u8cbb\u7528:</gray> <red>" + (long)this.cfgBankEstablishCost + "\u5186</red>"));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(13, this.createItem(Material.DIAMOND, "<light_purple><bold>【銀行を設立する】</bold></light_purple>", "<gray>設立費用:</gray> <red>" + (long)this.cfgBankEstablishCost + "円</red>"));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6340,25 +6268,25 @@ MinecraftBankAPI {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tBanker);
         UUID u = p.getUniqueId();
         double capital = this.bankCapital.getOrDefault(u, 0.0);
-        gui.setItem(4, this.createItem(Material.BEACON, "<red>\u3010\u9280\u884c\u30b9\u30c6\u30fc\u30bf\u30b9\u3011</red>", "<gray>\u8cc7\u672c\u91d1\u30d7\u30fc\u30eb:</gray> <gold>" + (long)capital + "\u5186</gold>"));
-        gui.setItem(10, this.createItem(Material.DIAMOND, "<aqua>\u8cc7\u672c\u91d1\u3078 +10,000\u5186</aqua>", new String[0]));
-        gui.setItem(11, this.createItem(Material.COAL, "<gray>\u8cc7\u672c\u91d1\u304b\u3089 -10,000\u5186</gray>", new String[0]));
+        gui.setItem(4, this.createItem(Material.BEACON, "<red>【銀行ステータス】</red>", "<gray>資本金プール:</gray> <gold>" + (long)capital + "円</gold>"));
+        gui.setItem(10, this.createItem(Material.DIAMOND, "<aqua>資本金へ +10,000円</aqua>", new String[0]));
+        gui.setItem(11, this.createItem(Material.COAL, "<gray>資本金から -10,000円</gray>", new String[0]));
         if (this.publishedLoans.containsKey(u)) {
-            gui.setItem(15, this.createItem(Material.BARRIER, "<red>\u30d7\u30e9\u30f3(1\u67a0\u76ee)\u3092\u53d6\u308a\u4e0b\u3052\u308b</red>", new String[0]));
+            gui.setItem(15, this.createItem(Material.BARRIER, "<red>プラン(1枠目)を取り下げる</red>", new String[0]));
         } else {
-            gui.setItem(15, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>\u878d\u8cc7\u30d7\u30e9\u30f3(1\u67a0\u76ee)\u3092\u8a2d\u8a08</bold></gold>", new String[0]));
+            gui.setItem(15, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>融資プラン(1枠目)を設計</bold></gold>", new String[0]));
         }
         if (this.publishedLoans2.containsKey(u)) {
-            gui.setItem(16, this.createItem(Material.BARRIER, "<red>\u30d7\u30e9\u30f3(2\u67a0\u76ee)\u3092\u53d6\u308a\u4e0b\u3052\u308b</red>", new String[0]));
+            gui.setItem(16, this.createItem(Material.BARRIER, "<red>プラン(2枠目)を取り下げる</red>", new String[0]));
         } else {
-            gui.setItem(16, this.createItem(Material.BOOK, "<aqua><bold>\u878d\u8cc7\u30d7\u30e9\u30f3(2\u67a0\u76ee)\u3092\u8a2d\u8a08</bold></aqua>", new String[0]));
+            gui.setItem(16, this.createItem(Material.BOOK, "<aqua><bold>融資プラン(2枠目)を設計</bold></aqua>", new String[0]));
         }
         if (this.publishedLoans3.containsKey(u)) {
-            gui.setItem(17, this.createItem(Material.BARRIER, "<red>\u30d7\u30e9\u30f3(3\u67a0\u76ee)\u3092\u53d6\u308a\u4e0b\u3052\u308b</red>", new String[0]));
+            gui.setItem(17, this.createItem(Material.BARRIER, "<red>プラン(3枠目)を取り下げる</red>", new String[0]));
         } else {
-            gui.setItem(17, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>\u878d\u8cc7\u30d7\u30e9\u30f3(3\u67a0\u76ee)\u3092\u8a2d\u8a08</bold></light_purple>", new String[0]));
+            gui.setItem(17, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>融資プラン(3枠目)を設計</bold></light_purple>", new String[0]));
         }
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6369,17 +6297,17 @@ MinecraftBankAPI {
         double amount = this.tempLoanAmount.getOrDefault(u, 1000.0);
         double interest = this.tempInterestRate.getOrDefault(u, 10.0);
         int slot = this.planDesignSlot.getOrDefault(u, 1);
-        gui.setItem(4, this.createItem(Material.OAK_SIGN, "<gold>\u3010\u8a2d\u8a08\u4e2d: " + slot + "\u67a0\u76ee\u3011</gold>", "<gray>\u878d\u8cc7\u984d:</gray> <aqua>" + (long)amount + "\u5186</aqua>", "<gray>\u5229\u606f:</gray> <red>" + (long)interest + "%</red>"));
-        gui.setItem(10, this.createItem(Material.SLIME_BALL, "<green>+1,000\u5186</green>", new String[0]));
-        gui.setItem(11, this.createItem(Material.SLIME_BLOCK, "<green>+10,000\u5186</green>", new String[0]));
-        gui.setItem(12, this.createItem(Material.REDSTONE, "<red>\u984d\u30ea\u30bb\u30c3\u30c8</red>", new String[0]));
-        gui.setItem(14, this.createItem(Material.SUGAR, "<yellow>\u5229\u606f +5%</yellow>", new String[0]));
-        gui.setItem(15, this.createItem(Material.GLOWSTONE_DUST, "<yellow>\u5229\u606f +10%</yellow>", new String[0]));
-        gui.setItem(16, this.createItem(Material.REDSTONE, "<red>\u5229\u606f\u30ea\u30bb\u30c3\u30c8</red>", new String[0]));
-        gui.setItem(18, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>\u878d\u8cc7\u984d\u3092\u76f4\u63a5\u5165\u529b</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u5f8c\u3001\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</gray>"));
-        gui.setItem(19, this.createItem(Material.PAPER, "<gold><bold>\u5229\u606f(%)\u3092\u76f4\u63a5\u5165\u529b</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u5f8c\u3001\u30c1\u30e3\u30c3\u30c8\u306b\u6570\u5024\u3092\u5165\u529b</gray>"));
-        gui.setItem(22, this.createItem(Material.NETHER_STAR, "<gold><bold>\u5e02\u5834\u306b\u516c\u958b\u3059\u308b</bold></gold>", new String[0]));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(4, this.createItem(Material.OAK_SIGN, "<gold>【設計中: " + slot + "枠目】</gold>", "<gray>融資額:</gray> <aqua>" + (long)amount + "円</aqua>", "<gray>利息:</gray> <red>" + (long)interest + "%</red>"));
+        gui.setItem(10, this.createItem(Material.SLIME_BALL, "<green>+1,000円</green>", new String[0]));
+        gui.setItem(11, this.createItem(Material.SLIME_BLOCK, "<green>+10,000円</green>", new String[0]));
+        gui.setItem(12, this.createItem(Material.REDSTONE, "<red>額リセット</red>", new String[0]));
+        gui.setItem(14, this.createItem(Material.SUGAR, "<yellow>利息 +5%</yellow>", new String[0]));
+        gui.setItem(15, this.createItem(Material.GLOWSTONE_DUST, "<yellow>利息 +10%</yellow>", new String[0]));
+        gui.setItem(16, this.createItem(Material.REDSTONE, "<red>利息リセット</red>", new String[0]));
+        gui.setItem(18, this.createItem(Material.WRITABLE_BOOK, "<gold><bold>融資額を直接入力</bold></gold>", "<gray>クリック後、チャットに金額を入力</gray>"));
+        gui.setItem(19, this.createItem(Material.PAPER, "<gold><bold>利息(%)を直接入力</bold></gold>", "<gray>クリック後、チャットに数値を入力</gray>"));
+        gui.setItem(22, this.createItem(Material.NETHER_STAR, "<gold><bold>市場に公開する</bold></gold>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6391,16 +6319,16 @@ MinecraftBankAPI {
         int interest = score >= 700 ? 5 : (score >= 500 ? 15 : 25);
         double cap = this.getGovLoanCap(score);
         double currentDebt = this.govDebt.getOrDefault(u, 0.0);
-        ArrayList<CallSite> lores = new ArrayList<CallSite>();
-        lores.add((CallSite)((Object)("<gray>\u9069\u7528\u91d1\u5229:</gray> <red>" + interest + "%</red>")));
-        lores.add((CallSite)((Object)("<gray>\u501f\u5165\u4e0a\u9650(\u4fe1\u7528\u30b9\u30b3\u30a2\u9023\u52d5):</gray> <gold>" + (long)cap + "\u5186</gold>")));
-        lores.add((CallSite)((Object)("<gray>\u73fe\u5728\u306e\u50b5\u52d9\u6b8b\u9ad8:</gray> <yellow>" + (long)currentDebt + "\u5186</yellow>")));
+        ArrayList<String> lores = new ArrayList<String>();
+        lores.add("<gray>適用金利:</gray> <red>" + interest + "%</red>");
+        lores.add("<gray>借入上限(信用スコア連動):</gray> <gold>" + (long)cap + "円</gold>");
+        lores.add("<gray>現在の債務残高:</gray> <yellow>" + (long)currentDebt + "円</yellow>");
         if (this.govDebtDueTime.containsKey(u) && currentDebt > 0.0) {
             long remain = this.govDebtDueTime.get(u) - System.currentTimeMillis();
-            lores.add((CallSite)((Object)("<gray>\u8fd4\u6e08\u671f\u9650:</gray> " + (String)(remain > 0L ? "<green>\u6b8b\u308a " + remain / 60000L + "\u5206</green>" : "<red>\u671f\u9650\u8d85\u904e\uff08\u5ef6\u6ede\u91d1\u52a0\u7b97\u4e2d\uff09</red>"))));
+            lores.add("<gray>返済期限:</gray> " + (remain > 0L ? "<green>残り " + remain / 60000L + "分</green>" : "<red>期限超過（延滞金加算中）</red>"));
         }
-        gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>+" + (long)this.cfgGovLoanAmount + "\u5186 \u56fd\u55b6\u30ed\u30fc\u30f3\u3092\u7d44\u3080</bold></green>", lores.toArray(new String[0])));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>+" + (long)this.cfgGovLoanAmount + "円 国営ローンを組む</bold></green>", lores.toArray(new String[0])));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6431,10 +6359,10 @@ MinecraftBankAPI {
 
     private String vipTierName(int tier) {
         return switch (tier) {
-            case 3 -> "\u30d7\u30e9\u30c1\u30ca";
-            case 2 -> "\u30b4\u30fc\u30eb\u30c9";
-            case 1 -> "\u30b7\u30eb\u30d0\u30fc";
-            default -> "\u901a\u5e38";
+            case 3 -> "プラチナ";
+            case 2 -> "ゴールド";
+            case 1 -> "シルバー";
+            default -> "通常";
         };
     }
 
@@ -6490,22 +6418,22 @@ MinecraftBankAPI {
         double amount = this.fixedDeposit.getOrDefault(u, 0.0);
         long diff = this.fixedDepositUnlockTime.getOrDefault(u, 0L) - System.currentTimeMillis();
         String timeStr = this.fixedDepositStatusText(amount, diff);
-        gui.setItem(4, this.createItem(Material.CLOCK, "<gold>\u3010\u5b9a\u671f\u9810\u91d1 1\u67a0\u76ee\u3011</gold>", "<gray>\u73fe\u5728\u306e\u9810\u91d1\u984d:</gray> <yellow>" + (long)amount + "\u5186</yellow>", "<gray>\u72b6\u614b:</gray> " + timeStr));
-        gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<yellow>\u624b\u6301\u3061\u304b\u3089 " + (long)this.cfgFixedDepositAmount + "\u5186 \u9810\u3051\u308b</yellow>", new String[0]));
-        gui.setItem(15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\u6e80\u671f\u5f15\u304d\u51fa\u3057 (+" + (int)(this.cfgFixedDepositRate * 100.0) + "%)</bold></gold>", new String[0]));
+        gui.setItem(4, this.createItem(Material.CLOCK, "<gold>【定期預金 1枠目】</gold>", "<gray>現在の預金額:</gray> <yellow>" + (long)amount + "円</yellow>", "<gray>状態:</gray> " + timeStr));
+        gui.setItem(11, this.createItem(Material.GOLD_INGOT, "<yellow>手持ちから " + (long)this.cfgFixedDepositAmount + "円 預ける</yellow>", new String[0]));
+        gui.setItem(15, this.createItem(Material.GOLD_BLOCK, "<gold><bold>満期引き出し (+" + (int)(this.cfgFixedDepositRate * 100.0) + "%)</bold></gold>", new String[0]));
         double amount2 = this.fixedDeposit2.getOrDefault(u, 0.0);
         long diff2 = this.fixedDepositUnlockTime2.getOrDefault(u, 0L) - System.currentTimeMillis();
         String timeStr2 = this.fixedDepositStatusText(amount2, diff2);
-        gui.setItem(3, this.createItem(Material.CLOCK, "<aqua>\u3010\u5b9a\u671f\u9810\u91d1 2\u67a0\u76ee\u3011</aqua>", "<gray>\u73fe\u5728\u306e\u9810\u91d1\u984d:</gray> <yellow>" + (long)amount2 + "\u5186</yellow>", "<gray>\u72b6\u614b:</gray> " + timeStr2));
-        gui.setItem(12, this.createItem(Material.IRON_INGOT, "<yellow>2\u67a0\u76ee\u3078 " + (long)this.cfgFixedDepositAmount + "\u5186 \u9810\u3051\u308b</yellow>", new String[0]));
-        gui.setItem(16, this.createItem(Material.IRON_BLOCK, "<aqua><bold>2\u67a0\u76ee \u6e80\u671f\u5f15\u304d\u51fa\u3057</bold></aqua>", new String[0]));
+        gui.setItem(3, this.createItem(Material.CLOCK, "<aqua>【定期預金 2枠目】</aqua>", "<gray>現在の預金額:</gray> <yellow>" + (long)amount2 + "円</yellow>", "<gray>状態:</gray> " + timeStr2));
+        gui.setItem(12, this.createItem(Material.IRON_INGOT, "<yellow>2枠目へ " + (long)this.cfgFixedDepositAmount + "円 預ける</yellow>", new String[0]));
+        gui.setItem(16, this.createItem(Material.IRON_BLOCK, "<aqua><bold>2枠目 満期引き出し</bold></aqua>", new String[0]));
         double amount3 = this.fixedDeposit3.getOrDefault(u, 0.0);
         long diff3 = this.fixedDepositUnlockTime3.getOrDefault(u, 0L) - System.currentTimeMillis();
         String timeStr3 = this.fixedDepositStatusText(amount3, diff3);
-        gui.setItem(5, this.createItem(Material.CLOCK, "<light_purple>\u3010\u5b9a\u671f\u9810\u91d1 3\u67a0\u76ee\u3011</light_purple>", "<gray>\u73fe\u5728\u306e\u9810\u91d1\u984d:</gray> <yellow>" + (long)amount3 + "\u5186</yellow>", "<gray>\u72b6\u614b:</gray> " + timeStr3));
-        gui.setItem(13, this.createItem(Material.EMERALD, "<yellow>3\u67a0\u76ee\u3078 " + (long)this.cfgFixedDepositAmount + "\u5186 \u9810\u3051\u308b</yellow>", new String[0]));
-        gui.setItem(17, this.createItem(Material.EMERALD_BLOCK, "<light_purple><bold>3\u67a0\u76ee \u6e80\u671f\u5f15\u304d\u51fa\u3057</bold></light_purple>", new String[0]));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(5, this.createItem(Material.CLOCK, "<light_purple>【定期預金 3枠目】</light_purple>", "<gray>現在の預金額:</gray> <yellow>" + (long)amount3 + "円</yellow>", "<gray>状態:</gray> " + timeStr3));
+        gui.setItem(13, this.createItem(Material.EMERALD, "<yellow>3枠目へ " + (long)this.cfgFixedDepositAmount + "円 預ける</yellow>", new String[0]));
+        gui.setItem(17, this.createItem(Material.EMERALD_BLOCK, "<light_purple><bold>3枠目 満期引き出し</bold></light_purple>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6513,8 +6441,8 @@ MinecraftBankAPI {
     private void openCreditGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tCredit);
         int score = this.getScore(p.getUniqueId());
-        gui.setItem(13, this.createItem(Material.NAME_TAG, "<green><bold>\u3010\u4fe1\u7528\u60c5\u5831\u3011</bold></green>", "<gray>\u30b9\u30b3\u30a2:</gray> <aqua>" + score + " / 800</aqua>"));
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(13, this.createItem(Material.NAME_TAG, "<green><bold>【信用情報】</bold></green>", "<gray>スコア:</gray> <aqua>" + score + " / 800</aqua>"));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6522,9 +6450,9 @@ MinecraftBankAPI {
     private void openWorldStockGUI(Player p) {
         UUID u = p.getUniqueId();
         Inventory gui = Bukkit.createInventory(null, (int)54, (Component)this.tWorldStock);
-        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<blue><bold>\u3010\u73fe\u5b9f\u4e16\u754c\u306e\u682a\u5f0f\u5e02\u5834\u3011</bold></blue>", "<gray>\u5b9f\u5728\u3059\u308b\u9298\u67c4\u306e\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u3092\u691c\u7d22\u3057\u3066\u58f2\u8cb7\u3067\u304d\u307e\u3059\u3002</gray>", "<gray>\u4fa1\u683c\u306f\u73fe\u5b9f\u306e\u682a\u4fa1\u3092\u3001\u30e9\u30a4\u30d6\u306e\u70ba\u66ff\u30ec\u30fc\u30c8\u3067\u5186\u63db\u7b97\u3057\u3066\u6271\u3044\u307e\u3059(1\u682a\u5358\u4f4d)\u3002</gray>", "<gray>\u4f8b: AAPL(Apple) TSLA(Tesla) 7203.T(\u30c8\u30e8\u30bf) ^GSPC(S&P500)</gray>", "<dark_gray>\u540c\u4e00\u9298\u67c4\u306e\u4fa1\u683c\u306f\u7d04" + (long)this.cfgWorldStockCacheSeconds + "\u79d2\u30ad\u30e3\u30c3\u30b7\u30e5\u3055\u308c\u307e\u3059(\u53d6\u5f15\u6240\u306b\u3088\u3063\u3066\u306f\u6570\u5206\u9045\u5ef6\u3042\u308a)\u3002</dark_gray>", "<gray>\u4fdd\u6709\u4e2d\u306e\u9298\u67c4\u306b\u306f\u5e74\u7387" + this.cfgWorldStockDividendAnnualRate * 100.0 + "%\u76f8\u5f53\u306e\u914d\u5f53\u91d1\u304c\u5b9a\u671f\u7684\u306b\u652f\u6255\u308f\u308c\u307e\u3059\u3002</gray>"));
-        gui.setItem(49, this.createItem(Material.COMPASS, "<gold><bold>\ud83d\udd0d \u9298\u67c4\u3092\u691c\u7d22\u3057\u3066\u58f2\u8cb7</bold></gold>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u3092\u30c1\u30e3\u30c3\u30c8\u5165\u529b</gray>"));
-        gui.setItem(45, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>\ud83d\udcca \u4fdd\u6709\u682a\u30e9\u30f3\u30ad\u30f3\u30b0</bold></yellow>", "<gray>\u30b5\u30fc\u30d0\u30fc\u5185\u306e\u4fdd\u6709\u682a\u8a55\u4fa1\u984d\u30e9\u30f3\u30ad\u30f3\u30b0\u3092\u8868\u793a</gray>"));
+        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<blue><bold>【現実世界の株式市場】</bold></blue>", "<gray>実在する銘柄のティッカーシンボルを検索して売買できます。</gray>", "<gray>価格は現実の株価を、ライブの為替レートで円換算して扱います(1株単位)。</gray>", "<gray>例: AAPL(Apple) TSLA(Tesla) 7203.T(トヨタ) ^GSPC(S&P500)</gray>", "<dark_gray>同一銘柄の価格は約" + (long)this.cfgWorldStockCacheSeconds + "秒キャッシュされます(取引所によっては数分遅延あり)。</dark_gray>", "<gray>保有中の銘柄には年率" + this.cfgWorldStockDividendAnnualRate * 100.0 + "%相当の配当金が定期的に支払われます。</gray>"));
+        gui.setItem(49, this.createItem(Material.COMPASS, "<gold><bold>🔍 銘柄を検索して売買</bold></gold>", "<gray>クリックしてティッカーシンボルをチャット入力</gray>"));
+        gui.setItem(45, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>📊 保有株ランキング</bold></yellow>", "<gray>サーバー内の保有株評価額ランキングを表示</gray>"));
         HashMap holdings = this.playerWorldStocks.getOrDefault(u, new HashMap());
         HashMap avgCosts = this.playerWorldStockAvgCost.getOrDefault(u, new HashMap());
         int slot = 9;
@@ -6535,24 +6463,24 @@ MinecraftBankAPI {
             double avgCost = avgCosts.getOrDefault(symbol, 0.0);
             WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
             ArrayList<Object> lore = new ArrayList<Object>();
-            lore.add("<gray>\u4fdd\u6709: </gray><white>" + qty + "\u682a</white>");
-            lore.add("<gray>\u5e73\u5747\u53d6\u5f97\u5358\u4fa1: </gray><white>" + String.format("%.2f", avgCost) + "\u5186</white>");
+            lore.add("<gray>保有: </gray><white>" + qty + "株</white>");
+            lore.add("<gray>平均取得単価: </gray><white>" + String.format("%.2f", avgCost) + "円</white>");
             if (q != null) {
                 double value = this.worldStockYenPrice(q) * (double)qty;
                 double pnl = value - avgCost * (double)qty;
-                lore.add(this.worldStockPriceLine("<gray>\u73fe\u5728\u5024: </gray>", q));
-                lore.add("<gray>\u8a55\u4fa1\u984d: </gray><gold>" + (long)value + "\u5186</gold>");
+                lore.add(this.worldStockPriceLine("<gray>現在値: </gray>", q));
+                lore.add("<gray>評価額: </gray><gold>" + (long)value + "円</gold>");
                 lore.add(this.worldStockPnlLine(pnl));
             } else {
-                lore.add("<gray>\u73fe\u5728\u5024: \u53d6\u5f97\u4e2d... \u30af\u30ea\u30c3\u30af\u3057\u3066\u66f4\u65b0</gray>");
+                lore.add("<gray>現在値: 取得中... クリックして更新</gray>");
             }
-            lore.add("<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u58f2\u8cb7\u753b\u9762\u3078</yellow>");
+            lore.add("<yellow>クリックして売買画面へ</yellow>");
             ItemStack item = this.createItem(Material.PAPER, "<aqua><bold>" + symbol + "</bold></aqua>", lore.toArray(new String[0]));
             this.setWorldStockTag(item, symbol);
             gui.setItem(slot++, item);
             this.fetchWorldStockQuote(symbol, quote -> {});
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6583,11 +6511,11 @@ MinecraftBankAPI {
             InvestmentFund fund = this.investmentFunds.get(owner);
             if (fund != null) {
                 fund.cashBalance += totalDividend;
-                this.addLog(fund.manager, "\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c" + fund.name + "\u300d\u306e\u4e16\u754c\u682a\u914d\u5f53\u91d1 +" + (long)totalDividend + "\u5186(\u30d5\u30a1\u30f3\u30c9\u73fe\u91d1\u3078\u8a08\u4e0a)");
+                this.addLog(fund.manager, "共同投資ファンド「" + fund.name + "」の世界株配当金 +" + (long)totalDividend + "円(ファンド現金へ計上)");
                 continue;
             }
             econ.depositPlayer(Bukkit.getOfflinePlayer((UUID)owner), totalDividend);
-            this.addLog(owner, "\u4e16\u754c\u682a\u306e\u914d\u5f53\u91d1 +" + this.fmtCur(totalDividend));
+            this.addLog(owner, "世界株の配当金 +" + this.fmtCur(totalDividend));
             Player online = Bukkit.getPlayer((UUID)owner);
             if (online == null) continue;
             this.msgKey(online, "worldstock.dividend-paid", "amount", String.format("%.2f", totalDividend));
@@ -6597,7 +6525,7 @@ MinecraftBankAPI {
     private void openWorldStockLeaderboardGUI(Player p) {
         int symbols;
         Inventory gui = Bukkit.createInventory(null, (int)54, (Component)this.tWorldStockLeaderboard);
-        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<blue><bold>\u3010\u4fdd\u6709\u682a\u8a55\u4fa1\u984d\u30e9\u30f3\u30ad\u30f3\u30b0\u3011</bold></blue>", "<gray>\u4fdd\u6709\u4e2d\u306e\u9298\u67c4\u306e\u8a55\u4fa1\u984d\u5408\u8a08\u3067\u9806\u4f4d\u4ed8\u3051\u3057\u3066\u3044\u307e\u3059\u3002</gray>", "<dark_gray>\u4fa1\u683c\u30ad\u30e3\u30c3\u30b7\u30e5\u304c\u7121\u3044\u9298\u67c4\u306f\u5e73\u5747\u53d6\u5f97\u5358\u4fa1\u3067\u6982\u7b97\u3057\u307e\u3059\u3002</dark_gray>"));
+        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<blue><bold>【保有株評価額ランキング】</bold></blue>", "<gray>保有中の銘柄の評価額合計で順位付けしています。</gray>", "<dark_gray>価格キャッシュが無い銘柄は平均取得単価で概算します。</dark_gray>"));
         ArrayList<Map.Entry<UUID, Double>> ranking = new ArrayList<Map.Entry<UUID, Double>>();
         HashMap<UUID, Integer> symbolCounts = new HashMap<UUID, Integer>();
         for (Map.Entry<UUID, HashMap<String, Integer>> entry : this.playerWorldStocks.entrySet()) {
@@ -6628,51 +6556,51 @@ MinecraftBankAPI {
                 name = "unknown";
             }
             symbols = symbolCounts.getOrDefault(owner, 0);
-            gui.setItem(slot++, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>#" + rank + " " + name + "</bold></yellow>", "<gray>\u8a55\u4fa1\u984d\u5408\u8a08: </gray><gold>" + (long)((Double)entry.getValue()).doubleValue() + "\u5186</gold>", "<gray>\u4fdd\u6709\u9298\u67c4\u6570: </gray><white>" + symbols + "</white>"));
+            gui.setItem(slot++, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>#" + rank + " " + name + "</bold></yellow>", "<gray>評価額合計: </gray><gold>" + (long)((Double)entry.getValue()).doubleValue() + "円</gold>", "<gray>保有銘柄数: </gray><white>" + symbols + "</white>"));
             ++rank;
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
 
     private String resourceDisplayName(Material mat) {
         return switch (mat) {
-            case Material.COAL -> "\u77f3\u70ad";
-            case Material.IRON_INGOT -> "\u9244\u30a4\u30f3\u30b4\u30c3\u30c8";
-            case Material.GOLD_INGOT -> "\u91d1\u30a4\u30f3\u30b4\u30c3\u30c8";
-            case Material.COPPER_INGOT -> "\u9285\u30a4\u30f3\u30b4\u30c3\u30c8";
-            case Material.REDSTONE -> "\u30ec\u30c3\u30c9\u30b9\u30c8\u30fc\u30f3";
-            case Material.LAPIS_LAZULI -> "\u30e9\u30d4\u30b9\u30e9\u30ba\u30ea";
-            case Material.DIAMOND -> "\u30c0\u30a4\u30e4\u30e2\u30f3\u30c9";
-            case Material.EMERALD -> "\u30a8\u30e1\u30e9\u30eb\u30c9";
-            case Material.NETHERITE_SCRAP -> "\u30cd\u30b6\u30e9\u30a4\u30c8\u306e\u6b20\u7247";
-            case Material.WHEAT -> "\u5c0f\u9ea6";
-            case Material.CARROT -> "\u30cb\u30f3\u30b8\u30f3";
-            case Material.POTATO -> "\u30b8\u30e3\u30ac\u30a4\u30e2";
-            case Material.BEETROOT -> "\u30d3\u30fc\u30c8\u30eb\u30fc\u30c8";
-            case Material.MELON_SLICE -> "\u30b9\u30a4\u30ab";
-            case Material.PUMPKIN -> "\u30ab\u30dc\u30c1\u30e3";
-            case Material.SUGAR_CANE -> "\u30b5\u30c8\u30a6\u30ad\u30d3";
-            case Material.NETHER_WART -> "\u30cd\u30b6\u30fc\u30a6\u30a9\u30fc\u30c8";
-            case Material.COCOA_BEANS -> "\u30ab\u30ab\u30aa\u8c46";
-            case Material.ROTTEN_FLESH -> "\u8150\u3063\u305f\u8089";
-            case Material.BONE -> "\u9aa8";
-            case Material.STRING -> "\u7cf8";
-            case Material.GUNPOWDER -> "\u706b\u85ac";
-            case Material.SPIDER_EYE -> "\u30af\u30e2\u306e\u76ee";
-            case Material.SLIME_BALL -> "\u30b9\u30e9\u30a4\u30e0\u30dc\u30fc\u30eb";
-            case Material.ENDER_PEARL -> "\u30a8\u30f3\u30c0\u30fc\u30d1\u30fc\u30eb";
-            case Material.BLAZE_ROD -> "\u30d6\u30ec\u30a4\u30ba\u30ed\u30c3\u30c9";
-            case Material.GHAST_TEAR -> "\u30ac\u30b9\u30c8\u306e\u6d99";
-            case Material.OAK_LOG -> "\u30aa\u30fc\u30af\u306e\u539f\u6728";
-            case Material.SPRUCE_LOG -> "\u30c8\u30a6\u30d2\u306e\u539f\u6728";
-            case Material.BIRCH_LOG -> "\u30b7\u30e9\u30ab\u30d0\u306e\u539f\u6728";
-            case Material.JUNGLE_LOG -> "\u30b8\u30e3\u30f3\u30b0\u30eb\u306e\u539f\u6728";
-            case Material.ACACIA_LOG -> "\u30a2\u30ab\u30b7\u30a2\u306e\u539f\u6728";
-            case Material.DARK_OAK_LOG -> "\u30c0\u30fc\u30af\u30aa\u30fc\u30af\u306e\u539f\u6728";
-            case Material.MANGROVE_LOG -> "\u30de\u30f3\u30b0\u30ed\u30fc\u30d6\u306e\u539f\u6728";
-            case Material.CHERRY_LOG -> "\u30b5\u30af\u30e9\u306e\u539f\u6728";
+            case COAL -> "石炭";
+            case IRON_INGOT -> "鉄インゴット";
+            case GOLD_INGOT -> "金インゴット";
+            case COPPER_INGOT -> "銅インゴット";
+            case REDSTONE -> "レッドストーン";
+            case LAPIS_LAZULI -> "ラピスラズリ";
+            case DIAMOND -> "ダイヤモンド";
+            case EMERALD -> "エメラルド";
+            case NETHERITE_SCRAP -> "ネザライトの欠片";
+            case WHEAT -> "小麦";
+            case CARROT -> "ニンジン";
+            case POTATO -> "ジャガイモ";
+            case BEETROOT -> "ビートルート";
+            case MELON_SLICE -> "スイカ";
+            case PUMPKIN -> "カボチャ";
+            case SUGAR_CANE -> "サトウキビ";
+            case NETHER_WART -> "ネザーウォート";
+            case COCOA_BEANS -> "カカオ豆";
+            case ROTTEN_FLESH -> "腐った肉";
+            case BONE -> "骨";
+            case STRING -> "糸";
+            case GUNPOWDER -> "火薬";
+            case SPIDER_EYE -> "クモの目";
+            case SLIME_BALL -> "スライムボール";
+            case ENDER_PEARL -> "エンダーパール";
+            case BLAZE_ROD -> "ブレイズロッド";
+            case GHAST_TEAR -> "ガストの涙";
+            case OAK_LOG -> "オークの原木";
+            case SPRUCE_LOG -> "トウヒの原木";
+            case BIRCH_LOG -> "シラカバの原木";
+            case JUNGLE_LOG -> "ジャングルの原木";
+            case ACACIA_LOG -> "アカシアの原木";
+            case DARK_OAK_LOG -> "ダークオークの原木";
+            case MANGROVE_LOG -> "マングローブの原木";
+            case CHERRY_LOG -> "サクラの原木";
             default -> mat.name();
         };
     }
@@ -6685,10 +6613,10 @@ MinecraftBankAPI {
         double price = this.getResourcePrice(mat);
         double ratio = price / base;
         if (ratio > 1.001) {
-            return "<green>\u25b2</green>";
+            return "<green>▲</green>";
         }
         if (ratio < 0.999) {
-            return "<red>\u25bc</red>";
+            return "<red>▼</red>";
         }
         return "<gray>=</gray>";
     }
@@ -6713,12 +6641,12 @@ MinecraftBankAPI {
 
     private void openResourceShopGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tResourceShop);
-        gui.setItem(4, this.createItem(Material.EMERALD, "<green><bold>\u3010\u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u3011</bold></green>", "<gray>\u9271\u77f3\u30fb\u8fb2\u4f5c\u7269\u30fb\u30e2\u30d6\u30c9\u30ed\u30c3\u30d7\u30fb\u6728\u6750\u3092\u30b5\u30fc\u30d0\u30fc\u306b\u5373\u6642\u58f2\u8cb7\u3067\u304d\u307e\u3059\u3002</gray>", "<gray>\u4fa1\u683c\u306f\u53d6\u5f15\u91cf\u306b\u5fdc\u3058\u3066\u4e0a\u4e0b\u3057\u3001\u6642\u9593\u7d4c\u904e\u3067\u57fa\u6e96\u4fa1\u683c\u3078\u7de9\u3084\u304b\u306b\u623b\u308a\u307e\u3059\u3002</gray>", "<dark_gray>\u58f2\u308a\u3059\u304e\u308b\u3068\u4fa1\u683c\u304c\u4e0b\u304c\u308b\u305f\u3081\u3001\u58f2\u5374\u76ca\u306f\u81ea\u7136\u3068\u982d\u6253\u3061\u306b\u306a\u308a\u307e\u3059\u3002</dark_gray>"));
-        gui.setItem(10, this.createItem(Material.IRON_PICKAXE, "<white><bold>\u26cf \u9271\u77f3</bold></white>", "<gray>\u77f3\u70ad\u30fb\u9244\u30fb\u91d1\u30fb\u30c0\u30a4\u30e4\u30e2\u30f3\u30c9\u306a\u3069</gray>"));
-        gui.setItem(12, this.createItem(Material.WHEAT, "<yellow><bold>\ud83c\udf3e \u8fb2\u4f5c\u7269</bold></yellow>", "<gray>\u5c0f\u9ea6\u30fb\u30cb\u30f3\u30b8\u30f3\u30fb\u30b8\u30e3\u30ac\u30a4\u30e2\u306a\u3069</gray>"));
-        gui.setItem(14, this.createItem(Material.BONE, "<white><bold>\ud83e\uddb4 \u30e2\u30d6\u30c9\u30ed\u30c3\u30d7</bold></white>", "<gray>\u9aa8\u30fb\u7cf8\u30fb\u30a8\u30f3\u30c0\u30fc\u30d1\u30fc\u30eb\u306a\u3069</gray>"));
-        gui.setItem(16, this.createItem(Material.OAK_LOG, "<gold><bold>\ud83e\udeb5 \u6728\u6750</bold></gold>", "<gray>\u5404\u7a2e\u539f\u6728</gray>"));
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(4, this.createItem(Material.EMERALD, "<green><bold>【資源相場ショップ】</bold></green>", "<gray>鉱石・農作物・モブドロップ・木材をサーバーに即時売買できます。</gray>", "<gray>価格は取引量に応じて上下し、時間経過で基準価格へ緩やかに戻ります。</gray>", "<dark_gray>売りすぎると価格が下がるため、売却益は自然と頭打ちになります。</dark_gray>"));
+        gui.setItem(10, this.createItem(Material.IRON_PICKAXE, "<white><bold>⛏ 鉱石</bold></white>", "<gray>石炭・鉄・金・ダイヤモンドなど</gray>"));
+        gui.setItem(12, this.createItem(Material.WHEAT, "<yellow><bold>🌾 農作物</bold></yellow>", "<gray>小麦・ニンジン・ジャガイモなど</gray>"));
+        gui.setItem(14, this.createItem(Material.BONE, "<white><bold>🦴 モブドロップ</bold></white>", "<gray>骨・糸・エンダーパールなど</gray>"));
+        gui.setItem(16, this.createItem(Material.OAK_LOG, "<gold><bold>🪵 木材</bold></gold>", "<gray>各種原木</gray>"));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6728,24 +6656,24 @@ MinecraftBankAPI {
         this.resourceShopViewCategory.put(u, category);
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tResourceShopList);
         String categoryName = switch (category) {
-            case "ore" -> "\u9271\u77f3";
-            case "crop" -> "\u8fb2\u4f5c\u7269";
-            case "drop" -> "\u30e2\u30d6\u30c9\u30ed\u30c3\u30d7";
-            case "wood" -> "\u6728\u6750";
+            case "ore" -> "鉱石";
+            case "crop" -> "農作物";
+            case "drop" -> "モブドロップ";
+            case "wood" -> "木材";
             default -> category;
         };
-        gui.setItem(4, this.createItem(Material.PAPER, "<green><bold>\u3010" + categoryName + "\u3011</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u5404\u54c1\u76ee\u306e\u58f2\u8cb7\u753b\u9762\u3092\u958b\u304d\u307e\u3059\u3002</gray>"));
+        gui.setItem(4, this.createItem(Material.PAPER, "<green><bold>【" + categoryName + "】</bold></green>", "<gray>クリックして各品目の売買画面を開きます。</gray>"));
         List mats = RESOURCE_CATEGORIES.getOrDefault(category, List.of());
         int slot = 9;
         for (Material mat : mats) {
             if (slot >= 18) break;
             double base = RESOURCE_BASE_PRICES.getOrDefault(mat, 0.0);
             double price = this.getResourceEffectivePrice(mat);
-            ItemStack item = this.createItem(mat, "<aqua><bold>" + this.resourceDisplayName(mat) + "</bold></aqua>", "<gray>\u73fe\u5728\u4fa1\u683c: </gray><gold>" + String.format("%.2f", price) + "\u5186/\u500b</gold> " + this.resourceTrendIndicator(mat), "<gray>\u57fa\u6e96\u4fa1\u683c: </gray><white>" + String.format("%.2f", base) + "\u5186/\u500b</white>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u58f2\u8cb7\u753b\u9762\u3078</yellow>");
+            ItemStack item = this.createItem(mat, "<aqua><bold>" + this.resourceDisplayName(mat) + "</bold></aqua>", "<gray>現在価格: </gray><gold>" + String.format("%.2f", price) + "円/個</gold> " + this.resourceTrendIndicator(mat), "<gray>基準価格: </gray><white>" + String.format("%.2f", base) + "円/個</white>", "<yellow>クリックして売買画面へ</yellow>");
             this.setResourceMaterialTag(item, mat);
             gui.setItem(slot++, item);
         }
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6757,9 +6685,9 @@ MinecraftBankAPI {
         double personalMult = this.getResourcePersonalMultiplier(p.getUniqueId(), mat);
         double buyPrice = price * personalMult;
         int holding = this.countMaterialInInventory(p, mat);
-        ArrayList<CallSite> infoLore = new ArrayList<CallSite>(List.of("<gray>\u73fe\u5728\u4fa1\u683c: </gray><gold>" + String.format("%.2f", price) + "\u5186/\u500b</gold> " + this.resourceTrendIndicator(mat), "<gray>\u57fa\u6e96\u4fa1\u683c: </gray><white>" + String.format("%.2f", base) + "\u5186/\u500b</white>", "<gray>\u6240\u6301\u6570: </gray><white>" + holding + "\u500b</white>"));
+        ArrayList<String> infoLore = new ArrayList<String>(List.of("<gray>現在価格: </gray><gold>" + String.format("%.2f", price) + "円/個</gold> " + this.resourceTrendIndicator(mat), "<gray>基準価格: </gray><white>" + String.format("%.2f", base) + "円/個</white>", "<gray>所持数: </gray><white>" + holding + "個</white>"));
         if (personalMult > 1.01) {
-            infoLore.add((CallSite)((Object)("<red>\u3042\u306a\u305f\u306f\u9023\u7d9a\u8cfc\u5165\u4e2d\u306e\u305f\u3081\u3001\u8cb7\u5024\u304c\u5272\u5897(\u00d7" + String.format("%.2f", personalMult) + ")\u306b\u306a\u3063\u3066\u3044\u307e\u3059</red>")));
+            infoLore.add("<red>あなたは連続購入中のため、買値が割増(×" + String.format("%.2f", personalMult) + ")になっています</red>");
         }
         ItemStack infoItem = this.createItem(mat, "<aqua><bold>" + this.resourceDisplayName(mat) + "</bold></aqua>", infoLore.toArray(new String[0]));
         gui.setItem(4, infoItem);
@@ -6769,25 +6697,25 @@ MinecraftBankAPI {
         for (int i = 0; i < qtys.length; ++i) {
             int qty = qtys[i];
             double sellTotal = price * (double)qty;
-            ItemStack sellItem = this.createItem(mat, "<red><bold>\u58f2\u308b x" + qty + "</bold></red>", "<gray>\u53d7\u53d6\u984d: </gray><gold>" + String.format("%.2f", sellTotal) + "\u5186</gold>", "<dark_gray>(\u5358\u4fa1 " + String.format("%.2f", price) + "\u5186 \u00d7 " + qty + "\u500b)</dark_gray>");
+            ItemStack sellItem = this.createItem(mat, "<red><bold>売る x" + qty + "</bold></red>", "<gray>受取額: </gray><gold>" + String.format("%.2f", sellTotal) + "円</gold>", "<dark_gray>(単価 " + String.format("%.2f", price) + "円 × " + qty + "個)</dark_gray>");
             this.setResourceMaterialTag(sellItem, mat);
             this.setResourceActionTag(sellItem, "sell" + qty);
             gui.setItem(sellSlots[i], sellItem);
             double buyTotal = buyPrice * (double)qty;
-            ItemStack buyItem = this.createItem(mat, "<green><bold>\u8cb7\u3046 x" + qty + "</bold></green>", "<gray>\u652f\u6255\u984d: </gray><gold>" + String.format("%.2f", buyTotal) + "\u5186</gold>", "<dark_gray>(\u5358\u4fa1 " + String.format("%.2f", buyPrice) + "\u5186 \u00d7 " + qty + "\u500b)</dark_gray>");
+            ItemStack buyItem = this.createItem(mat, "<green><bold>買う x" + qty + "</bold></green>", "<gray>支払額: </gray><gold>" + String.format("%.2f", buyTotal) + "円</gold>", "<dark_gray>(単価 " + String.format("%.2f", buyPrice) + "円 × " + qty + "個)</dark_gray>");
             this.setResourceMaterialTag(buyItem, mat);
             this.setResourceActionTag(buyItem, "buy" + qty);
             gui.setItem(buySlots[i], buyItem);
         }
-        ItemStack sellQtyItem = this.createItem(Material.WRITABLE_BOOK, "<red><bold>\ud83d\udcd6 \u6570\u91cf\u6307\u5b9a\u3067\u58f2\u308b</bold></red>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u500b\u6570\u3092\u5165\u529b</gray>");
+        ItemStack sellQtyItem = this.createItem(Material.WRITABLE_BOOK, "<red><bold>📖 数量指定で売る</bold></red>", "<gray>クリックしてチャットに個数を入力</gray>");
         this.setResourceMaterialTag(sellQtyItem, mat);
         this.setResourceActionTag(sellQtyItem, "sellqty");
         gui.setItem(20, sellQtyItem);
-        ItemStack buyQtyItem = this.createItem(Material.WRITABLE_BOOK, "<green><bold>\ud83d\udcd6 \u6570\u91cf\u6307\u5b9a\u3067\u8cb7\u3046</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u500b\u6570\u3092\u5165\u529b</gray>");
+        ItemStack buyQtyItem = this.createItem(Material.WRITABLE_BOOK, "<green><bold>📖 数量指定で買う</bold></green>", "<gray>クリックしてチャットに個数を入力</gray>");
         this.setResourceMaterialTag(buyQtyItem, mat);
         this.setResourceActionTag(buyQtyItem, "buyqty");
         gui.setItem(24, buyQtyItem);
-        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(26, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6799,13 +6727,13 @@ MinecraftBankAPI {
         int myTickets = this.lotteryTickets.getOrDefault(u, 0);
         double winChance = totalTickets == 0 ? 0.0 : (double)myTickets * 100.0 / (double)totalTickets;
         long remainMs = Math.max(0L, this.lotteryDrawAt - System.currentTimeMillis());
-        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<gold><bold>\u3010\u5b9a\u671f\u62bd\u9078\u30fb\u5b9d\u304f\u3058\u3011</bold></gold>", "<gray>\u8cde\u91d1\u30d7\u30fc\u30eb:</gray> <gold>" + (long)this.lotteryPool + "\u5186</gold>", "<gray>\u30c1\u30b1\u30c3\u30c8\u4fa1\u683c:</gray> <white>" + (long)this.cfgLotteryTicketPrice + "\u5186/\u679a</white>", "<gray>\u3042\u306a\u305f\u306e\u8cfc\u5165\u679a\u6570:</gray> <yellow>" + myTickets + "\u679a</yellow>", "<gray>\u73fe\u5728\u306e\u5f53\u305b\u3093\u78ba\u7387:</gray> <aqua>" + String.format("%.2f", winChance) + "%</aqua>", "<gray>\u6b21\u56de\u62bd\u9078\u307e\u3067:</gray> <white>" + this.formatHoursMinutes(remainMs, false) + "</white>", "<dark_gray>\u524d\u56de\u306e\u5f53\u305b\u3093\u8005:</dark_gray> <light_purple>" + this.lastLotteryWinnerName + "</light_purple>" + (String)(this.lastLotteryWinnerAmount > 0.0 ? " <dark_gray>(" + (long)this.lastLotteryWinnerAmount + "\u5186)</dark_gray>" : ""), "<dark_gray>\u8cde\u91d1\u30d7\u30fc\u30eb\u306f\u30c1\u30b1\u30c3\u30c8\u58f2\u4e0a\u306e\u307f\u304c\u539f\u8cc7\u3067\u3059(\u56fd\u5eab\u304b\u3089\u306e\u88dc\u586b\u306f\u3042\u308a\u307e\u305b\u3093)\u3002</dark_gray>"));
+        gui.setItem(4, this.createItem(Material.NETHER_STAR, "<gold><bold>【定期抽選・宝くじ】</bold></gold>", "<gray>賞金プール:</gray> <gold>" + (long)this.lotteryPool + "円</gold>", "<gray>チケット価格:</gray> <white>" + (long)this.cfgLotteryTicketPrice + "円/枚</white>", "<gray>あなたの購入枚数:</gray> <yellow>" + myTickets + "枚</yellow>", "<gray>現在の当せん確率:</gray> <aqua>" + String.format("%.2f", winChance) + "%</aqua>", "<gray>次回抽選まで:</gray> <white>" + this.formatHoursMinutes(remainMs, false) + "</white>", "<dark_gray>前回の当せん者:</dark_gray> <light_purple>" + this.lastLotteryWinnerName + "</light_purple>" + (String)(this.lastLotteryWinnerAmount > 0.0 ? " <dark_gray>(" + (long)this.lastLotteryWinnerAmount + "円)</dark_gray>" : ""), "<dark_gray>賞金プールはチケット売上のみが原資です(国庫からの補填はありません)。</dark_gray>"));
         double price = this.cfgLotteryTicketPrice;
-        gui.setItem(11, this.createItem(Material.PAPER, "<green><bold>\ud83c\udf9f 1\u679a\u8cfc\u5165</bold></green>", "<gray>\u652f\u6255\u984d:</gray> <gold>" + (long)(price * 1.0) + "\u5186</gold>"));
-        gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>\ud83c\udf9f 5\u679a\u8cfc\u5165</bold></green>", "<gray>\u652f\u6255\u984d:</gray> <gold>" + (long)(price * 5.0) + "\u5186</gold>"));
-        gui.setItem(15, this.createItem(Material.DIAMOND, "<green><bold>\ud83c\udf9f 10\u679a\u8cfc\u5165</bold></green>", "<gray>\u652f\u6255\u984d:</gray> <gold>" + (long)(price * 10.0) + "\u5186</gold>"));
-        gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<aqua><bold>\ud83d\udcd6 \u6570\u91cf\u3092\u6307\u5b9a\u3057\u3066\u8cfc\u5165</bold></aqua>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u679a\u6570\u3092\u5165\u529b</gray>"));
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(11, this.createItem(Material.PAPER, "<green><bold>🎟 1枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + (long)(price * 1.0) + "円</gold>"));
+        gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>🎟 5枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + (long)(price * 5.0) + "円</gold>"));
+        gui.setItem(15, this.createItem(Material.DIAMOND, "<green><bold>🎟 10枚購入</bold></green>", "<gray>支払額:</gray> <gold>" + (long)(price * 10.0) + "円</gold>"));
+        gui.setItem(20, this.createItem(Material.WRITABLE_BOOK, "<aqua><bold>📖 数量を指定して購入</bold></aqua>", "<gray>クリックしてチャットに枚数を入力</gray>"));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6815,16 +6743,16 @@ MinecraftBankAPI {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tStorageRent);
         int clampedSize = Math.max(9, this.cfgStorageSize / 9 * 9);
         if (!this.storageRentDueTime.containsKey(u)) {
-            gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>\u3010\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3011</bold></gold>", "<gray>\u5bb6\u8cc3:</gray> <gold>" + (long)this.cfgStorageRentAmount + "\u5186</gold> / " + this.cfgStorageRentIntervalHours + "\u6642\u9593\u3054\u3068", "<gray>\u53ce\u7d0d\u30b9\u30ed\u30c3\u30c8\u6570:</gray> <white>" + clampedSize + "</white>", "<gray>\u500b\u4eba\u53e3\u5ea7\u30fb\u30a8\u30f3\u30c0\u30fc\u30c1\u30a7\u30b9\u30c8\u3068\u306f\u5225\u306e\u5c02\u7528\u53ce\u7d0d\u304c\u4f7f\u3048\u307e\u3059\u3002</gray>", "<red>\u26a0 \u5bb6\u8cc3\u306e\u652f\u6255\u3044\u30921\u56de\u3067\u3082\u6ede\u7d0d\u3059\u308b\u3068\u5951\u7d04\u306f\u5931\u52b9\u3057\u3001</red>", "<red>\u26a0 \u5009\u5eab\u306e\u4e2d\u8eab\u306f\u5168\u3066\u6ca1\u53ce\u3055\u308c\u307e\u3059\u306e\u3067\u3054\u6ce8\u610f\u304f\u3060\u3055\u3044\u3002</red>"));
-            gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>\u501f\u308a\u308b</bold></green>", "<gray>\u4eca\u3059\u3050\u521d\u56de\u5bb6\u8cc3 " + (long)this.cfgStorageRentAmount + "\u5186 \u3092\u652f\u6255\u3063\u3066\u5951\u7d04\u3057\u307e\u3059\u3002</gray>"));
+            gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>【レンタル倉庫】</bold></gold>", "<gray>家賃:</gray> <gold>" + (long)this.cfgStorageRentAmount + "円</gold> / " + this.cfgStorageRentIntervalHours + "時間ごと", "<gray>収納スロット数:</gray> <white>" + clampedSize + "</white>", "<gray>個人口座・エンダーチェストとは別の専用収納が使えます。</gray>", "<red>⚠ 家賃の支払いを1回でも滞納すると契約は失効し、</red>", "<red>⚠ 倉庫の中身は全て没収されますのでご注意ください。</red>"));
+            gui.setItem(13, this.createItem(Material.EMERALD, "<green><bold>借りる</bold></green>", "<gray>今すぐ初回家賃 " + (long)this.cfgStorageRentAmount + "円 を支払って契約します。</gray>"));
         } else {
             long due = this.storageRentDueTime.get(u);
             long remainMs = Math.max(0L, due - System.currentTimeMillis());
-            gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>\u3010\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3011\u5951\u7d04\u4e2d</bold></gold>", "<gray>\u5bb6\u8cc3:</gray> <gold>" + (long)this.cfgStorageRentAmount + "\u5186</gold> / " + this.cfgStorageRentIntervalHours + "\u6642\u9593\u3054\u3068", "<gray>\u6b21\u56de\u5bb6\u8cc3\u306e\u652f\u6255\u3044\u307e\u3067:</gray> <white>" + this.formatHoursMinutes(remainMs, false) + "</white>", "<red>\u26a0 \u652f\u6255\u3044\u306b\u5931\u6557\u3059\u308b\u3068\u5009\u5eab\u306e\u4e2d\u8eab\u306f\u5168\u3066\u6ca1\u53ce\u3055\u308c\u307e\u3059\u3002</red>"));
-            gui.setItem(11, this.createItem(Material.CHEST, "<aqua><bold>\u5009\u5eab\u3092\u958b\u304f</bold></aqua>", "<gray>\u5c02\u7528\u306e\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3092\u958b\u304d\u307e\u3059\u3002</gray>"));
-            gui.setItem(15, this.createItem(Material.DIAMOND, "<light_purple><bold>\u65e9\u3081\u306b\u66f4\u65b0\u3059\u308b(\u6b21\u56de\u671f\u65e5\u3092\u5ef6\u9577)</bold></light_purple>", "<gray>" + (long)this.cfgStorageRentAmount + "\u5186\u3092\u652f\u6255\u3044\u3001\u6b21\u56de\u671f\u65e5\u3092\u305d\u3053\u304b\u3089" + this.cfgStorageRentIntervalHours + "\u6642\u9593\u5ef6\u9577\u3057\u307e\u3059\u3002</gray>"));
+            gui.setItem(4, this.createItem(Material.BOOK, "<gold><bold>【レンタル倉庫】契約中</bold></gold>", "<gray>家賃:</gray> <gold>" + (long)this.cfgStorageRentAmount + "円</gold> / " + this.cfgStorageRentIntervalHours + "時間ごと", "<gray>次回家賃の支払いまで:</gray> <white>" + this.formatHoursMinutes(remainMs, false) + "</white>", "<red>⚠ 支払いに失敗すると倉庫の中身は全て没収されます。</red>"));
+            gui.setItem(11, this.createItem(Material.CHEST, "<aqua><bold>倉庫を開く</bold></aqua>", "<gray>専用のレンタル倉庫を開きます。</gray>"));
+            gui.setItem(15, this.createItem(Material.DIAMOND, "<light_purple><bold>早めに更新する(次回期日を延長)</bold></light_purple>", "<gray>" + (long)this.cfgStorageRentAmount + "円を支払い、次回期日をそこから" + this.cfgStorageRentIntervalHours + "時間延長します。</gray>"));
         }
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -6878,14 +6806,14 @@ MinecraftBankAPI {
             if (online != null) {
                 this.msgKey(online, "storage.rented", "amount", String.valueOf((long)this.cfgStorageRentAmount), "hours", String.valueOf(this.cfgStorageRentIntervalHours));
             }
-            this.addLog(u, "\u30ec\u30f3\u30bf\u30eb\u5009\u5eab: \u5951\u7d04\u958b\u59cb -" + this.fmtCur(this.cfgStorageRentAmount));
+            this.addLog(u, "レンタル倉庫: 契約開始 -" + this.fmtCur(this.cfgStorageRentAmount));
         } else {
             long current = this.storageRentDueTime.get(u);
             this.storageRentDueTime.put(u, current + (long)this.cfgStorageRentIntervalHours * 3600000L);
             if (online != null) {
                 this.msgKey(online, "storage.rent-paid", "amount", String.valueOf((long)this.cfgStorageRentAmount));
             }
-            this.addLog(u, "\u30ec\u30f3\u30bf\u30eb\u5009\u5eab: \u65e9\u671f\u66f4\u65b0 -" + this.fmtCur(this.cfgStorageRentAmount));
+            this.addLog(u, "レンタル倉庫: 早期更新 -" + this.fmtCur(this.cfgStorageRentAmount));
         }
         return true;
     }
@@ -6901,7 +6829,7 @@ MinecraftBankAPI {
             if (econ.getBalance(offline) >= this.cfgStorageRentAmount) {
                 econ.withdrawPlayer(offline, this.cfgStorageRentAmount);
                 this.storageRentDueTime.put(u, now + (long)this.cfgStorageRentIntervalHours * 3600000L);
-                this.addLog(u, "\u30ec\u30f3\u30bf\u30eb\u5009\u5eab: \u5bb6\u8cc3\u81ea\u52d5\u5f15\u843d -" + this.fmtCur(this.cfgStorageRentAmount));
+                this.addLog(u, "レンタル倉庫: 家賃自動引落 -" + this.fmtCur(this.cfgStorageRentAmount));
                 if (online == null || !online.isOnline()) continue;
                 this.msgKey(online, "storage.rent-paid", "amount", String.valueOf((long)this.cfgStorageRentAmount));
                 continue;
@@ -6913,7 +6841,7 @@ MinecraftBankAPI {
             if (cached != null) {
                 cached.clear();
             }
-            this.addLog(u, "\u30ec\u30f3\u30bf\u30eb\u5009\u5eab: \u5bb6\u8cc3\u6ede\u7d0d\u306b\u3088\u308a\u5951\u7d04\u5931\u52b9\u30fb\u4e2d\u8eab\u6ca1\u53ce");
+            this.addLog(u, "レンタル倉庫: 家賃滞納により契約失効・中身没収");
             if (online == null || !online.isOnline()) continue;
             this.msgKey(online, "storage.forfeited", new String[0]);
         }
@@ -6921,26 +6849,26 @@ MinecraftBankAPI {
 
     private String merchantDisplayName(Material mat) {
         return switch (mat) {
-            case Material.ELYTRA -> "\u30a8\u30ea\u30c8\u30e9";
-            case Material.TOTEM_OF_UNDYING -> "\u4e0d\u6b7b\u306e\u30c8\u30fc\u30c6\u30e0";
-            case Material.NETHERITE_INGOT -> "\u30cd\u30b6\u30e9\u30a4\u30c8\u30a4\u30f3\u30b4\u30c3\u30c8";
-            case Material.NETHERITE_BLOCK -> "\u30cd\u30b6\u30e9\u30a4\u30c8\u30d6\u30ed\u30c3\u30af";
-            case Material.ENCHANTED_GOLDEN_APPLE -> "\u30a8\u30f3\u30c1\u30e3\u30f3\u30c8\u3055\u308c\u305f\u91d1\u306e\u30ea\u30f3\u30b4";
-            case Material.SADDLE -> "\u30b5\u30c9\u30eb";
-            case Material.NAME_TAG -> "\u540d\u672d";
-            case Material.SHULKER_BOX -> "\u30b7\u30e5\u30eb\u30ab\u30fc\u30dc\u30c3\u30af\u30b9";
-            case Material.TRIDENT -> "\u30c8\u30e9\u30a4\u30c7\u30f3\u30c8";
-            case Material.NETHER_STAR -> "\u30cd\u30b6\u30fc\u30b9\u30bf\u30fc";
-            case Material.DRAGON_EGG -> "\u30c9\u30e9\u30b4\u30f3\u306e\u5375";
-            case Material.BEACON -> "\u30d3\u30fc\u30b3\u30f3";
-            case Material.DIAMOND_BLOCK -> "\u30c0\u30a4\u30e4\u30e2\u30f3\u30c9\u30d6\u30ed\u30c3\u30af";
-            case Material.EMERALD_BLOCK -> "\u30a8\u30e1\u30e9\u30eb\u30c9\u30d6\u30ed\u30c3\u30af";
-            case Material.MUSIC_DISC_PIGSTEP -> "\u30ec\u30b3\u30fc\u30c9(Pigstep)";
-            case Material.MUSIC_DISC_OTHERSIDE -> "\u30ec\u30b3\u30fc\u30c9(Otherside)";
-            case Material.HEART_OF_THE_SEA -> "\u6d77\u306e\u5fc3";
-            case Material.CONDUIT -> "\u30b3\u30f3\u30b8\u30c3\u30c8";
-            case Material.END_CRYSTAL -> "\u30a8\u30f3\u30c9\u30af\u30ea\u30b9\u30bf\u30eb";
-            case Material.GOLDEN_CARROT -> "\u91d1\u306e\u30cb\u30f3\u30b8\u30f3";
+            case ELYTRA -> "エリトラ";
+            case TOTEM_OF_UNDYING -> "不死のトーテム";
+            case NETHERITE_INGOT -> "ネザライトインゴット";
+            case NETHERITE_BLOCK -> "ネザライトブロック";
+            case ENCHANTED_GOLDEN_APPLE -> "エンチャントされた金のリンゴ";
+            case SADDLE -> "サドル";
+            case NAME_TAG -> "名札";
+            case SHULKER_BOX -> "シュルカーボックス";
+            case TRIDENT -> "トライデント";
+            case NETHER_STAR -> "ネザースター";
+            case DRAGON_EGG -> "ドラゴンの卵";
+            case BEACON -> "ビーコン";
+            case DIAMOND_BLOCK -> "ダイヤモンドブロック";
+            case EMERALD_BLOCK -> "エメラルドブロック";
+            case MUSIC_DISC_PIGSTEP -> "レコード(Pigstep)";
+            case MUSIC_DISC_OTHERSIDE -> "レコード(Otherside)";
+            case HEART_OF_THE_SEA -> "海の心";
+            case CONDUIT -> "コンジット";
+            case END_CRYSTAL -> "エンドクリスタル";
+            case GOLDEN_CARROT -> "金のニンジン";
             default -> mat.name();
         };
     }
@@ -7038,7 +6966,7 @@ MinecraftBankAPI {
             entity.setPersistent(true);
             entity.setRemoveWhenFarAway(false);
             entity.setSilent(true);
-            entity.customName(this.mm("<gold><bold>\u65c5\u306e\u884c\u5546\u4eba</bold></gold>"));
+            entity.customName(this.mm("<gold><bold>旅の行商人</bold></gold>"));
             entity.setCustomNameVisible(true);
             entity.setRecipes(new ArrayList());
             entity.getPersistentDataContainer().set(this.merchantNpcMarkerKey, PersistentDataType.BYTE, (Object)1);
@@ -7123,28 +7051,28 @@ MinecraftBankAPI {
         this.treasureY = block.getY();
         this.treasureZ = block.getZ();
         this.treasureActive = true;
-        this.broadcastNews("<gold><bold>\u3010\u57cb\u8535\u91d1\u3011</bold> " + this.treasureWorldName + " (" + this.treasureX + ", " + this.treasureY + ", " + this.treasureZ + ") \u4ed8\u8fd1\u306b\u57cb\u8535\u91d1\u306e\u5165\u3063\u305f\u30c1\u30a7\u30b9\u30c8\u304c\u51fa\u73fe\u3057\u307e\u3057\u305f\uff01\u6700\u521d\u306b\u767a\u898b\u3057\u305f\u8005\u304c\u7dcf\u53d6\u308a\u3067\u3059\u3002</gold>");
+        this.broadcastNews("<gold><bold>【埋蔵金】</bold> " + this.treasureWorldName + " (" + this.treasureX + ", " + this.treasureY + ", " + this.treasureZ + ") 付近に埋蔵金の入ったチェストが出現しました！最初に発見した者が総取りです。</gold>");
     }
 
     private void openTravelingMerchantGUI(Player p) {
         this.ensureMerchantDealsCurrent();
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tTravelingMerchant);
         long remainMs = Math.max(0L, this.merchantRefreshAt - System.currentTimeMillis());
-        gui.setItem(4, this.createItem(Material.EMERALD, "<green><bold>\u3010\u5de1\u56de\u5546\u4eba\u3011</bold></green>", "<gray>\u65e5\u66ff\u308f\u308a\u3067\u6570\u91cf\u9650\u5b9a\u30fb\u5272\u5f15\u4fa1\u683c\u306e\u54c1\u3092\u8ca9\u58f2\u3057\u3066\u3044\u307e\u3059\u3002</gray>", "<gray>\u6b21\u56de\u306e\u66f4\u65b0\u307e\u3067: </gray><gold>" + this.formatHoursMinutes(remainMs, false) + "</gold>"));
+        gui.setItem(4, this.createItem(Material.EMERALD, "<green><bold>【巡回商人】</bold></green>", "<gray>日替わりで数量限定・割引価格の品を販売しています。</gray>", "<gray>次回の更新まで: </gray><gold>" + this.formatHoursMinutes(remainMs, false) + "</gold>"));
         int slot = 9;
         for (MerchantDeal deal : this.merchantDeals) {
             if (slot >= 18) break;
             if (deal.stockRemaining <= 0) {
-                gui.setItem(slot, this.createItem(Material.GRAY_DYE, "<gray><bold>" + this.merchantDisplayName(deal.material) + "</bold></gray>", "<dark_gray>\u58f2\u308a\u5207\u308c</dark_gray>"));
+                gui.setItem(slot, this.createItem(Material.GRAY_DYE, "<gray><bold>" + this.merchantDisplayName(deal.material) + "</bold></gray>", "<dark_gray>売り切れ</dark_gray>"));
             } else {
                 double discounted = deal.normalPrice * (1.0 - deal.discountPercent / 100.0);
-                ItemStack item = this.createItem(deal.material, "<aqua><bold>" + this.merchantDisplayName(deal.material) + "</bold></aqua>", "<gray>\u901a\u5e38\u4fa1\u683c: </gray><strikethrough><white>" + (long)deal.normalPrice + "\u5186</white></strikethrough>", "<gray>\u5272\u5f15\u4fa1\u683c: </gray><gold><bold>" + (long)discounted + "\u5186</bold></gold>", "<green>\u5272\u5f15\u7387: " + String.format("%.0f", deal.discountPercent) + "%OFF</green>", "<gray>\u5728\u5eab: </gray><white>" + deal.stockRemaining + " / " + deal.stockTotal + "</white>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u8cfc\u5165</yellow>");
+                ItemStack item = this.createItem(deal.material, "<aqua><bold>" + this.merchantDisplayName(deal.material) + "</bold></aqua>", "<gray>通常価格: </gray><strikethrough><white>" + (long)deal.normalPrice + "円</white></strikethrough>", "<gray>割引価格: </gray><gold><bold>" + (long)discounted + "円</bold></gold>", "<green>割引率: " + String.format("%.0f", deal.discountPercent) + "%OFF</green>", "<gray>在庫: </gray><white>" + deal.stockRemaining + " / " + deal.stockTotal + "</white>", "<yellow>クリックして購入</yellow>");
                 this.setMerchantDealTag(item, deal.id);
                 gui.setItem(slot, item);
             }
             ++slot;
         }
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -7168,8 +7096,8 @@ MinecraftBankAPI {
                 p.getWorld().dropItem(p.getLocation(), over);
             }
             --deal.stockRemaining;
-            this.addLog(u, "\u5de1\u56de\u5546\u4eba: " + this.merchantDisplayName(deal.material) + " \u3092\u5206\u5272\u6255\u3044\u3067\u8cfc\u5165 (\u521d\u56de" + (long)plan.installmentAmount + "\u5186)");
-            this.sendDiscordWebhook("\ud83e\uddf3 **" + p.getName() + "** \u304c\u5de1\u56de\u5546\u4eba\u304b\u3089 **" + this.merchantDisplayName(deal.material) + "** \u3092\u5206\u5272\u6255\u3044\u3067\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08\u521d\u56de -" + (long)plan.installmentAmount + "\u5186\uff09");
+            this.addLog(u, "巡回商人: " + this.merchantDisplayName(deal.material) + " を分割払いで購入 (初回" + (long)plan.installmentAmount + "円)");
+            this.sendDiscordWebhook("🧳 **" + p.getName() + "** が巡回商人から **" + this.merchantDisplayName(deal.material) + "** を分割払いで購入しました。（初回 -" + (long)plan.installmentAmount + "円）");
             this.msgKey(p, "merchant.installment-purchased", "item", this.merchantDisplayName(deal.material), "first", String.format("%.2f", plan.installmentAmount), "remaining", String.valueOf(plan.installmentsRemaining), "each", String.format("%.2f", plan.installmentAmount), "count", String.valueOf(plan.installmentsRemaining + 1));
             this.clickSound(p);
             this.openTravelingMerchantGUI(p);
@@ -7181,8 +7109,8 @@ MinecraftBankAPI {
             p.getWorld().dropItem(p.getLocation(), over);
         }
         --deal.stockRemaining;
-        this.addLog(u, "\u5de1\u56de\u5546\u4eba: " + this.merchantDisplayName(deal.material) + " \u3092\u8cfc\u5165 -" + this.fmtCur(price));
-        this.sendDiscordWebhook("\ud83e\uddf3 **" + p.getName() + "** \u304c\u5de1\u56de\u5546\u4eba\u304b\u3089 **" + this.merchantDisplayName(deal.material) + "** \u3092\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08-" + (long)price + "\u5186\uff09");
+        this.addLog(u, "巡回商人: " + this.merchantDisplayName(deal.material) + " を購入 -" + this.fmtCur(price));
+        this.sendDiscordWebhook("🧳 **" + p.getName() + "** が巡回商人から **" + this.merchantDisplayName(deal.material) + "** を購入しました。（-" + (long)price + "円）");
         this.msgKey(p, "merchant.bought", "item", this.merchantDisplayName(deal.material), "amount", String.valueOf((long)price));
         this.clickSound(p);
         this.openTravelingMerchantGUI(p);
@@ -7229,28 +7157,28 @@ MinecraftBankAPI {
         int score = this.getScore(u);
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tVipLounge);
         ArrayList<Object> lore = new ArrayList<Object>();
-        lore.add("<gray>\u73fe\u5728\u306e\u30c6\u30a3\u30a2: </gray><white>" + this.vipTierName(tier) + "</white>");
-        lore.add("<gray>\u4fe1\u7528\u30b9\u30b3\u30a2: </gray><white>" + score + " / 800</white>");
+        lore.add("<gray>現在のティア: </gray><white>" + this.vipTierName(tier) + "</white>");
+        lore.add("<gray>信用スコア: </gray><white>" + score + " / 800</white>");
         if (tier >= 3) {
-            lore.add("<green>\u6700\u9ad8\u30c6\u30a3\u30a2\u3067\u3059</green>");
+            lore.add("<green>最高ティアです</green>");
         } else {
             int need = tier == 0 ? this.cfgVipSilverScore : (tier == 1 ? this.cfgVipGoldScore : this.cfgVipPlatinumScore);
-            lore.add("<gray>\u6b21\u306e\u30c6\u30a3\u30a2(" + this.vipTierName(tier + 1) + ")\u307e\u3067: </gray><gold>\u3042\u3068 " + Math.max(0, need - score) + "</gold> <dark_gray>(\u5fc5\u8981\u30b9\u30b3\u30a2 " + need + ")</dark_gray>");
+            lore.add("<gray>次のティア(" + this.vipTierName(tier + 1) + ")まで: </gray><gold>あと " + Math.max(0, need - score) + "</gold> <dark_gray>(必要スコア " + need + ")</dark_gray>");
         }
         lore.add("");
         if (tier >= 1) {
-            lore.add("<light_purple>\u3010\u9069\u7528\u4e2d\u306e\u7279\u5178\u3011</light_purple>");
-            lore.add("<gray>\u30fb\u624b\u6570\u6599\u5272\u5f15: </gray><white>" + String.format("%.0f", (1.0 - this.vipFeeMultiplier(u)) * 100.0) + "%OFF</white> <dark_gray>(\u4e16\u754c\u682a/\u30d5\u30a1\u30f3\u30c9/\u30aa\u30fc\u30af\u30b7\u30e7\u30f3)</dark_gray>");
-            lore.add("<gray>\u30fb\u65e5\u6b21VIP\u624b\u5f53: </gray><white>" + (long)this.vipStipendAmount(tier) + "\u5186 / 24\u6642\u9593</white>");
-            lore.add("<gray>\u30fb\u4e16\u754c\u682a\u306e1\u65e5\u53d6\u5f15\u67a0: </gray><white>x" + String.format("%.1f", this.vipTradeLimitMultiplier(u)) + "</white>");
-            lore.add("<gray>\u30fbVIP\u9650\u5b9a\u30b7\u30e7\u30c3\u30d7\u306e\u5229\u7528</gray>");
+            lore.add("<light_purple>【適用中の特典】</light_purple>");
+            lore.add("<gray>・手数料割引: </gray><white>" + String.format("%.0f", (1.0 - this.vipFeeMultiplier(u)) * 100.0) + "%OFF</white> <dark_gray>(世界株/ファンド/オークション)</dark_gray>");
+            lore.add("<gray>・日次VIP手当: </gray><white>" + (long)this.vipStipendAmount(tier) + "円 / 24時間</white>");
+            lore.add("<gray>・世界株の1日取引枠: </gray><white>x" + String.format("%.1f", this.vipTradeLimitMultiplier(u)) + "</white>");
+            lore.add("<gray>・VIP限定ショップの利用</gray>");
         } else {
-            lore.add("<yellow>\u4fe1\u7528\u30b9\u30b3\u30a2\u304c " + this.cfgVipSilverScore + " \u4ee5\u4e0a\u3067\u30b7\u30eb\u30d0\u30fc\u4f1a\u54e1\u306b\u306a\u308a\u3001\u7279\u5178\u304c\u89e3\u653e\u3055\u308c\u307e\u3059\u3002</yellow>");
-            lore.add("<red><bold>\u73fe\u5728\u306f VIP\u5bfe\u8c61\u5916 \u3067\u3059\u3002</bold></red>");
+            lore.add("<yellow>信用スコアが " + this.cfgVipSilverScore + " 以上でシルバー会員になり、特典が解放されます。</yellow>");
+            lore.add("<red><bold>現在は VIP対象外 です。</bold></red>");
         }
-        gui.setItem(4, this.createItem(Material.DIAMOND, "<light_purple><bold>\ud83d\udc8e VIP\u4f1a\u54e1\u30b9\u30c6\u30fc\u30bf\u30b9</bold></light_purple>", lore.toArray(new String[0])));
+        gui.setItem(4, this.createItem(Material.DIAMOND, "<light_purple><bold>💎 VIP会員ステータス</bold></light_purple>", lore.toArray(new String[0])));
         if (tier == 0) {
-            gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+            gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
             this.fillGlass(gui);
             p.openInventory(gui);
             return;
@@ -7261,29 +7189,29 @@ MinecraftBankAPI {
             long cooldownMs = 86400000L;
             double amount = this.vipStipendAmount(tier);
             if (now - last >= cooldownMs) {
-                gui.setItem(2, this.createItem(Material.GOLD_INGOT, "<gold><bold>\u65e5\u6b21VIP\u624b\u5f53\u3092\u53d7\u3051\u53d6\u308b</bold></gold>", "<gray>\u53d7\u53d6\u984d: </gray><gold>" + (long)amount + "\u5186</gold>", "<dark_gray>\u56fd\u5eab\u8ca1\u6e90\u300224\u6642\u9593\u3054\u3068\u306b1\u56de\u53d7\u3051\u53d6\u308c\u307e\u3059\u3002</dark_gray>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u53d7\u3051\u53d6\u308b</yellow>"));
+                gui.setItem(2, this.createItem(Material.GOLD_INGOT, "<gold><bold>日次VIP手当を受け取る</bold></gold>", "<gray>受取額: </gray><gold>" + (long)amount + "円</gold>", "<dark_gray>国庫財源。24時間ごとに1回受け取れます。</dark_gray>", "<yellow>クリックして受け取る</yellow>"));
             } else {
                 long remain = cooldownMs - (now - last);
-                gui.setItem(2, this.createItem(Material.CLOCK, "<gray><bold>\u65e5\u6b21VIP\u624b\u5f53(\u53d7\u53d6\u6e08\u307f)</bold></gray>", "<gray>\u6b21\u56de\u53d7\u53d6\u307e\u3067: </gray><white>" + this.formatHoursMinutes(remain, true) + "</white>"));
+                gui.setItem(2, this.createItem(Material.CLOCK, "<gray><bold>日次VIP手当(受取済み)</bold></gray>", "<gray>次回受取まで: </gray><white>" + this.formatHoursMinutes(remain, true) + "</white>"));
             }
         }
         this.ensureVipShopCurrent();
         long remainMs = Math.max(0L, this.vipShopRefreshAt - System.currentTimeMillis());
-        gui.setItem(6, this.createItem(Material.NETHER_STAR, "<light_purple><bold>\u3010VIP\u9650\u5b9a\u30b7\u30e7\u30c3\u30d7\u3011</bold></light_purple>", "<gray>VIP\u4f1a\u54e1\u3060\u3051\u304c\u8cb7\u3048\u308b\u5272\u5f15\u30e9\u30a4\u30f3\u30ca\u30c3\u30d7\u3002\u6570\u91cf\u9650\u5b9a\u3067\u3059\u3002</gray>", "<gray>\u6b21\u56de\u66f4\u65b0\u307e\u3067: </gray><gold>" + this.formatHoursMinutes(remainMs, false) + "</gold>"));
+        gui.setItem(6, this.createItem(Material.NETHER_STAR, "<light_purple><bold>【VIP限定ショップ】</bold></light_purple>", "<gray>VIP会員だけが買える割引ラインナップ。数量限定です。</gray>", "<gray>次回更新まで: </gray><gold>" + this.formatHoursMinutes(remainMs, false) + "</gold>"));
         int slot = 9;
         for (VipDeal deal : this.vipShopDeals) {
             if (slot >= 18) break;
             if (deal.stockRemaining <= 0) {
-                gui.setItem(slot, this.createItem(Material.GRAY_DYE, "<gray><bold>" + this.merchantDisplayName(deal.material) + "</bold></gray>", "<dark_gray>\u58f2\u308a\u5207\u308c</dark_gray>"));
+                gui.setItem(slot, this.createItem(Material.GRAY_DYE, "<gray><bold>" + this.merchantDisplayName(deal.material) + "</bold></gray>", "<dark_gray>売り切れ</dark_gray>"));
             } else {
                 double discounted = deal.normalPrice * (1.0 - deal.discountPercent / 100.0);
-                ItemStack card = this.createItem(deal.material, "<light_purple><bold>" + this.merchantDisplayName(deal.material) + "</bold></light_purple>", "<gray>\u901a\u5e38\u4fa1\u683c: </gray><strikethrough><white>" + (long)deal.normalPrice + "\u5186</white></strikethrough>", "<gray>VIP\u5272\u5f15\u4fa1\u683c: </gray><gold><bold>" + (long)discounted + "\u5186</bold></gold>", "<green>\u5272\u5f15\u7387: " + String.format("%.0f", deal.discountPercent) + "%OFF</green>", "<gray>\u5728\u5eab: </gray><white>" + deal.stockRemaining + " / " + deal.stockTotal + "</white>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u8cfc\u5165</yellow>");
+                ItemStack card = this.createItem(deal.material, "<light_purple><bold>" + this.merchantDisplayName(deal.material) + "</bold></light_purple>", "<gray>通常価格: </gray><strikethrough><white>" + (long)deal.normalPrice + "円</white></strikethrough>", "<gray>VIP割引価格: </gray><gold><bold>" + (long)discounted + "円</bold></gold>", "<green>割引率: " + String.format("%.0f", deal.discountPercent) + "%OFF</green>", "<gray>在庫: </gray><white>" + deal.stockRemaining + " / " + deal.stockTotal + "</white>", "<yellow>クリックして購入</yellow>");
                 this.setVipDealTag(card, deal.id);
                 gui.setItem(slot, card);
             }
             ++slot;
         }
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -7325,8 +7253,8 @@ MinecraftBankAPI {
         this.treasury -= amount;
         econ.depositPlayer((OfflinePlayer)p, amount);
         this.vipStipendClaimedAt.put(u, now);
-        this.addLog(u, "VIP\u624b\u5f53(" + this.vipTierName(tier) + ") +" + this.fmtCur(amount));
-        this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** \u304cVIP\u624b\u5f53(" + this.vipTierName(tier) + ")\u3068\u3057\u3066 " + (long)amount + "\u5186 \u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002");
+        this.addLog(u, "VIP手当(" + this.vipTierName(tier) + ") +" + this.fmtCur(amount));
+        this.sendDiscordWebhook("💎 **" + p.getName() + "** がVIP手当(" + this.vipTierName(tier) + ")として " + (long)amount + "円 を受け取りました。");
         this.msgKey(p, "vip.stipend-claimed", "amount", String.valueOf((long)amount), "tier", this.vipTierName(tier));
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
     }
@@ -7354,8 +7282,8 @@ MinecraftBankAPI {
             p.getWorld().dropItem(p.getLocation(), over);
         }
         --deal.stockRemaining;
-        this.addLog(u, "VIP\u9650\u5b9a\u30b7\u30e7\u30c3\u30d7: " + this.merchantDisplayName(deal.material) + " \u3092\u8cfc\u5165 -" + this.fmtCur(price));
-        this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** \u304cVIP\u9650\u5b9a\u30b7\u30e7\u30c3\u30d7\u304b\u3089 **" + this.merchantDisplayName(deal.material) + "** \u3092\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08-" + (long)price + "\u5186\uff09");
+        this.addLog(u, "VIP限定ショップ: " + this.merchantDisplayName(deal.material) + " を購入 -" + this.fmtCur(price));
+        this.sendDiscordWebhook("💎 **" + p.getName() + "** がVIP限定ショップから **" + this.merchantDisplayName(deal.material) + "** を購入しました。（-" + (long)price + "円）");
         this.msgKey(p, "vip.shop-bought", "item", this.merchantDisplayName(deal.material), "amount", String.valueOf((long)price));
         this.clickSound(p);
         this.openVipLoungeGUI(p);
@@ -7374,112 +7302,112 @@ MinecraftBankAPI {
             boolean isPoster = q2.posterId.equals(u);
             boolean isAccepter = u.equals(q2.acceptedBy);
             if (q2.posterId.equals(SYSTEM_QUEST_POSTER_ID)) {
-                posterName = "\u904b\u55b6";
+                posterName = "運営";
             } else {
                 posterName = Bukkit.getOfflinePlayer((UUID)q2.posterId).getName();
                 if (posterName == null) {
-                    posterName = "\u4e0d\u660e";
+                    posterName = "不明";
                 }
             }
-            Object distStr = "<gray>\u4e0d\u660e(\u5225\u30ef\u30fc\u30eb\u30c9)</gray>";
+            Object distStr = "<gray>不明(別ワールド)</gray>";
             World w = Bukkit.getWorld((String)q2.worldName);
             if (w != null && w.equals((Object)p.getWorld())) {
                 double dist = p.getLocation().distance(new Location(w, q2.x, q2.y, q2.z));
-                distStr = "<yellow>" + (long)dist + "\u30d6\u30ed\u30c3\u30af</yellow>";
+                distStr = "<yellow>" + (long)dist + "ブロック</yellow>";
             }
             boolean isSystemQuest = q2.posterId.equals(SYSTEM_QUEST_POSTER_ID);
             ArrayList<Object> lores = new ArrayList<Object>();
-            lores.add("<gray>\u4f9d\u983c\u4e3b: </gray>" + (isSystemQuest ? "<gold>" : "<aqua>") + posterName + (isSystemQuest ? "</gold>" : "</aqua>"));
+            lores.add("<gray>依頼主: </gray>" + (isSystemQuest ? "<gold>" : "<aqua>") + posterName + (isSystemQuest ? "</gold>" : "</aqua>"));
             if (isSystemQuest) {
-                lores.add("<gold>\u2605 \u904b\u55b6\u304b\u3089\u306e\u4f9d\u983c</gold>");
+                lores.add("<gold>★ 運営からの依頼</gold>");
             }
-            lores.add("<gray>\u5ea7\u6a19: </gray><white>" + q2.worldName + " (" + (long)q2.x + ", " + (long)q2.y + ", " + (long)q2.z + ")</white>");
-            lores.add("<gray>\u73fe\u5728\u5730\u304b\u3089\u306e\u8ddd\u96e2: </gray>" + (String)distStr);
+            lores.add("<gray>座標: </gray><white>" + q2.worldName + " (" + (long)q2.x + ", " + (long)q2.y + ", " + (long)q2.z + ")</white>");
+            lores.add("<gray>現在地からの距離: </gray>" + (String)distStr);
             if (q2.requiredTeamSize > 1) {
-                lores.add("<gray>\u4e00\u4eba\u3042\u305f\u308a\u5831\u916c: </gray><gold>" + (long)q2.reward + "\u5186</gold>");
-                lores.add("<gray>\u5408\u8a08\u30b3\u30b9\u30c8: </gray><gold>" + (long)(q2.reward * (double)q2.requiredTeamSize) + "\u5186</gold>");
+                lores.add("<gray>一人あたり報酬: </gray><gold>" + (long)q2.reward + "円</gold>");
+                lores.add("<gray>合計コスト: </gray><gold>" + (long)(q2.reward * (double)q2.requiredTeamSize) + "円</gold>");
                 lores.add("");
                 boolean isMember = q2.teamMembers.contains(u);
                 if (isPoster) {
                     if (q2.state == QuestState.AVAILABLE) {
-                        lores.add("<gray>\u52df\u96c6\u72b6\u6cc1: </gray><white>" + q2.teamMembers.size() + " / " + q2.requiredTeamSize + "\u4eba</white>");
+                        lores.add("<gray>募集状況: </gray><white>" + q2.teamMembers.size() + " / " + q2.requiredTeamSize + "人</white>");
                         if (q2.teamMembers.isEmpty()) {
                             mat = Material.MAP;
-                            name = "<green><bold>\ud83e\udd1d \u3042\u306a\u305f\u306e\u30c1\u30fc\u30e0\u4f9d\u983c(\u672a\u53c2\u52a0) - \u30af\u30ea\u30c3\u30af\u3067\u53d6\u308a\u4e0b\u3052</bold></green>";
-                            lores.add("<red>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u53d6\u308a\u4e0b\u3052\u3066\u5831\u916c\u3092\u8fd4\u91d1</red>");
+                            name = "<green><bold>🤝 あなたのチーム依頼(未参加) - クリックで取り下げ</bold></green>";
+                            lores.add("<red>▶ クリックで取り下げて報酬を返金</red>");
                         } else {
                             mat = Material.MAP;
-                            name = "<yellow><bold>\ud83e\udd1d \u3042\u306a\u305f\u306e\u30c1\u30fc\u30e0\u4f9d\u983c(\u52df\u96c6\u4e2d)</bold></yellow>";
-                            lores.add("<gray>\u53c2\u52a0\u8005\u304c\u3044\u308b\u305f\u3081\u53d6\u308a\u4e0b\u3052\u3089\u308c\u307e\u305b\u3093</gray>");
+                            name = "<yellow><bold>🤝 あなたのチーム依頼(募集中)</bold></yellow>";
+                            lores.add("<gray>参加者がいるため取り下げられません</gray>");
                         }
                     } else if (q2.state == QuestState.IN_PROGRESS) {
                         mat = Material.RECOVERY_COMPASS;
-                        name = "<yellow><bold>\ud83e\udd1d \u3042\u306a\u305f\u306e\u30c1\u30fc\u30e0\u4f9d\u983c(\u6311\u6226\u4e2d)</bold></yellow>";
-                        lores.add("<gray>\u5230\u9054\u72b6\u6cc1: </gray><white>" + q2.teamArrived.size() + " / " + q2.teamMembers.size() + "\u4eba</white>");
+                        name = "<yellow><bold>🤝 あなたのチーム依頼(挑戦中)</bold></yellow>";
+                        lores.add("<gray>到達状況: </gray><white>" + q2.teamArrived.size() + " / " + q2.teamMembers.size() + "人</white>");
                     } else {
                         long remain = this.questCooldownRemainMinutes(q2.cooldownUntil, now);
                         mat = Material.CLOCK;
-                        name = "<gray><bold>\ud83e\udd1d \u3042\u306a\u305f\u306e\u30c1\u30fc\u30e0\u4f9d\u983c(\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d)</bold></gray>";
-                        lores.add("<gray>\u518d\u51fa\u54c1\u307e\u3067: </gray><white>" + remain + "\u5206</white>");
+                        name = "<gray><bold>🤝 あなたのチーム依頼(クールダウン中)</bold></gray>";
+                        lores.add("<gray>再出品まで: </gray><white>" + remain + "分</white>");
                     }
                 } else if (q2.state == QuestState.AVAILABLE) {
-                    lores.add("<gray>\u52df\u96c6\u72b6\u6cc1: </gray><white>" + q2.teamMembers.size() + " / " + q2.requiredTeamSize + "\u4eba</white>");
+                    lores.add("<gray>募集状況: </gray><white>" + q2.teamMembers.size() + " / " + q2.requiredTeamSize + "人</white>");
                     mat = Material.MAP;
                     if (isMember) {
-                        name = "<gold><bold>\ud83e\udd1d \u30c1\u30fc\u30e0\u4f9d\u983c(\u53c2\u52a0\u4e2d\u30fb\u52df\u96c6\u4e2d) - \u30af\u30ea\u30c3\u30af\u3067\u53c2\u52a0\u53d6\u6d88</bold></gold>";
-                        lores.add("<red>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u53c2\u52a0\u3092\u53d6\u308a\u6d88\u3059</red>");
+                        name = "<gold><bold>🤝 チーム依頼(参加中・募集中) - クリックで参加取消</bold></gold>";
+                        lores.add("<red>▶ クリックで参加を取り消す</red>");
                     } else {
-                        name = "<green><bold>\ud83e\udd1d \u30c1\u30fc\u30e0\u4f9d\u983c(\u52df\u96c6\u4e2d) - \u30af\u30ea\u30c3\u30af\u3067\u53c2\u52a0</bold></green>";
-                        lores.add("<yellow>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u53c2\u52a0\u3059\u308b</yellow>");
+                        name = "<green><bold>🤝 チーム依頼(募集中) - クリックで参加</bold></green>";
+                        lores.add("<yellow>▶ クリックで参加する</yellow>");
                     }
                 } else if (q2.state == QuestState.IN_PROGRESS && isMember) {
                     mat = Material.RECOVERY_COMPASS;
-                    name = "<gold><bold>\ud83e\udd1d \u30c1\u30fc\u30e0\u4f9d\u983c(\u6311\u6226\u4e2d) - \u30af\u30ea\u30c3\u30af\u3067\u653e\u68c4</bold></gold>";
-                    lores.add("<gray>\u5230\u9054\u72b6\u6cc1: </gray><white>" + q2.teamArrived.size() + " / " + q2.teamMembers.size() + "\u4eba</white>");
-                    lores.add("<red>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u653e\u68c4\u3059\u308b(\u30c1\u30fc\u30e0\u5168\u4f53\u304c\u52df\u96c6\u4e2d\u306b\u623b\u308a\u307e\u3059)</red>");
+                    name = "<gold><bold>🤝 チーム依頼(挑戦中) - クリックで放棄</bold></gold>";
+                    lores.add("<gray>到達状況: </gray><white>" + q2.teamArrived.size() + " / " + q2.teamMembers.size() + "人</white>");
+                    lores.add("<red>▶ クリックで放棄する(チーム全体が募集中に戻ります)</red>");
                 } else if (q2.state == QuestState.IN_PROGRESS) {
                     mat = Material.GRAY_DYE;
-                    name = "<dark_gray>\ud83e\udd1d \u4ed6\u30d7\u30ec\u30a4\u30e4\u30fc\u306e\u30c1\u30fc\u30e0\u304c\u6311\u6226\u4e2d</dark_gray>";
-                    lores.add("<gray>\u5230\u9054\u72b6\u6cc1: </gray><white>" + q2.teamArrived.size() + " / " + q2.teamMembers.size() + "\u4eba</white>");
+                    name = "<dark_gray>🤝 他プレイヤーのチームが挑戦中</dark_gray>";
+                    lores.add("<gray>到達状況: </gray><white>" + q2.teamArrived.size() + " / " + q2.teamMembers.size() + "人</white>");
                 } else {
                     long remain = this.questCooldownRemainMinutes(q2.cooldownUntil, now);
                     mat = Material.CLOCK;
-                    name = "<dark_gray>\ud83e\udd1d \u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d(\u6b8b\u308a" + remain + "\u5206)</dark_gray>";
+                    name = "<dark_gray>🤝 クールダウン中(残り" + remain + "分)</dark_gray>";
                 }
             } else {
-                lores.add("<gray>\u5831\u916c: </gray><gold>" + (long)q2.reward + "\u5186</gold>");
+                lores.add("<gray>報酬: </gray><gold>" + (long)q2.reward + "円</gold>");
                 lores.add("");
                 if (isPoster) {
                     if (q2.state == QuestState.AVAILABLE) {
                         mat = Material.PAPER;
-                        name = "<green><bold>\u3042\u306a\u305f\u306e\u4f9d\u983c(\u672a\u53d7\u6ce8) - \u30af\u30ea\u30c3\u30af\u3067\u53d6\u308a\u4e0b\u3052</bold></green>";
-                        lores.add("<red>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u53d6\u308a\u4e0b\u3052\u3066\u5831\u916c\u3092\u8fd4\u91d1</red>");
+                        name = "<green><bold>あなたの依頼(未受注) - クリックで取り下げ</bold></green>";
+                        lores.add("<red>▶ クリックで取り下げて報酬を返金</red>");
                     } else if (q2.state == QuestState.IN_PROGRESS) {
                         String accepterName = Bukkit.getOfflinePlayer((UUID)q2.acceptedBy).getName();
                         mat = Material.COMPASS;
-                        name = "<yellow><bold>\u3042\u306a\u305f\u306e\u4f9d\u983c(\u53d7\u6ce8\u4e2d)</bold></yellow>";
-                        lores.add("<gray>\u53d7\u6ce8\u8005: </gray><aqua>" + (accepterName != null ? accepterName : "\u4e0d\u660e") + "</aqua>");
+                        name = "<yellow><bold>あなたの依頼(受注中)</bold></yellow>";
+                        lores.add("<gray>受注者: </gray><aqua>" + (accepterName != null ? accepterName : "不明") + "</aqua>");
                     } else {
                         long remain = this.questCooldownRemainMinutes(q2.cooldownUntil, now);
                         mat = Material.CLOCK;
-                        name = "<gray><bold>\u3042\u306a\u305f\u306e\u4f9d\u983c(\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d)</bold></gray>";
-                        lores.add("<gray>\u518d\u51fa\u54c1\u307e\u3067: </gray><white>" + remain + "\u5206</white>");
+                        name = "<gray><bold>あなたの依頼(クールダウン中)</bold></gray>";
+                        lores.add("<gray>再出品まで: </gray><white>" + remain + "分</white>");
                     }
                 } else if (q2.state == QuestState.AVAILABLE) {
                     mat = Material.PAPER;
-                    name = "<green><bold>\u63a2\u7d22\u4f9d\u983c - \u30af\u30ea\u30c3\u30af\u3067\u53d7\u6ce8</bold></green>";
-                    lores.add("<yellow>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u53d7\u6ce8\u3059\u308b</yellow>");
+                    name = "<green><bold>探索依頼 - クリックで受注</bold></green>";
+                    lores.add("<yellow>▶ クリックで受注する</yellow>");
                 } else if (isAccepter) {
                     mat = Material.COMPASS;
-                    name = "<gold><bold>\u53d7\u6ce8\u4e2d\u306e\u4f9d\u983c - \u30af\u30ea\u30c3\u30af\u3067\u653e\u68c4</bold></gold>";
-                    lores.add("<red>\u25b6 \u30af\u30ea\u30c3\u30af\u3067\u653e\u68c4\u3059\u308b</red>");
+                    name = "<gold><bold>受注中の依頼 - クリックで放棄</bold></gold>";
+                    lores.add("<red>▶ クリックで放棄する</red>");
                 } else if (q2.state == QuestState.IN_PROGRESS) {
                     mat = Material.GRAY_DYE;
-                    name = "<dark_gray>\u4ed6\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u53d7\u6ce8\u4e2d</dark_gray>";
+                    name = "<dark_gray>他プレイヤーが受注中</dark_gray>";
                 } else {
                     long remain = this.questCooldownRemainMinutes(q2.cooldownUntil, now);
                     mat = Material.CLOCK;
-                    name = "<dark_gray>\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d(\u6b8b\u308a" + remain + "\u5206)</dark_gray>";
+                    name = "<dark_gray>クールダウン中(残り" + remain + "分)</dark_gray>";
                 }
             }
             ItemStack item = this.createItem(mat, (String)name, lores.toArray(new String[0]));
@@ -7491,18 +7419,18 @@ MinecraftBankAPI {
             gui.setItem(slot++, item);
         }
         long postedByMe = this.quests.values().stream().filter(q -> q.posterId.equals(u)).count();
-        gui.setItem(49, this.createItem(Material.EMERALD, "<green><bold>\u2795 \u65b0\u3057\u3044\u4f9d\u983c\u3092\u51fa\u3059</bold></green>", "<gray>\u3042\u306a\u305f\u306e\u73fe\u5728\u5730\u3092\u76ee\u7684\u5730\u3068\u3057\u3066\u3001\u5831\u916c\u3092\u61f8\u3051\u3066\u4f9d\u983c\u3092\u63b2\u793a\u3057\u307e\u3059</gray>", "<gray>\u63b2\u793a\u4e2d\u306e\u4f9d\u983c\u6570: </gray><white>" + postedByMe + " / " + this.cfgQuestMaxPerPlayer + "</white>"));
-        gui.setItem(48, this.createItem(Material.EMERALD_BLOCK, "<green><bold>\ud83e\udd1d \u30c1\u30fc\u30e0\u4f9d\u983c\u3092\u63b2\u793a</bold></green>", "<gray>\u3042\u306a\u305f\u306e\u73fe\u5728\u5730\u3092\u76ee\u7684\u5730\u3068\u3057\u3066\u3001\u8907\u6570\u4eba\u3067\u6311\u6226\u3059\u308b\u30c1\u30fc\u30e0\u4f9d\u983c\u3092\u63b2\u793a\u3057\u307e\u3059</gray>", "<gray>\u5168\u54e1\u304c\u540c\u6642\u306b\u76ee\u7684\u5730\u3078\u5230\u9054\u3059\u308b\u3068\u3001\u4e00\u4eba\u3042\u305f\u308a\u306e\u5831\u916c\u304c\u5168\u54e1\u306b\u652f\u6255\u308f\u308c\u307e\u3059</gray>", "<gray>\u63b2\u793a\u4e2d\u306e\u4f9d\u983c\u6570: </gray><white>" + postedByMe + " / " + this.cfgQuestMaxPerPlayer + "</white>"));
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(49, this.createItem(Material.EMERALD, "<green><bold>➕ 新しい依頼を出す</bold></green>", "<gray>あなたの現在地を目的地として、報酬を懸けて依頼を掲示します</gray>", "<gray>掲示中の依頼数: </gray><white>" + postedByMe + " / " + this.cfgQuestMaxPerPlayer + "</white>"));
+        gui.setItem(48, this.createItem(Material.EMERALD_BLOCK, "<green><bold>🤝 チーム依頼を掲示</bold></green>", "<gray>あなたの現在地を目的地として、複数人で挑戦するチーム依頼を掲示します</gray>", "<gray>全員が同時に目的地へ到達すると、一人あたりの報酬が全員に支払われます</gray>", "<gray>掲示中の依頼数: </gray><white>" + postedByMe + " / " + this.cfgQuestMaxPerPlayer + "</white>"));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
 
     private void openAdminMainGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tAdminMain);
-        gui.setItem(11, this.createItem(Material.PLAYER_HEAD, "<red><bold>\ud83d\udc64 \u30d7\u30ec\u30a4\u30e4\u30fc\u7ba1\u7406</bold></red>", "<gray>\u8cc7\u7523\u306e\u4ed8\u4e0e/\u6ca1\u53ce\u30fb\u4fe1\u7528\u30b9\u30b3\u30a2\u5909\u66f4\u30fb\u30c7\u30fc\u30bf\u30ea\u30bb\u30c3\u30c8</gray>"));
-        gui.setItem(15, this.createItem(Material.COMMAND_BLOCK, "<red><bold>\u2699 \u30b5\u30fc\u30d0\u30fc\u7ba1\u7406</bold></red>", "<gray>\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u767a\u751f\u30fb\u81ea\u5df1\u8a3a\u65ad\u30fbreload/save</gray>"));
-        gui.setItem(22, this.createItem(Material.BARRIER, "<gray>\u9589\u3058\u308b</gray>", new String[0]));
+        gui.setItem(11, this.createItem(Material.PLAYER_HEAD, "<red><bold>👤 プレイヤー管理</bold></red>", "<gray>資産の付与/没収・信用スコア変更・データリセット</gray>"));
+        gui.setItem(15, this.createItem(Material.COMMAND_BLOCK, "<red><bold>⚙ サーバー管理</bold></red>", "<gray>経済イベント発生・自己診断・reload/save</gray>"));
+        gui.setItem(22, this.createItem(Material.BARRIER, "<gray>閉じる</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -7516,7 +7444,7 @@ MinecraftBankAPI {
             double pocket = econ.getBalance((OfflinePlayer)online);
             double bank = this.personalBank.getOrDefault(tid, 0.0);
             int score = this.getScore(tid);
-            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<yellow><bold>" + online.getName() + "</bold></yellow>", "<gray>\u6240\u6301\u91d1:</gray> <green>" + (long)pocket + "\u5186</green>", "<gray>\u9810\u91d1:</gray> <aqua>" + (long)bank + "\u5186</aqua>", "<gray>\u4fe1\u7528\u30b9\u30b3\u30a2:</gray> <light_purple>" + score + "</light_purple>", "<yellow>\u30af\u30ea\u30c3\u30af\u3067\u8a73\u7d30\u3092\u958b\u304f</yellow>");
+            ItemStack head = this.createItem(Material.PLAYER_HEAD, "<yellow><bold>" + online.getName() + "</bold></yellow>", "<gray>所持金:</gray> <green>" + (long)pocket + "円</green>", "<gray>預金:</gray> <aqua>" + (long)bank + "円</aqua>", "<gray>信用スコア:</gray> <light_purple>" + score + "</light_purple>", "<yellow>クリックで詳細を開く</yellow>");
             ItemMeta hm = head.getItemMeta();
             if (hm != null) {
                 hm.getPersistentDataContainer().set(this.adminTargetKey, PersistentDataType.STRING, (Object)tid.toString());
@@ -7524,8 +7452,8 @@ MinecraftBankAPI {
             }
             gui.setItem(slot++, head);
         }
-        gui.setItem(49, this.createItem(Material.NAME_TAG, "<white><bold>\ud83d\udd0d \u540d\u524d\u3067\u691c\u7d22\uff08\u30aa\u30d5\u30e9\u30a4\u30f3\u3082\u53ef\uff09</bold></white>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u30d7\u30ec\u30a4\u30e4\u30fc\u540d\u3092\u5165\u529b</gray>"));
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(49, this.createItem(Material.NAME_TAG, "<white><bold>🔍 名前で検索（オフラインも可）</bold></white>", "<gray>クリックしてチャットにプレイヤー名を入力</gray>"));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -7544,28 +7472,28 @@ MinecraftBankAPI {
         int score = this.getScore(targetId);
         double gDebt = this.govDebt.getOrDefault(targetId, 0.0);
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tAdminPlayerDetail);
-        gui.setItem(4, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>" + name + "</bold></yellow>", "<gray>\u6240\u6301\u91d1:</gray> <green>" + (long)pocket + "\u5186</green>", "<gray>\u9810\u91d1:</gray> <aqua>" + (long)bank + "\u5186</aqua>", "<gray>\u4fe1\u7528\u30b9\u30b3\u30a2:</gray> <light_purple>" + score + "</light_purple>", "<gray>\u653f\u5e9c\u50b5\u52d9:</gray> <red>" + (long)gDebt + "\u5186</red>"));
-        gui.setItem(10, this.createItem(Material.GOLD_INGOT, "<green><bold>\ud83d\udcb0 \u304a\u91d1\u3092\u4ed8\u4e0e\u3059\u308b</bold></green>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</gray>"));
-        gui.setItem(12, this.createItem(Material.REDSTONE, "<red><bold>\ud83d\udcb8 \u304a\u91d1\u3092\u6ca1\u53ce\u3059\u308b</bold></red>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u91d1\u984d\u3092\u5165\u529b</gray>"));
-        gui.setItem(14, this.createItem(Material.EMERALD, "<light_purple><bold>\ud83d\udcca \u4fe1\u7528\u30b9\u30b3\u30a2\u3092\u8a2d\u5b9a</bold></light_purple>", "<gray>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b0\u301c800\u306e\u5024\u3092\u5165\u529b</gray>"));
-        gui.setItem(16, this.createItem(Material.BARRIER, "<dark_red><bold>\ud83d\uddd1 \u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u30ea\u30bb\u30c3\u30c8</bold></dark_red>", "<gray>\u500b\u4eba\u306e\u53e3\u5ea7\u30fb\u878d\u8cc7\u30fb\u5b9f\u7e3e\u306a\u3069\u3092\u5168\u524a\u9664\u3057\u307e\u3059</gray>", "<red><bold>\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3067\u78ba\u5b9a\uff0815\u79d2\u4ee5\u5185\uff09</bold></red>"));
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(4, this.createItem(Material.PLAYER_HEAD, "<yellow><bold>" + name + "</bold></yellow>", "<gray>所持金:</gray> <green>" + (long)pocket + "円</green>", "<gray>預金:</gray> <aqua>" + (long)bank + "円</aqua>", "<gray>信用スコア:</gray> <light_purple>" + score + "</light_purple>", "<gray>政府債務:</gray> <red>" + (long)gDebt + "円</red>"));
+        gui.setItem(10, this.createItem(Material.GOLD_INGOT, "<green><bold>💰 お金を付与する</bold></green>", "<gray>クリックしてチャットに金額を入力</gray>"));
+        gui.setItem(12, this.createItem(Material.REDSTONE, "<red><bold>💸 お金を没収する</bold></red>", "<gray>クリックしてチャットに金額を入力</gray>"));
+        gui.setItem(14, this.createItem(Material.EMERALD, "<light_purple><bold>📊 信用スコアを設定</bold></light_purple>", "<gray>クリックしてチャットに0〜800の値を入力</gray>"));
+        gui.setItem(16, this.createItem(Material.BARRIER, "<dark_red><bold>🗑 経済データをリセット</bold></dark_red>", "<gray>個人の口座・融資・実績などを全削除します</gray>", "<red><bold>もう一度クリックで確定（15秒以内）</bold></red>"));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
 
     private void openAdminServerGUI(Player p) {
         Inventory gui = Bukkit.createInventory(null, (int)27, (Component)this.tAdminServer);
-        gui.setItem(10, this.createItem(Material.GOLD_BLOCK, "<gold><bold>\ud83c\udfb2 \u30e9\u30f3\u30c0\u30e0\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u767a\u751f</bold></gold>", new String[0]));
-        gui.setItem(11, this.createItem(Material.EMERALD_BLOCK, "<green><bold>\ud83d\udcc8 \u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5\u3092\u767a\u751f</bold></green>", new String[0]));
-        gui.setItem(12, this.createItem(Material.NETHERITE_INGOT, "<yellow><bold>\ud83d\udcb0 \u624b\u6570\u6599\u9ad8\u9a30\u3092\u767a\u751f</bold></yellow>", new String[0]));
-        gui.setItem(13, this.createItem(Material.SUNFLOWER, "<aqua><bold>\ud83c\udf81 \u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc\u3092\u767a\u751f</bold></aqua>", new String[0]));
-        gui.setItem(14, this.createItem(Material.REDSTONE_BLOCK, "<red><bold>\ud83d\udcc9 \u51ac\u306e\u6642\u4ee3\u3092\u767a\u751f</bold></red>", new String[0]));
-        gui.setItem(16, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>\ud83d\udd0d \u81ea\u5df1\u8a3a\u65ad\u3092\u5b9f\u884c</bold></light_purple>", "<gray>\u30c7\u30fc\u30bf\u4e0d\u6574\u5408\u3092\u691c\u51fa\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u306b\u8868\u793a</gray>"));
-        gui.setItem(19, this.createItem(Material.HOPPER, "<white><bold>\ud83d\udd04 config/messages\u3092\u518d\u8aad\u8fbc</bold></white>", new String[0]));
-        gui.setItem(20, this.createItem(Material.CHEST, "<white><bold>\ud83d\udcbe \u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u4fdd\u5b58</bold></white>", new String[0]));
-        gui.setItem(21, this.createItem(Material.BOOK, "<white><bold>\u2699 config\u8a2d\u5b9a\u3092\u7de8\u96c6</bold></white>", "<gray>config.yml\u306e\u5168\u8a2d\u5b9a\u3092GUI\u304b\u3089\u76f4\u63a5\u5909\u66f4\u3067\u304d\u307e\u3059</gray>"));
-        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(10, this.createItem(Material.GOLD_BLOCK, "<gold><bold>🎲 ランダム経済イベント発生</bold></gold>", new String[0]));
+        gui.setItem(11, this.createItem(Material.EMERALD_BLOCK, "<green><bold>📈 黄金ラッシュを発生</bold></green>", new String[0]));
+        gui.setItem(12, this.createItem(Material.NETHERITE_INGOT, "<yellow><bold>💰 手数料高騰を発生</bold></yellow>", new String[0]));
+        gui.setItem(13, this.createItem(Material.SUNFLOWER, "<aqua><bold>🎁 ボーナス支給デーを発生</bold></aqua>", new String[0]));
+        gui.setItem(14, this.createItem(Material.REDSTONE_BLOCK, "<red><bold>📉 冬の時代を発生</bold></red>", new String[0]));
+        gui.setItem(16, this.createItem(Material.KNOWLEDGE_BOOK, "<light_purple><bold>🔍 自己診断を実行</bold></light_purple>", "<gray>データ不整合を検出してチャットに表示</gray>"));
+        gui.setItem(19, this.createItem(Material.HOPPER, "<white><bold>🔄 config/messagesを再読込</bold></white>", new String[0]));
+        gui.setItem(20, this.createItem(Material.CHEST, "<white><bold>💾 経済データを保存</bold></white>", new String[0]));
+        gui.setItem(21, this.createItem(Material.BOOK, "<white><bold>⚙ config設定を編集</bold></white>", "<gray>config.ymlの全設定をGUIから直接変更できます</gray>"));
+        gui.setItem(22, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -7596,7 +7524,7 @@ MinecraftBankAPI {
             String key = keys.get(i);
             Object value = c.get(key);
             String typeName = value == null ? "null" : value.getClass().getSimpleName();
-            ItemStack item = this.createItem(Material.PAPER, "<aqua>" + key + "</aqua>", "<gray>\u73fe\u5728\u5024:</gray> <white>" + String.valueOf(value) + "</white>", "<dark_gray>\u578b: " + typeName + "</dark_gray>", "<yellow>\u30af\u30ea\u30c3\u30af\u3057\u3066\u30c1\u30e3\u30c3\u30c8\u3067\u65b0\u3057\u3044\u5024\u3092\u5165\u529b</yellow>");
+            ItemStack item = this.createItem(Material.PAPER, "<aqua>" + key + "</aqua>", "<gray>現在値:</gray> <white>" + String.valueOf(value) + "</white>", "<dark_gray>型: " + typeName + "</dark_gray>", "<yellow>クリックしてチャットで新しい値を入力</yellow>");
             ItemMeta meta = item.getItemMeta();
             if (meta != null) {
                 meta.getPersistentDataContainer().set(this.configKeyTag, PersistentDataType.STRING, (Object)key);
@@ -7605,12 +7533,12 @@ MinecraftBankAPI {
             gui.setItem(slot++, item);
         }
         if (page > 0) {
-            gui.setItem(51, this.createItem(Material.ARROW, "<aqua><bold>\u25c0 \u524d\u306e\u30da\u30fc\u30b8</bold></aqua>", "<gray>" + page + " / " + totalPages + "\u30da\u30fc\u30b8</gray>"));
+            gui.setItem(51, this.createItem(Material.ARROW, "<aqua><bold>◀ 前のページ</bold></aqua>", "<gray>" + page + " / " + totalPages + "ページ</gray>"));
         }
         if (page < totalPages - 1) {
-            gui.setItem(52, this.createItem(Material.ARROW, "<aqua><bold>\u6b21\u306e\u30da\u30fc\u30b8 \u25b6</bold></aqua>", "<gray>" + (page + 2) + " / " + totalPages + "\u30da\u30fc\u30b8</gray>"));
+            gui.setItem(52, this.createItem(Material.ARROW, "<aqua><bold>次のページ ▶</bold></aqua>", "<gray>" + (page + 2) + " / " + totalPages + "ページ</gray>"));
         }
-        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>\u623b\u308b</gray>", new String[0]));
+        gui.setItem(53, this.createItem(Material.IRON_DOOR, "<gray>戻る</gray>", new String[0]));
         this.fillGlass(gui);
         p.openInventory(gui);
     }
@@ -7620,14 +7548,109 @@ MinecraftBankAPI {
      */
     @EventHandler
     public void onInventoryClick(InventoryClickEvent e) {
+        Player p;
+        Component t;
+        ItemStack item;
+        UUID u;
+        long nowClick;
+        long lastClick;
+        Material mat;
+        double pocket;
+        String symbol;
+        String category;
+        String matName;
+        Material listedMat;
+        String action;
+        Material rmat;
+        String dealIdStr;
+        UUID dealId;
+        MerchantDeal deal;
+        String vipDealIdStr;
+        UUID vipDealId;
+        VipDeal vipDeal;
+        long postedByMe;
+        String qIdStr;
+        Quest q;
+        boolean isPoster;
+        double refund;
+        Player posterOnline;
+        Player memberOnline;
+        UUID adminTargetId;
+        String confirmKey;
+        long confirmedAt;
+        boolean expired;
+        String targetName;
+        List<String> issues;
+        int shown;
+        int rawSlot;
+        ItemMeta meta;
+        String key;
+        ItemStack selected;
+        double value;
+        double loan;
+        ItemStack stored;
+        double totalRepay;
+        ItemStack returned;
+        HashMap<Integer, ItemStack> leftover;
+        Player target;
+        UUID accountId;
+        GroupAccount acc;
+        String targetStr;
+        UUID tu;
+        HashSet<UUID> pset;
+        String tn;
+        Player to;
+        String idStr;
+        InvestmentFund fund;
+        UUID fundId;
+        LinkedList<String> logs;
+        long remain;
+        String token;
+        String base;
+        int mode;
+        long myListings;
+        ItemMeta clickedMeta;
+        UUID auctionId;
+        UUID seller;
+        double currentBid;
+        boolean hasBidder;
+        double minNext;
+        ItemMeta confirmMeta;
+        ItemStack auctionedItem;
+        long expiry;
+        double bank;
+        String lStr;
+        UUID lenderId;
+        Integer slotNumBoxed;
+        int slotNum;
+        HashMap<UUID, String> targetMap;
+        String planData;
+        String[] data;
+        double amount;
+        double interest;
+        double capital;
+        Player lender;
+        double debt;
+        double pay;
+        double gDebt;
+        int slot;
+        int score;
+        double currentGovDebt;
+        double addDebt;
+        double cap;
+        long unlockTime;
+        double reward;
+        double a2;
+        long t2;
+        double a3;
+        long t3;
         block550: {
             block551: {
                 block552: {
-                    var3_2 = e.getWhoClicked();
-                    if (!(var3_2 instanceof Player)) {
+                    if (!(e.getWhoClicked() instanceof Player)) {
                         return;
                     }
-                    p = (Player)var3_2;
+                    p = (Player)e.getWhoClicked();
                     t = e.getView().title();
                     if (t.equals((Object)this.tTrade)) {
                         this.handleTradeClick(e);
@@ -7736,25 +7759,25 @@ MinecraftBankAPI {
                             this.clickSound(p);
                             return;
                         }
-                        switch (1.$SwitchMap$org$bukkit$Material[mat.ordinal()]) {
-                            case 58: {
-                                v0 = "ore";
+                        switch (mat) {
+                            case IRON_PICKAXE: {
+                                category = "ore";
                                 break;
                             }
-                            case 20: {
-                                v0 = "crop";
+                            case WHEAT: {
+                                category = "crop";
                                 break;
                             }
-                            case 30: {
-                                v0 = "drop";
+                            case BONE: {
+                                category = "drop";
                                 break;
                             }
-                            case 38: {
-                                v0 = "wood";
+                            case OAK_LOG: {
+                                category = "wood";
                                 break;
                             }
                             default: {
-                                v0 = category = null;
+                                category = null;
                             }
                         }
                         if (category == null) {
@@ -7807,81 +7830,38 @@ MinecraftBankAPI {
                         catch (IllegalArgumentException ex) {
                             return;
                         }
-                        ex = action;
-                        var17_120 = -1;
-                        switch (ex.hashCode()) {
-                            case 109320991: {
-                                if (!ex.equals("sell1")) break;
-                                var17_120 = 0;
-                                break;
-                            }
-                            case -906016521: {
-                                if (!ex.equals("sell16")) break;
-                                var17_120 = 1;
-                                break;
-                            }
-                            case -906016368: {
-                                if (!ex.equals("sell64")) break;
-                                var17_120 = 2;
-                                break;
-                            }
-                            case 3035755: {
-                                if (!ex.equals("buy1")) break;
-                                var17_120 = 3;
-                                break;
-                            }
-                            case 94108459: {
-                                if (!ex.equals("buy16")) break;
-                                var17_120 = 4;
-                                break;
-                            }
-                            case 94108612: {
-                                if (!ex.equals("buy64")) break;
-                                var17_120 = 5;
-                                break;
-                            }
-                            case 1978322468: {
-                                if (!ex.equals("sellqty")) break;
-                                var17_120 = 6;
-                                break;
-                            }
-                            case -1377541520: {
-                                if (!ex.equals("buyqty")) break;
-                                var17_120 = 7;
-                            }
-                        }
-                        switch (var17_120) {
-                            case 0: {
+                        switch (action) {
+                            case "sell1": {
                                 this.executeResourceSell(p, rmat, 1);
                                 break;
                             }
-                            case 1: {
+                            case "sell16": {
                                 this.executeResourceSell(p, rmat, 16);
                                 break;
                             }
-                            case 2: {
+                            case "sell64": {
                                 this.executeResourceSell(p, rmat, 64);
                                 break;
                             }
-                            case 3: {
+                            case "buy1": {
                                 this.executeResourceBuy(p, rmat, 1);
                                 break;
                             }
-                            case 4: {
+                            case "buy16": {
                                 this.executeResourceBuy(p, rmat, 16);
                                 break;
                             }
-                            case 5: {
+                            case "buy64": {
                                 this.executeResourceBuy(p, rmat, 64);
                                 break;
                             }
-                            case 6: {
+                            case "sellqty": {
                                 this.awaitingChatInput.put(u, "resource_sell_qty:" + rmat.name());
                                 p.closeInventory();
                                 this.msgKey(p, "resourceshop.sell-qty-prompt", new String[]{"material", this.resourceDisplayName(rmat)});
                                 break;
                             }
-                            case 7: {
+                            case "buyqty": {
                                 this.awaitingChatInput.put(u, "resource_buy_qty:" + rmat.name());
                                 p.closeInventory();
                                 this.msgKey(p, "resourceshop.buy-qty-prompt", new String[]{"material", this.resourceDisplayName(rmat)});
@@ -7967,7 +7947,7 @@ MinecraftBankAPI {
                         catch (IllegalArgumentException ex) {
                             return;
                         }
-                        deal = this.merchantDeals.stream().filter((Predicate<MerchantDeal>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Z, lambda$onInventoryClick$0(java.util.UUID kot0328.minecraftBank.MinecraftBank$MerchantDeal ), (Lkot0328/minecraftBank/MinecraftBank$MerchantDeal;)Z)((UUID)dealId)).findFirst().orElse(null);
+                        deal = this.merchantDeals.stream().filter(d -> d.id.equals(dealId)).findFirst().orElse(null);
                         if (deal == null) {
                             return;
                         }
@@ -7998,7 +7978,7 @@ MinecraftBankAPI {
                         catch (IllegalArgumentException ex) {
                             return;
                         }
-                        vipDeal = this.vipShopDeals.stream().filter((Predicate<VipDeal>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Z, lambda$onInventoryClick$1(java.util.UUID kot0328.minecraftBank.MinecraftBank$VipDeal ), (Lkot0328/minecraftBank/MinecraftBank$VipDeal;)Z)((UUID)vipDealId)).findFirst().orElse(null);
+                        vipDeal = this.vipShopDeals.stream().filter(d -> d.id.equals(vipDealId)).findFirst().orElse(null);
                         if (vipDeal == null) {
                             return;
                         }
@@ -8012,7 +7992,7 @@ MinecraftBankAPI {
                             return;
                         }
                         if (mat == Material.EMERALD) {
-                            postedByMe = this.quests.values().stream().filter((Predicate<Quest>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Z, lambda$onInventoryClick$2(java.util.UUID kot0328.minecraftBank.MinecraftBank$Quest ), (Lkot0328/minecraftBank/MinecraftBank$Quest;)Z)((UUID)u)).count();
+                            postedByMe = this.quests.values().stream().filter(q2 -> q2.posterId.equals(u)).count();
                             if (postedByMe >= (long)this.cfgQuestMaxPerPlayer) {
                                 this.msgKey(p, "quest.max-reached", new String[]{"count", String.valueOf(this.cfgQuestMaxPerPlayer)});
                                 this.errorSound(p);
@@ -8024,7 +8004,7 @@ MinecraftBankAPI {
                             return;
                         }
                         if (mat == Material.EMERALD_BLOCK) {
-                            postedByMe = this.quests.values().stream().filter((Predicate<Quest>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Z, lambda$onInventoryClick$3(java.util.UUID kot0328.minecraftBank.MinecraftBank$Quest ), (Lkot0328/minecraftBank/MinecraftBank$Quest;)Z)((UUID)u)).count();
+                            postedByMe = this.quests.values().stream().filter(q2 -> q2.posterId.equals(u)).count();
                             if (postedByMe >= (long)this.cfgQuestMaxPerPlayer) {
                                 this.msgKey(p, "quest.max-reached", new String[]{"count", String.valueOf(this.cfgQuestMaxPerPlayer)});
                                 this.errorSound(p);
@@ -8219,7 +8199,7 @@ MinecraftBankAPI {
                         if (mat == Material.BARRIER) {
                             confirmKey = "admin_reset:" + String.valueOf(adminTargetId);
                             confirmedAt = this.pendingConfirmationTime.getOrDefault(u, 0L);
-                            v1 = expired = System.currentTimeMillis() - confirmedAt > 15000L;
+                            expired = System.currentTimeMillis() - confirmedAt > 15000L;
                             if (!confirmKey.equals(this.pendingConfirmation.get(u)) || expired) {
                                 this.pendingConfirmation.put(u, confirmKey);
                                 this.pendingConfirmationTime.put(u, System.currentTimeMillis());
@@ -8235,7 +8215,7 @@ MinecraftBankAPI {
                             }
                             this.resetPlayerEconomyData(adminTargetId);
                             this.msgKey(p, "admin.reset-success", new String[]{"player", targetName});
-                            this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + targetName + "** \u306e\u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u30ea\u30bb\u30c3\u30c8\u3057\u307e\u3057\u305f\u3002(GUI)");
+                            this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + targetName + "** の経済データをリセットしました。(GUI)");
                             this.openAdminPlayerDetailGUI(p, adminTargetId);
                         }
                         return;
@@ -8254,16 +8234,16 @@ MinecraftBankAPI {
                             this.fireEconomyEvent("random");
                             this.msgKey(p, "event.random-triggered", new String[0]);
                         } else if (mat == Material.EMERALD_BLOCK) {
-                            this.fireEconomyEvent("\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5");
+                            this.fireEconomyEvent("黄金ラッシュ");
                             this.msgKey(p, "event.boom-triggered", new String[0]);
                         } else if (mat == Material.NETHERITE_INGOT) {
-                            this.fireEconomyEvent("\u624b\u6570\u6599\u9ad8\u9a30");
+                            this.fireEconomyEvent("手数料高騰");
                             this.msgKey(p, "event.tax-triggered", new String[0]);
                         } else if (mat == Material.SUNFLOWER) {
-                            this.fireEconomyEvent("\u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc");
+                            this.fireEconomyEvent("ボーナス支給デー");
                             this.msgKey(p, "event.bonus-triggered", new String[0]);
                         } else if (mat == Material.REDSTONE_BLOCK) {
-                            this.fireEconomyEvent("\u51ac\u306e\u6642\u4ee3");
+                            this.fireEconomyEvent("冬の時代");
                             this.msgKey(p, "event.recession-triggered", new String[0]);
                         } else {
                             if (mat == Material.KNOWLEDGE_BOOK) {
@@ -8272,7 +8252,7 @@ MinecraftBankAPI {
                                 if (issues.isEmpty()) {
                                     this.msgKey(p, "admin.selfcheck-ok", new String[0]);
                                 } else {
-                                    this.msgKey(p, "admin.selfcheck-issues", new String[]{"count", String.valueOf(issues.size()), "note", "\uff08/meco admin selfcheck fix \u3067\u81ea\u52d5\u4fee\u5fa9\u3067\u304d\u307e\u3059\uff09"});
+                                    this.msgKey(p, "admin.selfcheck-issues", new String[]{"count", String.valueOf(issues.size()), "note", "（/meco admin selfcheck fix で自動修復できます）"});
                                     shown = 0;
                                     for (String issue : issues) {
                                         if (shown++ >= 30) {
@@ -8323,7 +8303,7 @@ MinecraftBankAPI {
                         }
                         if (mat == Material.PAPER) {
                             meta = item.getItemMeta();
-                            v2 = key = meta != null ? (String)meta.getPersistentDataContainer().get(this.configKeyTag, PersistentDataType.STRING) : null;
+                            key = meta != null ? (String)meta.getPersistentDataContainer().get(this.configKeyTag, PersistentDataType.STRING) : null;
                             if (key != null) {
                                 this.awaitingChatInput.put(u, "config_edit:" + key);
                                 this.msgKey(p, "config.edit-prompt", new String[]{"key", key});
@@ -8364,8 +8344,8 @@ MinecraftBankAPI {
                                 MinecraftBank.econ.depositPlayer((OfflinePlayer)p, loan);
                                 this.msgKey(p, "collateral.borrowed", new String[]{"item", stored.getType().name(), "amount", String.valueOf((long)loan), "minutes", String.valueOf(this.cfgCollateralDurationMs / 60000L)});
                                 p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                                this.addLog(u, "\u62c5\u4fdd\u878d\u8cc7 +" + (long)loan + "\u5186 (" + stored.getType().name() + ")");
-                                this.sendDiscordWebhook("\ud83c\udffa **" + p.getName() + "** \u304c " + stored.getType().name() + " \u3092\u62c5\u4fdd\u306b " + (long)loan + "\u5186 \u3092\u501f\u308a\u307e\u3057\u305f\u3002");
+                                this.addLog(u, "担保融資 +" + (long)loan + "円 (" + stored.getType().name() + ")");
+                                this.sendDiscordWebhook("🏺 **" + p.getName() + "** が " + stored.getType().name() + " を担保に " + (long)loan + "円 を借りました。");
                             }
                         } else if (mat == Material.GOLD_BLOCK && this.collateralItem.containsKey(u)) {
                             loan = this.collateralLoanAmount.getOrDefault(u, 0.0);
@@ -8385,8 +8365,8 @@ MinecraftBankAPI {
                                 this.msgKey(p, "collateral.repaid", new String[0]);
                                 this.addScore(u, 10);
                                 p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                                this.addLog(u, "\u62c5\u4fdd\u878d\u8cc7\u5b8c\u6e08 -" + this.fmtCur(totalRepay));
-                                this.sendDiscordWebhook("\ud83d\udd13 **" + p.getName() + "** \u304c\u62c5\u4fdd\u878d\u8cc7\u3092\u5b8c\u6e08\u3057\u307e\u3057\u305f\u3002\u8fd4\u6e08\u984d: " + this.fmtCur(totalRepay));
+                                this.addLog(u, "担保融資完済 -" + this.fmtCur(totalRepay));
+                                this.sendDiscordWebhook("🔓 **" + p.getName() + "** が担保融資を完済しました。返済額: " + this.fmtCur(totalRepay));
                             } else {
                                 this.msgKey(p, "collateral.repay-insufficient", new String[]{"amount", String.valueOf((long)totalRepay)});
                                 this.errorSound(p);
@@ -8501,7 +8481,7 @@ MinecraftBankAPI {
                     }
                     if (t.equals((Object)this.tGroupAccount)) {
                         accountId = this.groupAccountViewing.get(u);
-                        v3 = acc = accountId != null ? this.groupAccounts.get(accountId) : null;
+                        acc = accountId != null ? this.groupAccounts.get(accountId) : null;
                         if (acc == null || !this.isGroupAccountMember(acc, u)) {
                             this.openGroupListGUI(p);
                             return;
@@ -8531,7 +8511,7 @@ MinecraftBankAPI {
                         if (mat == Material.BARRIER && acc.owner.equals(u)) {
                             confirmKey = "group_disband:" + String.valueOf(acc.id);
                             confirmedAt = this.pendingConfirmationTime.getOrDefault(u, 0L);
-                            v4 = expired = System.currentTimeMillis() - confirmedAt > 30000L;
+                            expired = System.currentTimeMillis() - confirmedAt > 30000L;
                             if (!confirmKey.equals(this.pendingConfirmation.get(u)) || expired) {
                                 this.pendingConfirmation.put(u, confirmKey);
                                 this.pendingConfirmationTime.put(u, System.currentTimeMillis());
@@ -8549,7 +8529,7 @@ MinecraftBankAPI {
                     }
                     if (t.equals((Object)this.tGroupMembers)) {
                         accountId = this.groupAccountViewing.get(u);
-                        v5 = acc = accountId != null ? this.groupAccounts.get(accountId) : null;
+                        acc = accountId != null ? this.groupAccounts.get(accountId) : null;
                         if (acc == null || !acc.owner.equals(u)) {
                             this.openGroupListGUI(p);
                             return;
@@ -8580,7 +8560,7 @@ MinecraftBankAPI {
                                 if (to != null) {
                                     this.msgKey(to, "group.kicked-notice", new String[]{"group", acc.name});
                                 }
-                                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u304b\u3089 " + (tn != null ? tn : tu.toString()) + " \u3092\u8ffd\u653e");
+                                this.addLog(u, "グループ貯金箱「" + acc.name + "」から " + (tn != null ? tn : tu.toString()) + " を追放");
                             } else {
                                 if (1 + acc.members.size() >= this.cfgGroupAccountMaxMembers) {
                                     this.msgKey(p, "group.full", new String[0]);
@@ -8593,10 +8573,10 @@ MinecraftBankAPI {
                                     return;
                                 }
                                 acc.members.add(tu);
-                                this.playerGroupAccounts.computeIfAbsent(tu, (Function<UUID, HashSet>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Ljava/lang/Object;, lambda$onInventoryClick$4(java.util.UUID ), (Ljava/util/UUID;)Ljava/util/HashSet;)()).add(acc.id);
+                                this.playerGroupAccounts.computeIfAbsent(tu, k -> new HashSet()).add(acc.id);
                                 this.msgKey(p, "group.invited", new String[]{"player", to.getName()});
                                 this.msgKey(to, "group.invite-received", new String[]{"group", acc.name, "player", p.getName()});
-                                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u306b " + to.getName() + " \u3092\u62db\u5f85");
+                                this.addLog(u, "グループ貯金箱「" + acc.name + "」に " + to.getName() + " を招待");
                             }
                             this.clickSound(p);
                             this.openGroupMembersGUI(p, acc.id);
@@ -8629,7 +8609,7 @@ MinecraftBankAPI {
                     }
                     if (t.equals((Object)this.tFundInfo)) {
                         fundId = this.fundViewing.get(u);
-                        v6 = fund = fundId != null ? this.investmentFunds.get(fundId) : null;
+                        fund = fundId != null ? this.investmentFunds.get(fundId) : null;
                         if (fund == null || !this.isFundMember(fund, u) || fund.manager.equals(u)) {
                             this.openFundListGUI(p);
                             return;
@@ -8643,7 +8623,7 @@ MinecraftBankAPI {
                         if (mat == Material.GOLD_INGOT) {
                             confirmKey = "fund_redeem:" + String.valueOf(fund.id);
                             confirmedAt = this.pendingConfirmationTime.getOrDefault(u, 0L);
-                            v7 = expired = System.currentTimeMillis() - confirmedAt > 30000L;
+                            expired = System.currentTimeMillis() - confirmedAt > 30000L;
                             if (!confirmKey.equals(this.pendingConfirmation.get(u)) || expired) {
                                 this.pendingConfirmation.put(u, confirmKey);
                                 this.pendingConfirmationTime.put(u, System.currentTimeMillis());
@@ -8661,7 +8641,7 @@ MinecraftBankAPI {
                     }
                     if (t.equals((Object)this.tFundStock)) {
                         fundId = this.fundViewing.get(u);
-                        v8 = fund = fundId != null ? this.investmentFunds.get(fundId) : null;
+                        fund = fundId != null ? this.investmentFunds.get(fundId) : null;
                         if (fund == null || !fund.manager.equals(u)) {
                             return;
                         }
@@ -8690,7 +8670,7 @@ MinecraftBankAPI {
                     }
                     if (t.equals((Object)this.tFundStockDetail)) {
                         fundId = this.fundViewing.get(u);
-                        v9 = fund = fundId != null ? this.investmentFunds.get(fundId) : null;
+                        fund = fundId != null ? this.investmentFunds.get(fundId) : null;
                         if (fund == null || !fund.manager.equals(u)) {
                             return;
                         }
@@ -8807,8 +8787,8 @@ MinecraftBankAPI {
                                         this.msgKey(p, "webpage.disabled", new String[0]);
                                         this.errorSound(p);
                                     } else {
-                                        token = this.dashboardTokens.computeIfAbsent(u, (Function<UUID, String>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Ljava/lang/Object;, lambda$onInventoryClick$5(java.util.UUID ), (Ljava/util/UUID;)Ljava/lang/String;)());
-                                        base = this.cfgWebDashboardPublicUrl != null && this.cfgWebDashboardPublicUrl.isBlank() == false ? this.cfgWebDashboardPublicUrl.replaceAll("/$", "") : "http://<\u30b5\u30fc\u30d0\u30fc\u306eIP>:" + this.cfgWebDashboardPort;
+                                        token = this.dashboardTokens.computeIfAbsent(u, k -> UUID.randomUUID().toString().replace("-", ""));
+                                        base = this.cfgWebDashboardPublicUrl != null && this.cfgWebDashboardPublicUrl.isBlank() == false ? this.cfgWebDashboardPublicUrl.replaceAll("/$", "") : "http://<サーバーのIP>:" + this.cfgWebDashboardPort;
                                         this.msgKey(p, "webpage.link", new String[]{"url", base + "/me.html?token=" + token});
                                     }
                                 } else {
@@ -8922,13 +8902,13 @@ MinecraftBankAPI {
                         return;
                     }
                     if (rawSlot == 52 && mat == Material.ARROW) {
-                        this.auctionPage.merge(u, 1, (BiFunction<Integer, Integer, Integer>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;, sum(int int ), (Ljava/lang/Integer;Ljava/lang/Integer;)Ljava/lang/Integer;)());
+                        this.auctionPage.merge(u, 1, Integer::sum);
                         this.openAuctionGUI(p);
                         this.clickSound(p);
                         return;
                     }
                     if (mat == Material.EMERALD) {
-                        myListings = this.auctionSeller.values().stream().filter((Predicate<UUID>)LambdaMetafactory.metafactory(null, null, null, (Ljava/lang/Object;)Z, lambda$onInventoryClick$6(java.util.UUID java.util.UUID ), (Ljava/util/UUID;)Z)((UUID)u)).count();
+                        myListings = this.auctionSeller.values().stream().filter(s -> s.equals(u)).count();
                         if (myListings < (long)this.cfgAuctionMaxListingsPerPlayer) {
                             this.openAuctionSelectGUI(p);
                             return;
@@ -8948,17 +8928,16 @@ MinecraftBankAPI {
                     this.errorSound(p);
                     break block551;
                 }
-                if (!seller.equals(u)) ** GOTO lbl1231
-                if (this.auctionBidder.containsKey(auctionId)) {
-                    this.msgKey(p, "auction.cancel-has-bid", new String[0]);
-                    this.errorSound(p);
+                if (seller.equals(u)) {
+                    if (this.auctionBidder.containsKey(auctionId)) {
+                        this.msgKey(p, "auction.cancel-has-bid", new String[0]);
+                        this.errorSound(p);
+                    } else {
+                        this.openAuctionCancelConfirmGUI(p, auctionId);
+                        this.clickSound(p);
+                        return;
+                    }
                 } else {
-                    this.openAuctionCancelConfirmGUI(p, auctionId);
-                    this.clickSound(p);
-                    return;
-lbl1231:
-                    // 1 sources
-
                     this.awaitingChatInput.put(u, "auction_bid:" + idStr);
                     currentBid = this.auctionBid.getOrDefault(auctionId, 0.0);
                     hasBidder = this.auctionBidder.containsKey(auctionId);
@@ -8980,7 +8959,7 @@ lbl1231:
             }
             if (mat == Material.EMERALD) {
                 confirmMeta = item.getItemMeta();
-                v10 = idStr = confirmMeta != null ? (String)confirmMeta.getPersistentDataContainer().get(this.auctionIdKey, PersistentDataType.STRING) : null;
+                idStr = confirmMeta != null ? (String)confirmMeta.getPersistentDataContainer().get(this.auctionIdKey, PersistentDataType.STRING) : null;
                 if (idStr == null) {
                     this.openAuctionGUI(p);
                     return;
@@ -8997,7 +8976,7 @@ lbl1231:
                 } else {
                     this.addPendingItem(seller, auctionedItem);
                     this.clearAuctionEntry(auctionId);
-                    this.addLog(seller, "\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u51fa\u54c1\u3092\u81ea\u4e3b\u53d6\u6d88: " + auctionedItem.getType().name());
+                    this.addLog(seller, "オークション出品を自主取消: " + auctionedItem.getType().name());
                     this.msgKey(p, "auction.cancel-success", new String[]{"item", auctionedItem.getType().name()});
                     this.clickSound(p);
                 }
@@ -9029,8 +9008,8 @@ lbl1231:
                     this.insuranceExpiry.put(u, System.currentTimeMillis() + this.cfgInsuranceDurationMs);
                     this.msgKey(p, "insurance.joined", new String[]{"minutes", String.valueOf(this.cfgInsuranceDurationMs / 60000L)});
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u4fdd\u967a\u52a0\u5165 -" + this.fmtCur(this.cfgInsurancePremium));
-                    this.sendDiscordWebhook("\ud83d\udee1\ufe0f **" + p.getName() + "** \u304c\u751f\u547d\u4fdd\u967a\u306b\u52a0\u5165\u3057\u307e\u3057\u305f\u3002\u4fdd\u967a\u6599: " + this.fmtCur(this.cfgInsurancePremium));
+                    this.addLog(u, "保険加入 -" + this.fmtCur(this.cfgInsurancePremium));
+                    this.sendDiscordWebhook("🛡️ **" + p.getName() + "** が生命保険に加入しました。保険料: " + this.fmtCur(this.cfgInsurancePremium));
                 } else {
                     this.msgKey(p, "insurance.premium-insufficient", new String[]{"amount", String.valueOf((long)this.cfgInsurancePremium)});
                     this.errorSound(p);
@@ -9053,20 +9032,20 @@ lbl1231:
                 MinecraftBank.econ.withdrawPlayer((OfflinePlayer)p, this.cfgDepositStep);
                 this.personalBank.put(u, bank + this.cfgDepositStep);
                 this.msgKey(p, "personal.deposit-step", new String[]{"amount", String.valueOf((long)this.cfgDepositStep)});
-                this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** \u304c\u500b\u4eba\u53e3\u5ea7\u3078 " + (long)this.cfgDepositStep + "\u5186 \u9810\u91d1\u3057\u307e\u3057\u305f\u3002");
+                this.sendDiscordWebhook("💰 **" + p.getName() + "** が個人口座へ " + (long)this.cfgDepositStep + "円 預金しました。");
             } else if (mat == Material.LIME_GLAZED_TERRACOTTA && pocket > 0.0) {
                 MinecraftBank.econ.withdrawPlayer((OfflinePlayer)p, pocket);
                 this.personalBank.put(u, bank + pocket);
                 this.msgKey(p, "personal.deposit-full", new String[0]);
-                this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** \u304c\u500b\u4eba\u53e3\u5ea7\u3078\u5168\u984d\u9810\u91d1\u3057\u307e\u3057\u305f\u3002\u91d1\u984d: " + this.fmtCur(pocket));
+                this.sendDiscordWebhook("💰 **" + p.getName() + "** が個人口座へ全額預金しました。金額: " + this.fmtCur(pocket));
             } else if (mat == Material.RED_DYE && bank >= this.cfgDepositStep) {
                 this.personalBank.put(u, bank - this.cfgDepositStep);
                 MinecraftBank.econ.depositPlayer((OfflinePlayer)p, this.cfgDepositStep);
                 this.msgKey(p, "personal.withdraw-step", new String[]{"amount", String.valueOf((long)this.cfgDepositStep)});
-                this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** \u304c\u500b\u4eba\u53e3\u5ea7\u304b\u3089 " + (long)this.cfgDepositStep + "\u5186 \u5f15\u304d\u51fa\u3057\u307e\u3057\u305f\u3002");
+                this.sendDiscordWebhook("💸 **" + p.getName() + "** が個人口座から " + (long)this.cfgDepositStep + "円 引き出しました。");
             } else if (mat == Material.RED_GLAZED_TERRACOTTA && bank > 0.0) {
                 confirmedAt = this.pendingConfirmationTime.getOrDefault(u, 0L);
-                v11 = expired = System.currentTimeMillis() - confirmedAt > 30000L;
+                expired = System.currentTimeMillis() - confirmedAt > 30000L;
                 if (!"full_withdraw".equals(this.pendingConfirmation.remove(u)) || expired) {
                     this.pendingConfirmation.put(u, "full_withdraw");
                     this.pendingConfirmationTime.put(u, System.currentTimeMillis());
@@ -9077,7 +9056,7 @@ lbl1231:
                 this.personalBank.put(u, 0.0);
                 MinecraftBank.econ.depositPlayer((OfflinePlayer)p, bank);
                 this.msgKey(p, "personal.withdraw-full", new String[0]);
-                this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** \u304c\u500b\u4eba\u53e3\u5ea7\u304b\u3089\u5168\u984d " + (long)bank + "\u5186 \u5f15\u304d\u51fa\u3057\u307e\u3057\u305f\u3002");
+                this.sendDiscordWebhook("💸 **" + p.getName() + "** が個人口座から全額 " + (long)bank + "円 引き出しました。");
             } else {
                 if (mat == Material.WRITABLE_BOOK) {
                     this.awaitingChatInput.put(u, "personal_deposit");
@@ -9147,7 +9126,7 @@ lbl1231:
                     return;
                 }
                 slotNumBoxed = (Integer)meta.getPersistentDataContainer().get(this.loanSlotKey, PersistentDataType.INTEGER);
-                v12 = slotNum = slotNumBoxed != null ? slotNumBoxed : 1;
+                slotNum = slotNumBoxed != null ? slotNumBoxed : 1;
                 targetMap = slotNum == 2 ? this.publishedLoans2 : (slotNum == 3 ? this.publishedLoans3 : this.publishedLoans);
                 planData = targetMap.get(lenderId);
                 if (planData == null) {
@@ -9173,9 +9152,9 @@ lbl1231:
                 this.weeklyTradeVolume += amount;
                 this.msgKey(p, "loan.player-approved", new String[]{"amount", String.valueOf((long)amount)});
                 p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                this.addLog(u, "\u878d\u8cc7\u5951\u7d04\u6210\u7acb +" + (long)amount + "\u5186 (\u8fd4\u6e08\u7dcf\u984d" + (long)totalRepay + "\u5186)");
-                this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** \u304c **" + Bukkit.getOfflinePlayer((UUID)lenderId).getName() + "** \u306e\u878d\u8cc7\u30d7\u30e9\u30f3\u304b\u3089 " + (long)amount + "\u5186 \u3092\u501f\u308a\u307e\u3057\u305f\u3002\u8fd4\u6e08\u7dcf\u984d: " + this.fmtCur(totalRepay));
-                this.addLog(lenderId, p.getName() + " \u3078\u878d\u8cc7 -" + this.fmtCur(amount));
+                this.addLog(u, "融資契約成立 +" + (long)amount + "円 (返済総額" + (long)totalRepay + "円)");
+                this.sendDiscordWebhook("💰 **" + p.getName() + "** が **" + Bukkit.getOfflinePlayer((UUID)lenderId).getName() + "** の融資プランから " + (long)amount + "円 を借りました。返済総額: " + this.fmtCur(totalRepay));
+                this.addLog(lenderId, p.getName() + " へ融資 -" + this.fmtCur(amount));
                 lender = Bukkit.getPlayer((UUID)lenderId);
                 if (lender != null && lender.isOnline()) {
                     this.msgKey(lender, "loan.player-approved-notice", new String[]{"player", p.getName(), "amount", String.valueOf((long)amount)});
@@ -9209,8 +9188,8 @@ lbl1231:
                         this.loanGuarantor.remove(u);
                         this.msgKey(p, "loan.player-repaid-full-plain", new String[0]);
                         this.addScore(u, 30);
-                        this.unlockAchievement(u, "first_loan_repaid", "\u521d\u3081\u3066\u306e\u5b8c\u6e08");
-                        this.sendDiscordWebhook("\ud83d\udcb3 **" + p.getName() + "** \u304c\u30d7\u30ec\u30a4\u30e4\u30fc\u9593\u878d\u8cc7\u3092\u5b8c\u6e08\u3057\u307e\u3057\u305f\u3002");
+                        this.unlockAchievement(u, "first_loan_repaid", "初めての完済");
+                        this.sendDiscordWebhook("💳 **" + p.getName() + "** がプレイヤー間融資を完済しました。");
                     } else {
                         this.activeDebts.put(u, lenderId.toString() + ":" + debt);
                         this.msgKey(p, "loan.repay-partial", new String[]{"amount", String.valueOf((long)pay)});
@@ -9232,7 +9211,7 @@ lbl1231:
                     this.bankCapital.put(lenderId, this.bankCapital.getOrDefault(lenderId, 0.0) + debt);
                     this.msgKey(p, "loan.repaid-full", new String[0]);
                     this.addScore(u, 50);
-                    this.unlockAchievement(u, "first_loan_repaid", "\u521d\u3081\u3066\u306e\u5b8c\u6e08");
+                    this.unlockAchievement(u, "first_loan_repaid", "初めての完済");
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
                 } else {
                     this.msgKey(p, "loan.repay-full-insufficient", new String[0]);
@@ -9250,9 +9229,9 @@ lbl1231:
                         this.govDebtDueTime.remove(u);
                         this.msgKey(p, "loan.gov-repaid-full-plain", new String[0]);
                         this.addScore(u, 40);
-                        this.addLog(u, "\u56fd\u55b6\u30ed\u30fc\u30f3\u5b8c\u6e08");
-                        this.unlockAchievement(u, "first_gov_loan_repaid", "\u516c\u5eab\u306e\u5e38\u9023");
-                        this.sendDiscordWebhook("\ud83c\udfdb\ufe0f **" + p.getName() + "** \u304c\u56fd\u55b6\u516c\u5eab\u30ed\u30fc\u30f3\u3092\u5b8c\u6e08\u3057\u307e\u3057\u305f\u3002");
+                        this.addLog(u, "国営ローン完済");
+                        this.unlockAchievement(u, "first_gov_loan_repaid", "公庫の常連");
+                        this.sendDiscordWebhook("🏛️ **" + p.getName() + "** が国営公庫ローンを完済しました。");
                     } else {
                         this.govDebt.put(u, gDebt);
                         this.msgKey(p, "loan.repay-partial", new String[]{"amount", String.valueOf((long)pay)});
@@ -9271,8 +9250,8 @@ lbl1231:
                     this.msgKey(p, "loan.gov-repaid-full-bold", new String[0]);
                     this.addScore(u, 60);
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u56fd\u55b6\u30ed\u30fc\u30f3\u5168\u984d\u5b8c\u6e08");
-                    this.unlockAchievement(u, "first_gov_loan_repaid", "\u516c\u5eab\u306e\u5e38\u9023");
+                    this.addLog(u, "国営ローン全額完済");
+                    this.unlockAchievement(u, "first_gov_loan_repaid", "公庫の常連");
                 } else {
                     this.msgKey(p, "loan.repay-full-insufficient", new String[0]);
                     this.errorSound(p);
@@ -9299,8 +9278,8 @@ lbl1231:
                     this.bankCapital.put(u, 0.0);
                     this.msgKey(p, "bank.established", new String[0]);
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u9280\u884c\u3092\u8a2d\u7acb (-" + (long)this.cfgBankEstablishCost + "\u5186)");
-                    this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** \u304c\u9280\u884c\u3092\u8a2d\u7acb\u3057\u307e\u3057\u305f\u3002\u8cbb\u7528: " + this.fmtCur(this.cfgBankEstablishCost));
+                    this.addLog(u, "銀行を設立 (-" + (long)this.cfgBankEstablishCost + "円)");
+                    this.sendDiscordWebhook("🏦 **" + p.getName() + "** が銀行を設立しました。費用: " + this.fmtCur(this.cfgBankEstablishCost));
                     this.openBankHubGUI(p);
                     return;
                 }
@@ -9322,7 +9301,7 @@ lbl1231:
                     MinecraftBank.econ.withdrawPlayer((OfflinePlayer)p, 10000.0);
                     this.bankCapital.put(u, capital + 10000.0);
                     this.msgKey(p, "bank.capital-added", new String[0]);
-                    this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** \u304c\u9280\u884c\u306e\u8cc7\u672c\u91d1\u3078 10,000\u5186 \u8ffd\u52a0\u3057\u307e\u3057\u305f\u3002");
+                    this.sendDiscordWebhook("🏦 **" + p.getName() + "** が銀行の資本金へ 10,000円 追加しました。");
                 } else {
                     this.msgKey(p, "common.insufficient-funds-simple", new String[0]);
                     this.errorSound(p);
@@ -9332,7 +9311,7 @@ lbl1231:
                     this.bankCapital.put(u, capital - 10000.0);
                     MinecraftBank.econ.depositPlayer((OfflinePlayer)p, 10000.0);
                     this.msgKey(p, "bank.capital-withdrawn", new String[0]);
-                    this.sendDiscordWebhook("\ud83c\udfe6 **" + p.getName() + "** \u304c\u9280\u884c\u306e\u8cc7\u672c\u91d1\u304b\u3089 10,000\u5186 \u5f15\u304d\u51fa\u3057\u307e\u3057\u305f\u3002");
+                    this.sendDiscordWebhook("🏦 **" + p.getName() + "** が銀行の資本金から 10,000円 引き出しました。");
                 } else {
                     this.msgKey(p, "bank.capital-insufficient-pool", new String[0]);
                     this.errorSound(p);
@@ -9427,8 +9406,8 @@ lbl1231:
                     }
                     this.msgKey(p, "bank.plan-published", new String[]{"slot", String.valueOf(slot)});
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u878d\u8cc7\u30d7\u30e9\u30f3(" + slot + "\u67a0\u76ee)\u516c\u958b: " + (long)amount + "\u5186/" + (long)interest + "%");
-                    this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** \u304c\u878d\u8cc7\u30d7\u30e9\u30f3(" + slot + "\u67a0\u76ee)\u3092\u516c\u958b\u3057\u307e\u3057\u305f\u3002\u878d\u8cc7\u984d: " + (long)amount + "\u5186 / \u5229\u606f: " + (long)interest + "%");
+                    this.addLog(u, "融資プラン(" + slot + "枠目)公開: " + (long)amount + "円/" + (long)interest + "%");
+                    this.sendDiscordWebhook("📋 **" + p.getName() + "** が融資プラン(" + slot + "枠目)を公開しました。融資額: " + (long)amount + "円 / 利息: " + (long)interest + "%");
                     this.openBankerGUI(p);
                     return;
                 }
@@ -9458,8 +9437,8 @@ lbl1231:
                 this.weeklyTradeVolume += this.cfgGovLoanAmount;
                 this.msgKey(p, "loan.gov-approved", new String[]{"amount", String.valueOf((long)this.cfgGovLoanAmount), "rate", String.valueOf(interest), "total", String.valueOf((long)addDebt), "minutes", String.valueOf(this.cfgGovLoanDurationMs / 60000L)});
                 p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                this.addLog(u, "\u56fd\u55b6\u30ed\u30fc\u30f3\u501f\u5165 +" + (long)this.cfgGovLoanAmount + "\u5186 (\u8fd4\u6e08\u7dcf\u984d" + (long)addDebt + "\u5186)");
-                this.sendDiscordWebhook("\ud83c\udfdb\ufe0f **" + p.getName() + "** \u304c\u56fd\u55b6\u516c\u5eab\u304b\u3089 " + (long)this.cfgGovLoanAmount + "\u5186 \u3092\u501f\u308a\u307e\u3057\u305f\u3002\u8fd4\u6e08\u7dcf\u984d: " + this.fmtCur(addDebt));
+                this.addLog(u, "国営ローン借入 +" + (long)this.cfgGovLoanAmount + "円 (返済総額" + (long)addDebt + "円)");
+                this.sendDiscordWebhook("🏛️ **" + p.getName() + "** が国営公庫から " + (long)this.cfgGovLoanAmount + "円 を借りました。返済総額: " + this.fmtCur(addDebt));
                 this.openBankHubGUI(p);
                 return;
             }
@@ -9484,8 +9463,8 @@ lbl1231:
                     this.fixedDepositUnlockTime.put(u, System.currentTimeMillis() + this.cfgFixedDepositDurationMs);
                     this.msgKey(p, "deposit.slot1-created", new String[]{"amount", String.valueOf((long)this.cfgFixedDepositAmount), "seconds", String.valueOf(this.cfgFixedDepositDurationMs / 1000L), "rate", String.valueOf((int)(this.cfgFixedDepositRate * 100.0))});
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u5b9a\u671f\u9810\u91d1(1\u67a0) -" + this.fmtCur(this.cfgFixedDepositAmount));
-                    this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** \u304c\u5b9a\u671f\u9810\u91d11\u67a0\u76ee\u306b " + (long)this.cfgFixedDepositAmount + "\u5186 \u3092\u9810\u3051\u307e\u3057\u305f\u3002");
+                    this.addLog(u, "定期預金(1枠) -" + this.fmtCur(this.cfgFixedDepositAmount));
+                    this.sendDiscordWebhook("💵 **" + p.getName() + "** が定期預金1枠目に " + (long)this.cfgFixedDepositAmount + "円 を預けました。");
                 } else {
                     this.msgKey(p, "deposit.funds-insufficient", new String[]{"amount", String.valueOf((long)this.cfgFixedDepositAmount)});
                     this.errorSound(p);
@@ -9505,9 +9484,9 @@ lbl1231:
                     this.msgKey(p, "fixed-deposit.matured", new String[]{"amount", String.valueOf((long)reward)});
                     this.addScore(u, 15);
                     p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    this.addLog(u, "\u5b9a\u671f\u9810\u91d1(1\u67a0)\u6e80\u671f +" + this.fmtCur(reward));
-                    this.sendDiscordWebhook("\ud83c\udf89 **" + p.getName() + "** \u306e\u5b9a\u671f\u9810\u91d11\u67a0\u76ee\u304c\u6e80\u671f\u306b\u306a\u308a\u307e\u3057\u305f\u3002\u53d7\u53d6\u984d: " + this.fmtCur(reward));
-                    this.unlockAchievement(u, "first_fixed_deposit", "\u5805\u5b9f\u306a\u6295\u8cc7\u5bb6");
+                    this.addLog(u, "定期預金(1枠)満期 +" + this.fmtCur(reward));
+                    this.sendDiscordWebhook("🎉 **" + p.getName() + "** の定期預金1枠目が満期になりました。受取額: " + this.fmtCur(reward));
+                    this.unlockAchievement(u, "first_fixed_deposit", "堅実な投資家");
                 }
             } else if (mat == Material.IRON_INGOT) {
                 a2 = this.fixedDeposit2.getOrDefault(u, 0.0);
@@ -9520,8 +9499,8 @@ lbl1231:
                     this.fixedDepositUnlockTime2.put(u, System.currentTimeMillis() + this.cfgFixedDepositDurationMs);
                     this.msgKey(p, "deposit.slot2-created", new String[]{"amount", String.valueOf((long)this.cfgFixedDepositAmount)});
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u5b9a\u671f\u9810\u91d1(2\u67a0) -" + this.fmtCur(this.cfgFixedDepositAmount));
-                    this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** \u304c\u5b9a\u671f\u9810\u91d12\u67a0\u76ee\u306b " + (long)this.cfgFixedDepositAmount + "\u5186 \u3092\u9810\u3051\u307e\u3057\u305f\u3002");
+                    this.addLog(u, "定期預金(2枠) -" + this.fmtCur(this.cfgFixedDepositAmount));
+                    this.sendDiscordWebhook("💵 **" + p.getName() + "** が定期預金2枠目に " + (long)this.cfgFixedDepositAmount + "円 を預けました。");
                 } else {
                     this.msgKey(p, "deposit.funds-insufficient", new String[]{"amount", String.valueOf((long)this.cfgFixedDepositAmount)});
                     this.errorSound(p);
@@ -9543,9 +9522,9 @@ lbl1231:
                     this.msgKey(p, "fixed-deposit.matured-2", new String[]{"amount", String.valueOf((long)reward)});
                     this.addScore(u, 15);
                     p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    this.addLog(u, "\u5b9a\u671f\u9810\u91d1(2\u67a0)\u6e80\u671f +" + this.fmtCur(reward));
-                    this.sendDiscordWebhook("\ud83c\udf89 **" + p.getName() + "** \u306e\u5b9a\u671f\u9810\u91d12\u67a0\u76ee\u304c\u6e80\u671f\u306b\u306a\u308a\u307e\u3057\u305f\u3002\u53d7\u53d6\u984d: " + this.fmtCur(reward));
-                    this.unlockAchievement(u, "first_fixed_deposit", "\u5805\u5b9f\u306a\u6295\u8cc7\u5bb6");
+                    this.addLog(u, "定期預金(2枠)満期 +" + this.fmtCur(reward));
+                    this.sendDiscordWebhook("🎉 **" + p.getName() + "** の定期預金2枠目が満期になりました。受取額: " + this.fmtCur(reward));
+                    this.unlockAchievement(u, "first_fixed_deposit", "堅実な投資家");
                 }
             } else if (mat == Material.EMERALD) {
                 a3 = this.fixedDeposit3.getOrDefault(u, 0.0);
@@ -9558,8 +9537,8 @@ lbl1231:
                     this.fixedDepositUnlockTime3.put(u, System.currentTimeMillis() + this.cfgFixedDepositDurationMs);
                     this.msgKey(p, "deposit.slot3-created", new String[]{"amount", String.valueOf((long)this.cfgFixedDepositAmount)});
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u5b9a\u671f\u9810\u91d1(3\u67a0) -" + this.fmtCur(this.cfgFixedDepositAmount));
-                    this.sendDiscordWebhook("\ud83d\udcb5 **" + p.getName() + "** \u304c\u5b9a\u671f\u9810\u91d13\u67a0\u76ee\u306b " + (long)this.cfgFixedDepositAmount + "\u5186 \u3092\u9810\u3051\u307e\u3057\u305f\u3002");
+                    this.addLog(u, "定期預金(3枠) -" + this.fmtCur(this.cfgFixedDepositAmount));
+                    this.sendDiscordWebhook("💵 **" + p.getName() + "** が定期預金3枠目に " + (long)this.cfgFixedDepositAmount + "円 を預けました。");
                 } else {
                     this.msgKey(p, "deposit.funds-insufficient", new String[]{"amount", String.valueOf((long)this.cfgFixedDepositAmount)});
                     this.errorSound(p);
@@ -9581,9 +9560,9 @@ lbl1231:
                     this.msgKey(p, "fixed-deposit.matured-3", new String[]{"amount", String.valueOf((long)reward)});
                     this.addScore(u, 15);
                     p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-                    this.addLog(u, "\u5b9a\u671f\u9810\u91d1(3\u67a0)\u6e80\u671f +" + this.fmtCur(reward));
-                    this.sendDiscordWebhook("\ud83c\udf89 **" + p.getName() + "** \u306e\u5b9a\u671f\u9810\u91d13\u67a0\u76ee\u304c\u6e80\u671f\u306b\u306a\u308a\u307e\u3057\u305f\u3002\u53d7\u53d6\u984d: " + this.fmtCur(reward));
-                    this.unlockAchievement(u, "first_fixed_deposit", "\u5805\u5b9f\u306a\u6295\u8cc7\u5bb6");
+                    this.addLog(u, "定期預金(3枠)満期 +" + this.fmtCur(reward));
+                    this.sendDiscordWebhook("🎉 **" + p.getName() + "** の定期預金3枠目が満期になりました。受取額: " + this.fmtCur(reward));
+                    this.unlockAchievement(u, "first_fixed_deposit", "堅実な投資家");
                 }
             }
             this.openFixedDepoGUI(p);
@@ -9774,10 +9753,10 @@ lbl1231:
         Player p = e.getPlayer();
         econ.depositPlayer((OfflinePlayer)p, reward);
         this.msgKey(p, "treasure.found", "amount", String.valueOf((long)reward));
-        this.addLog(p.getUniqueId(), "\u57cb\u8535\u91d1\u3092\u767a\u898b +" + this.fmtCur(reward));
+        this.addLog(p.getUniqueId(), "埋蔵金を発見 +" + this.fmtCur(reward));
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-        this.sendDiscordWebhook("\ud83d\udc8e **" + p.getName() + "** \u304c\u57cb\u8535\u91d1\u30c1\u30a7\u30b9\u30c8\u3092\u767a\u898b\u3057\u3001" + (long)reward + "\u5186 \u3092\u7372\u5f97\u3057\u307e\u3057\u305f\u3002");
-        this.broadcastNews("<gold><bold>\u3010\u57cb\u8535\u91d1\u3011</bold> <yellow>" + p.getName() + "</yellow> \u304c\u57cb\u8535\u91d1 " + (long)reward + "\u5186 \u3092\u767a\u898b\u3057\u307e\u3057\u305f\uff01</gold>");
+        this.sendDiscordWebhook("💎 **" + p.getName() + "** が埋蔵金チェストを発見し、" + (long)reward + "円 を獲得しました。");
+        this.broadcastNews("<gold><bold>【埋蔵金】</bold> <yellow>" + p.getName() + "</yellow> が埋蔵金 " + (long)reward + "円 を発見しました！</gold>");
     }
 
     @EventHandler
@@ -9826,11 +9805,11 @@ lbl1231:
                 OfflinePlayer memberOffline = Bukkit.getOfflinePlayer((UUID)member);
                 econ.depositPlayer(memberOffline, q.reward);
                 this.weeklyTradeVolume += q.reward;
-                this.addLog(member, "\u30c1\u30fc\u30e0\u4f9d\u983c\u9054\u6210 +" + this.fmtCur(q.reward));
+                this.addLog(member, "チーム依頼達成 +" + this.fmtCur(q.reward));
                 Player memberOnline = Bukkit.getPlayer((UUID)member);
                 if (memberOnline != null) {
                     this.msgKey(memberOnline, "quest.team-completed", "amount", String.valueOf((long)q.reward));
-                    this.sendToast(memberOnline, "\u30c1\u30fc\u30e0\u4f9d\u983c\u9054\u6210", "+" + this.fmtCur(q.reward));
+                    this.sendToast(memberOnline, "チーム依頼達成", "+" + this.fmtCur(q.reward));
                     memberOnline.playSound(memberOnline.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
                 }
                 this.playerActiveQuest.remove(member);
@@ -9839,7 +9818,7 @@ lbl1231:
             if (posterOnline2 != null) {
                 this.msgKey(posterOnline2, "quest.completed-notice", "player", p.getName());
             }
-            this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** \u305f\u3061\u306e\u30c1\u30fc\u30e0\u304c\u63a2\u7d22\u4f9d\u983c\u3092\u9054\u6210\u3057\u307e\u3057\u305f\u3002\u4e00\u4eba\u3042\u305f\u308a\u5831\u916c: " + this.fmtCur(q.reward));
+            this.sendDiscordWebhook("📋 **" + p.getName() + "** たちのチームが探索依頼を達成しました。一人あたり報酬: " + this.fmtCur(q.reward));
             q.state = QuestState.COOLDOWN;
             q.cooldownUntil = System.currentTimeMillis() + this.cfgQuestCooldownMs;
             q.teamMembers.clear();
@@ -9861,14 +9840,14 @@ lbl1231:
         econ.depositPlayer((OfflinePlayer)p, q.reward);
         this.weeklyTradeVolume += q.reward;
         this.msgKey(p, "quest.completed", "amount", String.valueOf((long)q.reward));
-        this.sendToast(p, "\u4f9d\u983c\u9054\u6210", "+" + this.fmtCur(q.reward));
+        this.sendToast(p, "依頼達成", "+" + this.fmtCur(q.reward));
         p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-        this.addLog(u, "\u4f9d\u983c\u9054\u6210 +" + this.fmtCur(q.reward));
+        this.addLog(u, "依頼達成 +" + this.fmtCur(q.reward));
         Player posterOnline = Bukkit.getPlayer((UUID)q.posterId);
         if (posterOnline != null) {
             this.msgKey(posterOnline, "quest.completed-notice", "player", p.getName());
         }
-        this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** \u304c\u63a2\u7d22\u4f9d\u983c\u3092\u9054\u6210\u3057\u307e\u3057\u305f\u3002\u5831\u916c: " + this.fmtCur(q.reward));
+        this.sendDiscordWebhook("📋 **" + p.getName() + "** が探索依頼を達成しました。報酬: " + this.fmtCur(q.reward));
         this.playerActiveQuest.remove(u);
         q.state = QuestState.COOLDOWN;
         q.acceptedBy = null;
@@ -9938,7 +9917,7 @@ lbl1231:
             ++generated;
         }
         if (generated > 0) {
-            this.broadcastNews("<gray>\u3010\u904b\u55b6\u3011\u65b0\u3057\u3044\u63a2\u7d22\u4f9d\u983c\u3092\u4f9d\u983c\u30dc\u30fc\u30c9\u306b\u63b2\u793a\u3057\u307e\u3057\u305f\u3002</gray>");
+            this.broadcastNews("<gray>【運営】新しい探索依頼を依頼ボードに掲示しました。</gray>");
         }
     }
 
@@ -9961,7 +9940,7 @@ lbl1231:
             this.msgKey(p, "welcome.first-join", new String[0]);
         }
         if (pocket + (bankTotal = this.personalBank.getOrDefault(u, 0.0) + this.fixedDeposit.getOrDefault(u, 0.0) + this.fixedDeposit2.getOrDefault(u, 0.0) + this.fixedDeposit3.getOrDefault(u, 0.0)) >= 1000000.0) {
-            this.unlockAchievement(u, "millionaire", "\u8cc7\u7523\u5bb6\u306e\u8a3c");
+            this.unlockAchievement(u, "millionaire", "資産家の証");
         }
         this.deliverPendingAuctionItems(p);
         this.deliverAuctionOfflineNotices(p);
@@ -9986,7 +9965,7 @@ lbl1231:
                 this.activeDebts.remove(u);
                 this.loanGuarantor.remove(u);
                 this.msgKey(p, "loan.login-seized-full", new String[0]);
-                this.unlockAchievement(u, "first_loan_repaid", "\u521d\u3081\u3066\u306e\u5b8c\u6e08");
+                this.unlockAchievement(u, "first_loan_repaid", "初めての完済");
             } else {
                 OfflinePlayer guarantorOff;
                 double guarantorPocket;
@@ -9999,12 +9978,12 @@ lbl1231:
                     this.bankCapital.put(lenderId, this.bankCapital.getOrDefault(lenderId, 0.0) + guarantorSeize);
                     debt -= guarantorSeize;
                     this.addScore(guarantorId, -30);
-                    this.addLog(guarantorId, "\u4fdd\u8a3c\u50b5\u52d9\u306e\u5c65\u884c: -" + (long)guarantorSeize + "\u5186 (" + p.getName() + "\u306e\u501f\u91d1\u5206)");
+                    this.addLog(guarantorId, "保証債務の履行: -" + (long)guarantorSeize + "円 (" + p.getName() + "の借金分)");
                     Player guarantorOnline = Bukkit.getPlayer((UUID)guarantorId);
                     if (guarantorOnline != null) {
                         this.msgKey(guarantorOnline, "loan.guarantor-seized-notice", "player", p.getName(), "amount", String.valueOf((long)guarantorSeize));
                     }
-                    this.sendDiscordWebhook("\u26a0\ufe0f **\u4fdd\u8a3c\u50b5\u52d9\u57f7\u884c**: " + Bukkit.getOfflinePlayer((UUID)guarantorId).getName() + " \u304c " + p.getName() + " \u306e\u501f\u91d1 " + (long)guarantorSeize + "\u5186 \u3092\u4ee3\u308f\u308a\u306b\u652f\u6255\u3044\u307e\u3057\u305f\u3002");
+                    this.sendDiscordWebhook("⚠️ **保証債務執行**: " + Bukkit.getOfflinePlayer((UUID)guarantorId).getName() + " が " + p.getName() + " の借金 " + (long)guarantorSeize + "円 を代わりに支払いました。");
                 }
                 if (debt <= 0.0) {
                     this.activeDebts.remove(u);
@@ -10033,9 +10012,9 @@ lbl1231:
         this.insuranceLastClaim.put(u, System.currentTimeMillis());
         econ.depositPlayer((OfflinePlayer)p, this.cfgInsurancePayout);
         this.msgKey(p, "insurance.payout", "amount", String.valueOf((long)this.cfgInsurancePayout));
-        this.sendToast(p, "\u4fdd\u967a\u91d1\u652f\u6255\u3044", "+" + (long)this.cfgInsurancePayout + "\u5186 \u304c\u632f\u308a\u8fbc\u307e\u308c\u307e\u3057\u305f\uff01");
-        this.addLog(u, "\u4fdd\u967a\u91d1\u53d7\u7d66 +" + this.fmtCur(this.cfgInsurancePayout));
-        this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** \u306b\u751f\u547d\u4fdd\u967a\u91d1 " + (long)this.cfgInsurancePayout + "\u5186 \u304c\u652f\u6255\u308f\u308c\u307e\u3057\u305f\u3002");
+        this.sendToast(p, "保険金支払い", "+" + (long)this.cfgInsurancePayout + "円 が振り込まれました！");
+        this.addLog(u, "保険金受給 +" + this.fmtCur(this.cfgInsurancePayout));
+        this.sendDiscordWebhook("💰 **" + p.getName() + "** に生命保険金 " + (long)this.cfgInsurancePayout + "円 が支払われました。");
     }
 
     private void startWebDashboard() {
@@ -10056,10 +10035,10 @@ lbl1231:
             this.webDashboardServer.createContext("/me/collect", this::handleMyActionRequest);
             this.webDashboardServer.setExecutor(null);
             this.webDashboardServer.start();
-            this.getLogger().info("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] http://<\u30b5\u30fc\u30d0\u30fcIP>:" + this.cfgWebDashboardPort + "/ \u3067\u914d\u4fe1\u3092\u958b\u59cb\u3057\u307e\u3057\u305f\u3002(JSON API\u306f /dashboard.json)");
+            this.getLogger().info("[Webダッシュボード] http://<サーバーIP>:" + this.cfgWebDashboardPort + "/ で配信を開始しました。(JSON APIは /dashboard.json)");
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] HTTP\u30b5\u30fc\u30d0\u30fc\u306e\u8d77\u52d5\u306b\u5931\u6557\u3057\u307e\u3057\u305f(\u30dd\u30fc\u30c8 " + this.cfgWebDashboardPort + " \u304c\u4f7f\u7528\u4e2d\u306e\u53ef\u80fd\u6027\u304c\u3042\u308a\u307e\u3059): " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] HTTPサーバーの起動に失敗しました(ポート " + this.cfgWebDashboardPort + " が使用中の可能性があります): " + ex.getMessage());
         }
     }
 
@@ -10077,7 +10056,7 @@ lbl1231:
             }
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] \u30ea\u30af\u30a8\u30b9\u30c8\u51e6\u7406\u4e2d\u306b\u30a8\u30e9\u30fc: " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] リクエスト処理中にエラー: " + ex.getMessage());
         }
         finally {
             exchange.close();
@@ -10097,7 +10076,7 @@ lbl1231:
             }
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] \u30da\u30fc\u30b8\u914d\u4fe1\u4e2d\u306b\u30a8\u30e9\u30fc: " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] ページ配信中にエラー: " + ex.getMessage());
         }
         finally {
             exchange.close();
@@ -10216,24 +10195,23 @@ lbl1231:
             boolean bl = isOnline = online != null && online.isOnline();
             if (path.equals("/me/collect")) {
                 if (!isOnline) {
-                    this.sendJsonResponse(exchange, 409, "{\"ok\":false,\"message\":\"\u53d7\u53d6\u7bb1\u306e\u53d7\u53d6\u306f\u30ed\u30b0\u30a4\u30f3\u4e2d\u306e\u307f\u64cd\u4f5c\u3067\u304d\u307e\u3059\"}");
+                    this.sendJsonResponse(exchange, 409, "{\"ok\":false,\"message\":\"受取箱の受取はログイン中のみ操作できます\"}");
                     return;
                 }
             } else if (!isOnline) {
-                boolean authorized;
                 String password = this.getFormParam(body, "password");
-                boolean bl2 = authorized = this.verifyWebPassword(this.webPasswordHash.get(owner), password) || this.verifyWebPassword(this.webAdminPasswordHash.get(owner), password);
+                boolean authorized = this.verifyWebPassword(this.webPasswordHash.get(owner), password) || this.verifyWebPassword(this.webAdminPasswordHash.get(owner), password);
                 if (!authorized) {
-                    this.sendJsonResponse(exchange, 403, "{\"ok\":false,\"message\":\"\u30d1\u30b9\u30ef\u30fc\u30c9\u304c\u9055\u3044\u307e\u3059(\u672a\u8a2d\u5b9a\u306e\u5834\u5408\u306f\u30b2\u30fc\u30e0\u5185\u3067 /meco webpage password \u3092\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044)\"}");
+                    this.sendJsonResponse(exchange, 403, "{\"ok\":false,\"message\":\"パスワードが違います(未設定の場合はゲーム内で /meco webpage password を設定してください)\"}");
                     return;
                 }
             }
             Player actor = isOnline ? online : Bukkit.getOfflinePlayer((UUID)owner);
-            String resultJson = this.runOnMainThreadSync(() -> this.lambda$handleMyActionRequest$0(path, (OfflinePlayer)actor, body));
+            String resultJson = this.runOnMainThreadSync(() -> this.handleMyActionOnMainThread(path, (OfflinePlayer)actor, body));
             this.sendJsonResponse(exchange, 200, resultJson);
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] \u500b\u4eba\u30da\u30fc\u30b8\u64cd\u4f5c\u30ea\u30af\u30a8\u30b9\u30c8\u306e\u51e6\u7406\u4e2d\u306b\u30a8\u30e9\u30fc: " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] 個人ページ操作リクエストの処理中にエラー: " + ex.getMessage());
             try {
                 this.sendJsonResponse(exchange, 500, "{\"ok\":false,\"message\":\"internal error\"}");
             }
@@ -10331,7 +10309,7 @@ lbl1231:
             }
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] \u500b\u4eba\u30da\u30fc\u30b8\u7528\u30ea\u30af\u30a8\u30b9\u30c8\u51e6\u7406\u4e2d\u306b\u30a8\u30e9\u30fc: " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] 個人ページ用リクエスト処理中にエラー: " + ex.getMessage());
         }
         finally {
             exchange.close();
@@ -10417,7 +10395,7 @@ lbl1231:
             }
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] \u500b\u4eba\u30da\u30fc\u30b8\u914d\u4fe1\u4e2d\u306b\u30a8\u30e9\u30fc: " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] 個人ページ配信中にエラー: " + ex.getMessage());
         }
         finally {
             exchange.close();
@@ -10626,7 +10604,7 @@ lbl1231:
             }
         }
         catch (Exception ex) {
-            this.getLogger().warning("[Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9] JSON\u30d5\u30a1\u30a4\u30eb\u306e\u66f8\u304d\u51fa\u3057\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + ex.getMessage());
+            this.getLogger().warning("[Webダッシュボード] JSONファイルの書き出しに失敗しました: " + ex.getMessage());
         }
     }
 
@@ -10640,11 +10618,11 @@ lbl1231:
         for (UUID key : collateralKeys) {
             boolean complete = this.collateralItem.containsKey(key) && this.collateralLoanAmount.containsKey(key) && this.collateralDueTime.containsKey(key) && this.collateralLender.containsKey(key);
             if (complete) continue;
-            issues.add("\u62c5\u4fdd\u878d\u8cc7\u30c7\u30fc\u30bf\u4e0d\u6574\u5408: " + String.valueOf(key) + " \u306e\u30c7\u30fc\u30bf\u304c\u4e00\u90e8\u6b20\u843d\u3057\u3066\u3044\u307e\u3059");
+            issues.add("担保融資データ不整合: " + String.valueOf(key) + " のデータが一部欠落しています");
         }
         for (UUID auctionId : new HashSet<UUID>(this.auctionSeller.keySet())) {
             if (this.auctionItem.containsKey(auctionId) && this.auctionEndTime.containsKey(auctionId)) continue;
-            issues.add("\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30c7\u30fc\u30bf\u4e0d\u6574\u5408: " + String.valueOf(auctionId) + " \u306e\u30a2\u30a4\u30c6\u30e0\u307e\u305f\u306f\u7d42\u4e86\u6642\u523b\u304c\u6b20\u843d\u3057\u3066\u3044\u307e\u3059");
+            issues.add("オークションデータ不整合: " + String.valueOf(auctionId) + " のアイテムまたは終了時刻が欠落しています");
             if (!autoFix) continue;
             this.auctionSeller.remove(auctionId);
             this.auctionBid.remove(auctionId);
@@ -10652,7 +10630,7 @@ lbl1231:
         }
         for (UUID k : this.personalBank.keySet()) {
             if (!(this.personalBank.get(k) < 0.0)) continue;
-            issues.add("personalBank: " + String.valueOf(k) + " \u306e\u6b8b\u9ad8\u304c\u8ca0\u306e\u5024\u3067\u3059(" + String.valueOf(this.personalBank.get(k)) + "\u5186)");
+            issues.add("personalBank: " + String.valueOf(k) + " の残高が負の値です(" + String.valueOf(this.personalBank.get(k)) + "円)");
         }
         return issues;
     }
@@ -10714,7 +10692,7 @@ lbl1231:
         String raw = e.getMessage().trim();
         Bukkit.getScheduler().runTask((Plugin)this, () -> {
             double amount;
-            if (raw.equals("\u30ad\u30e3\u30f3\u30bb\u30eb") || raw.equalsIgnoreCase("cancel")) {
+            if (raw.equals("キャンセル") || raw.equalsIgnoreCase("cancel")) {
                 if (type.equals("auction_list_price") || type.equals("auction_buyout_price")) {
                     ItemStack draft = this.auctionListingDraft.remove(u);
                     this.auctionListingStartPrice.remove(u);
@@ -10828,7 +10806,7 @@ lbl1231:
             }
             if (type.equals("auction_search")) {
                 String q2 = raw.trim();
-                if (q2.equalsIgnoreCase("\u30af\u30ea\u30a2") || q2.equalsIgnoreCase("clear")) {
+                if (q2.equalsIgnoreCase("クリア") || q2.equalsIgnoreCase("clear")) {
                     this.auctionSearchQuery.remove(u);
                     this.msgKey(p, "auction.search-cleared", new String[0]);
                 } else {
@@ -10874,8 +10852,8 @@ lbl1231:
                 q3.state = QuestState.AVAILABLE;
                 this.quests.put(q3.id, q3);
                 this.msgKey(p, "quest.posted", "amount", String.valueOf((long)amount));
-                this.addLog(u, "\u4f9d\u983c\u30dc\u30fc\u30c9\u306b\u63b2\u793a -" + (long)amount + "\u5186(\u30a8\u30b9\u30af\u30ed\u30fc)");
-                this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** \u304c\u63a2\u7d22\u4f9d\u983c\u3092\u63b2\u793a\u3057\u307e\u3057\u305f\u3002\u5831\u916c: " + this.fmtCur(amount));
+                this.addLog(u, "依頼ボードに掲示 -" + (long)amount + "円(エスクロー)");
+                this.sendDiscordWebhook("📋 **" + p.getName() + "** が探索依頼を掲示しました。報酬: " + this.fmtCur(amount));
                 return;
             }
             if (type.equals("team_quest_post_reward")) {
@@ -10929,8 +10907,8 @@ lbl1231:
                 q4.state = QuestState.AVAILABLE;
                 this.quests.put(q4.id, q4);
                 this.msgKey(p, "quest.posted", "amount", String.valueOf((long)totalEscrow));
-                this.addLog(u, "\u30c1\u30fc\u30e0\u4f9d\u983c\u3092\u30dc\u30fc\u30c9\u306b\u63b2\u793a -" + (long)totalEscrow + "\u5186(\u30a8\u30b9\u30af\u30ed\u30fc\u3001" + teamSize + "\u4eba\u00d7" + (long)teamReward + "\u5186)");
-                this.sendDiscordWebhook("\ud83d\udccb **" + p.getName() + "** \u304c\u30c1\u30fc\u30e0\u63a2\u7d22\u4f9d\u983c(" + teamSize + "\u4eba)\u3092\u63b2\u793a\u3057\u307e\u3057\u305f\u3002\u4e00\u4eba\u3042\u305f\u308a\u5831\u916c: " + this.fmtCur(teamReward));
+                this.addLog(u, "チーム依頼をボードに掲示 -" + (long)totalEscrow + "円(エスクロー、" + teamSize + "人×" + (long)teamReward + "円)");
+                this.sendDiscordWebhook("📋 **" + p.getName() + "** がチーム探索依頼(" + teamSize + "人)を掲示しました。一人あたり報酬: " + this.fmtCur(teamReward));
                 return;
             }
             if (type.startsWith("world_stock_alert:")) {
@@ -11067,8 +11045,8 @@ lbl1231:
                 econ.depositPlayer(target, amount);
                 String targetName = target.getName() != null ? target.getName() : targetId.toString();
                 this.msgKey(p, "admin.give-success", "player", targetName, "amount", String.valueOf((long)amount));
-                this.addLog(targetId, "[\u7ba1\u7406\u8005\u64cd\u4f5c] " + p.getName() + " \u304b\u3089 +" + this.fmtCur(amount));
-                this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + targetName + "** \u306b " + (long)amount + "\u5186 \u3092\u4ed8\u4e0e\u3057\u307e\u3057\u305f\u3002(GUI)");
+                this.addLog(targetId, "[管理者操作] " + p.getName() + " から +" + this.fmtCur(amount));
+                this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + targetName + "** に " + (long)amount + "円 を付与しました。(GUI)");
                 this.openAdminPlayerDetailGUI(p, targetId);
                 return;
             }
@@ -11082,8 +11060,8 @@ lbl1231:
                 econ.withdrawPlayer(target, amount);
                 String targetName = target.getName() != null ? target.getName() : targetId.toString();
                 this.msgKey(p, "admin.take-success", "player", targetName, "amount", String.valueOf((long)amount));
-                this.addLog(targetId, "[\u7ba1\u7406\u8005\u64cd\u4f5c] " + p.getName() + " \u306b\u3088\u308a -" + this.fmtCur(amount));
-                this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + targetName + "** \u304b\u3089 " + (long)amount + "\u5186 \u3092\u6ca1\u53ce\u3057\u307e\u3057\u305f\u3002(GUI)");
+                this.addLog(targetId, "[管理者操作] " + p.getName() + " により -" + this.fmtCur(amount));
+                this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + targetName + "** から " + (long)amount + "円 を没収しました。(GUI)");
                 this.openAdminPlayerDetailGUI(p, targetId);
                 return;
             }
@@ -11101,7 +11079,7 @@ lbl1231:
                 econ.withdrawPlayer((OfflinePlayer)p, amount);
                 acc.balance += amount;
                 this.msgKey(p, "group.deposited", "amount", String.valueOf((long)amount));
-                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u3078\u5165\u91d1 -" + this.fmtCur(amount));
+                this.addLog(u, "グループ貯金箱「" + acc.name + "」へ入金 -" + this.fmtCur(amount));
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 return;
             }
@@ -11119,7 +11097,7 @@ lbl1231:
                 acc.balance -= amount;
                 econ.depositPlayer((OfflinePlayer)p, amount);
                 this.msgKey(p, "group.withdrawn", "amount", String.valueOf((long)amount));
-                this.addLog(u, "\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c" + acc.name + "\u300d\u304b\u3089\u5f15\u51fa +" + this.fmtCur(amount));
+                this.addLog(u, "グループ貯金箱「" + acc.name + "」から引出 +" + this.fmtCur(amount));
                 p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
                 return;
             }
@@ -11136,7 +11114,7 @@ lbl1231:
                     targetName = targetId.toString();
                 }
                 this.msgKey(p, "admin.setcredit-success", "player", targetName, "score", String.valueOf(score));
-                this.sendDiscordWebhook("\ud83d\udee0\ufe0f \u7ba1\u7406\u8005 **" + p.getName() + "** \u304c **" + targetName + "** \u306e\u4fe1\u7528\u30b9\u30b3\u30a2\u3092 " + score + " \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002(GUI)");
+                this.sendDiscordWebhook("🛠️ 管理者 **" + p.getName() + "** が **" + targetName + "** の信用スコアを " + score + " に設定しました。(GUI)");
                 this.openAdminPlayerDetailGUI(p, targetId);
                 return;
             }
@@ -11155,8 +11133,8 @@ lbl1231:
                     this.personalBank.put(u, bank + amount);
                     this.msgKey(p, "personal.deposit-custom", "amount", String.valueOf((long)amount));
                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u500b\u4eba\u53e3\u5ea7 \u6307\u5b9a\u9810\u91d1 -" + this.fmtCur(amount));
-                    this.sendDiscordWebhook("\ud83d\udcb0 **" + p.getName() + "** \u304c\u500b\u4eba\u53e3\u5ea7\u3078 " + (long)amount + "\u5186 \u9810\u91d1\u3057\u307e\u3057\u305f\u3002");
+                    this.addLog(u, "個人口座 指定預金 -" + this.fmtCur(amount));
+                    this.sendDiscordWebhook("💰 **" + p.getName() + "** が個人口座へ " + (long)amount + "円 預金しました。");
                     break;
                 }
                 case "personal_withdraw": {
@@ -11168,8 +11146,8 @@ lbl1231:
                     econ.depositPlayer((OfflinePlayer)p, amount);
                     this.msgKey(p, "personal.withdraw-custom", "amount", String.valueOf((long)amount));
                     p.playSound(p.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u500b\u4eba\u53e3\u5ea7 \u6307\u5b9a\u5f15\u51fa +" + this.fmtCur(amount));
-                    this.sendDiscordWebhook("\ud83d\udcb8 **" + p.getName() + "** \u304c\u500b\u4eba\u53e3\u5ea7\u304b\u3089 " + (long)amount + "\u5186 \u5f15\u304d\u51fa\u3057\u307e\u3057\u305f\u3002");
+                    this.addLog(u, "個人口座 指定引出 +" + this.fmtCur(amount));
+                    this.sendDiscordWebhook("💸 **" + p.getName() + "** が個人口座から " + (long)amount + "円 引き出しました。");
                     break;
                 }
                 case "plan_amount": {
@@ -11193,8 +11171,8 @@ lbl1231:
                     this.treasury += amount;
                     this.grantDonationCreditScore(u, amount);
                     this.msgKey(p, "donate.treasury-thanks", "amount", String.valueOf((long)amount));
-                    this.addLog(u, "\u56fd\u5eab\u3078\u5bc4\u4ed8: -" + this.fmtCur(amount));
-                    this.sendDiscordWebhook("\ud83c\udf81 **" + p.getName() + "** \u304c\u56fd\u5eab\u3078 " + (long)amount + "\u5186 \u3092\u5bc4\u4ed8\u3057\u307e\u3057\u305f\u3002");
+                    this.addLog(u, "国庫へ寄付: -" + this.fmtCur(amount));
+                    this.sendDiscordWebhook("🎁 **" + p.getName() + "** が国庫へ " + (long)amount + "円 を寄付しました。");
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
                     break;
                 }
@@ -11232,12 +11210,12 @@ lbl1231:
                     if (buyout > 0.0) {
                         this.auctionBuyoutPrice.put(auctionId, buyout);
                     }
-                    String buyoutMsg = buyout > 0.0 ? " / \u5373\u6c7a\u4fa1\u683c: " + this.fmtCur(buyout) : "";
+                    String buyoutMsg = buyout > 0.0 ? " / 即決価格: " + this.fmtCur(buyout) : "";
                     this.msgKey(p, "auction.listed", "item", draft.getType().name(), "amount", String.valueOf((long)startPrice.doubleValue()), "buyoutMsg", buyoutMsg, "minutes", String.valueOf(this.cfgAuctionDurationMs / 60000L));
                     p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
-                    this.addLog(u, "\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u51fa\u54c1: " + draft.getType().name() + " (\u958b\u59cb\u4fa1\u683c" + this.fmtCur(startPrice) + buyoutMsg + ")");
-                    this.sendDiscordWebhook("\ud83c\udff7\ufe0f **" + p.getName() + "** \u304c **" + draft.getType().name() + "** \u3092\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u306b\u51fa\u54c1\u3057\u307e\u3057\u305f\u3002\u958b\u59cb\u4fa1\u683c: " + this.fmtCur(startPrice) + buyoutMsg);
-                    this.broadcastNews("<gold><bold>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u3011</bold></gold> <yellow>" + p.getName() + "</yellow> \u304c <white>" + draft.getType().name() + "</white> \u3092\u51fa\u54c1\u3057\u305f\uff01");
+                    this.addLog(u, "オークション出品: " + draft.getType().name() + " (開始価格" + this.fmtCur(startPrice) + buyoutMsg + ")");
+                    this.sendDiscordWebhook("🏷️ **" + p.getName() + "** が **" + draft.getType().name() + "** をオークションに出品しました。開始価格: " + this.fmtCur(startPrice) + buyoutMsg);
+                    this.broadcastNews("<gold><bold>【オークション】</bold></gold> <yellow>" + p.getName() + "</yellow> が <white>" + draft.getType().name() + "</white> を出品した！");
                     break;
                 }
                 case "trade_money": {
@@ -11313,22 +11291,22 @@ lbl1231:
                     int code = conn.getResponseCode();
                     if (code < 300) break block26;
                     try (InputStream errStream = conn.getErrorStream();){
-                        body = errStream != null ? new String(errStream.readAllBytes(), StandardCharsets.UTF_8) : "(\u8a73\u7d30\u306a\u3057)";
+                        body = errStream != null ? new String(errStream.readAllBytes(), StandardCharsets.UTF_8) : "(詳細なし)";
                     }
                     catch (Exception readEx) {
-                        body = "(\u8a73\u7d30\u53d6\u5f97\u5931\u6557: " + readEx.getMessage() + ")";
+                        body = "(詳細取得失敗: " + readEx.getMessage() + ")";
                     }
-                    this.getLogger().warning("[Discord Bot] \u9001\u4fe1\u306b\u5931\u6557\u3057\u307e\u3057\u305f\u3002HTTP\u30b9\u30c6\u30fc\u30bf\u30b9: " + code + " / \u5185\u5bb9: " + (String)body);
+                    this.getLogger().warning("[Discord Bot] 送信に失敗しました。HTTPステータス: " + code + " / 内容: " + (String)body);
                     if (code == 401) {
-                        this.getLogger().warning("[Discord Bot] 401 = \u30c8\u30fc\u30af\u30f3\u304c\u7121\u52b9\u3067\u3059\u3002config.yml\u306esystem.discord-bot-token\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                        this.getLogger().warning("[Discord Bot] 401 = トークンが無効です。config.ymlのsystem.discord-bot-tokenを確認してください。");
                     } else if (code == 403) {
-                        this.getLogger().warning("[Discord Bot] 403 = Bot\u306b\u3053\u306e\u30c1\u30e3\u30f3\u30cd\u30eb\u3078\u306e\u9001\u4fe1\u6a29\u9650\u304c\u3042\u308a\u307e\u305b\u3093\u3002\u30b5\u30fc\u30d0\u30fc\u3078\u306e\u62db\u5f85\u30fb\u6a29\u9650\u8a2d\u5b9a\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                        this.getLogger().warning("[Discord Bot] 403 = Botにこのチャンネルへの送信権限がありません。サーバーへの招待・権限設定を確認してください。");
                     } else if (code == 404) {
-                        this.getLogger().warning("[Discord Bot] 404 = \u30c1\u30e3\u30f3\u30cd\u30ebID\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002system.discord-channel-id\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002");
+                        this.getLogger().warning("[Discord Bot] 404 = チャンネルIDが見つかりません。system.discord-channel-idを確認してください。");
                     }
                 }
                 catch (Exception ex) {
-                    this.getLogger().warning("[Discord Bot] \u9001\u4fe1\u4e2d\u306b\u30a8\u30e9\u30fc\u304c\u767a\u751f\u3057\u307e\u3057\u305f: " + ex.getMessage());
+                    this.getLogger().warning("[Discord Bot] 送信中にエラーが発生しました: " + ex.getMessage());
                 }
                 finally {
                     if (conn != null) {
@@ -11371,7 +11349,7 @@ lbl1231:
                 }
             }
             catch (Exception ex) {
-                this.getLogger().warning("[\u4e16\u754c\u682a\u5f0f\u5e02\u5834] " + symbol + " \u306e\u682a\u4fa1\u53d6\u5f97\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + ex.getMessage());
+                this.getLogger().warning("[世界株式市場] " + symbol + " の株価取得に失敗しました: " + ex.getMessage());
             }
             finally {
                 if (conn != null) {
@@ -11446,7 +11424,7 @@ lbl1231:
                 this.messages.save(file);
             }
             catch (IOException ex) {
-                this.getLogger().warning("[messages.yml] \u4fdd\u5b58\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + ex.getMessage());
+                this.getLogger().warning("[messages.yml] 保存に失敗しました: " + ex.getMessage());
             }
         }
     }
@@ -11518,40 +11496,8 @@ lbl1231:
         return this.activeEconomyEvent;
     }
 
-    private /* synthetic */ String lambda$handleMyActionRequest$0(String path, OfflinePlayer actor, String body) throws Exception {
-        return this.handleMyActionOnMainThread(path, actor, body);
-    }
-
-    private static /* synthetic */ boolean lambda$onInventoryClick$6(UUID u, UUID s) {
-        return s.equals(u);
-    }
-
-    private static /* synthetic */ String lambda$onInventoryClick$5(UUID k) {
-        return UUID.randomUUID().toString().replace("-", "");
-    }
-
-    private static /* synthetic */ HashSet lambda$onInventoryClick$4(UUID k) {
-        return new HashSet();
-    }
-
-    private static /* synthetic */ boolean lambda$onInventoryClick$3(UUID u, Quest q) {
-        return q.posterId.equals(u);
-    }
-
-    private static /* synthetic */ boolean lambda$onInventoryClick$2(UUID u, Quest q) {
-        return q.posterId.equals(u);
-    }
-
-    private static /* synthetic */ boolean lambda$onInventoryClick$1(UUID vipDealId, VipDeal d) {
-        return d.id.equals(vipDealId);
-    }
-
-    private static /* synthetic */ boolean lambda$onInventoryClick$0(UUID dealId, MerchantDeal d) {
-        return d.id.equals(dealId);
-    }
-
     static {
-        COUNTRY_CURRENCY_MAP.put("japan", "\u5186");
+        COUNTRY_CURRENCY_MAP.put("japan", "円");
         COUNTRY_CURRENCY_MAP.put("united states", "USD");
         COUNTRY_CURRENCY_MAP.put("usa", "USD");
         COUNTRY_CURRENCY_MAP.put("united kingdom", "GBP");
@@ -11655,369 +11601,369 @@ lbl1231:
         VIP_SHOP_POOL.put(Material.GOLDEN_APPLE, 800.0);
         MANAGED_DATA_PREFIXES = Set.of("storage_items", "storage_rent", "personal", "bankers", "capital", "market", "market2", "market3", "debts", "fixed_deposit", "fixed_time", "fixed_deposit2", "fixed_time2", "fixed_deposit3", "fixed_time3", "gov_debt", "gov_debt_due", "credit_score", "auction_seller", "auction_item", "auction_bid", "auction_bidder", "auction_end", "auction_buyout", "auction_pending", "auction_draft", "auction_offline_notices", "auction_total_sold", "loan_offline_notices", "collateral_item", "collateral_loan", "collateral_due", "collateral_lender", "insurance_expiry", "insurance_last_claim", "vip_stipend_claimed", "achievements", "news_off", "hub_item_issued", "tx_logs", "treasury", "weekly_trade_volume", "donation_score_today", "donation_score_reset_at", "welfare_count_today", "welfare_count_reset_at", "loan_guarantor", "guarantor_proposals", "guarantor_proposal_time", "economy-event", "tutorial-seen", "quests", "world_stocks", "world_stock_daily", "world_stock_last_trade", "world_stock_alerts", "resource_prices", "resource_personal_buy", "traveling_merchant", "vip_shop", "treasure", "installment_plans", "lottery", "group_accounts", "investment_funds", "dashboard_tokens", "web_password", "web_admin_password");
         DEFAULT_MESSAGES = new LinkedHashMap();
-        DEFAULT_MESSAGES.put("welcome.first-join", "<gold><bold>\u3010\u7d4c\u6e08\u624b\u5e33\u3011</bold> \u3042\u306a\u305f\u306b\u7d4c\u6e08\u624b\u5e33\u304c\u914d\u5e03\u3055\u308c\u307e\u3057\u305f\u3002\u53f3\u30af\u30ea\u30c3\u30af\u3067\u7d4c\u6e08\u7dcf\u5408\u30e1\u30cb\u30e5\u30fc\u3092\u958b\u3051\u307e\u3059\u3002</gold>");
-        DEFAULT_MESSAGES.put("welcome.no-permission", "<red>\u3053\u306e\u30b3\u30de\u30f3\u30c9\u3092\u4f7f\u7528\u3059\u308b\u6a29\u9650\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("common.insufficient-funds", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002\uff08\u6240\u6301\u91d1: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("common.invalid-number", "<red>\u6570\u5024\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 5000\uff09</red>");
-        DEFAULT_MESSAGES.put("common.cancelled", "<gray>\u5165\u529b\u3092\u30ad\u30e3\u30f3\u30bb\u30eb\u3057\u307e\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("insurance.payout", "<blue><bold>\u3010\u4fdd\u967a\u91d1\u652f\u6255\u3044\u3011 \u52a0\u5165\u3057\u3066\u3044\u305f\u751f\u547d\u4fdd\u967a\u304b\u3089 {amount}\u5186 \u304c\u632f\u308a\u8fbc\u307e\u308c\u307e\u3057\u305f\u3002</bold></blue>");
-        DEFAULT_MESSAGES.put("auction.won", "<green><bold>\u3010\u843d\u672d\u3011 {item} \u3092 {amount}\u5186 \u3067\u843d\u672d\u3057\u307e\u3057\u305f\u3002\uff08\u53d7\u53d6\u7bb1\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("auction.sold", "<green><bold>\u3010\u843d\u672d\u6210\u7acb\u3011</bold> {item} \u304c {amount}\u5186 \u3067\u843d\u672d\u3055\u308c\u307e\u3057\u305f\u3002\uff08\u624b\u6570\u6599 {fee}\u5186 \u5dee\u5f15\u5f8c {net}\u5186 \u3092\u5165\u91d1\uff09</green>");
-        DEFAULT_MESSAGES.put("auction.outbid-refund", "<yellow>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u3011 {item} \u3078\u306e\u3042\u306a\u305f\u306e\u5165\u672d\u306f\u4e0a\u56de\u3089\u308c\u307e\u3057\u305f\u3002\u5165\u672d\u91d1 {amount}\u5186 \u3092\u8fd4\u91d1\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("loan.player-approved", "<green><bold>\u878d\u8cc7\u5951\u7d04\u304c\u6210\u7acb\u3057\u307e\u3057\u305f\uff01 {amount}\u5186 \u3092\u53d7\u9818\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("loan.gov-approved", "<green><bold>\u56fd\u55b6\u516c\u5eab\u304b\u3089 {amount}\u5186 \u878d\u8cc7\u3092\u53d7\u3051\u307e\u3057\u305f\uff01 (\u9069\u7528\u91d1\u5229: {rate}% / \u7dcf\u8fd4\u6e08\u984d: {total}\u5186 / \u671f\u9650: {minutes}\u5206)</bold></green>");
-        DEFAULT_MESSAGES.put("loan.repaid-full", "<green><bold>\u30d7\u30ec\u30a4\u30e4\u30fc\u9593\u306e\u501f\u91d1\u3092\u5168\u984d\u5b8c\u6e08\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("achievement.unlocked", "<gold><bold>\ud83c\udf96 \u5b9f\u7e3e\u300c{title}\u300d\u3092\u89e3\u653e\u3057\u307e\u3057\u305f\uff01</bold></gold>");
-        DEFAULT_MESSAGES.put("event.boom", "<green><bold>\u3010\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u3011\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5\uff01</bold> \u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u306e\u53d6\u5f15\u4fa1\u683c\u304c\u4e00\u6642\u7684\u306b10%\u4e0a\u6607\u3057\u307e\u3059\u3002</green>");
-        DEFAULT_MESSAGES.put("event.tax", "<red><bold>\u3010\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u3011\u624b\u6570\u6599\u9ad8\u9a30\uff01</bold> \u4e16\u754c\u682a\u5f0f\u5e02\u5834\u306e\u58f2\u8cb7\u624b\u6570\u6599\u304c\u4e00\u6642\u7684\u306b2\u500d\u306b\u306a\u308a\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>\u3010\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u3011\u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc\uff01</bold> \u5168\u30d7\u30ec\u30a4\u30e4\u30fc\u306b5,000\u5186\u3092\u652f\u7d66\u3057\u307e\u3057\u305f\u3002</gold>");
-        DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>\u3010\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u3011\u51ac\u306e\u6642\u4ee3\uff01</bold> \u8cc7\u6e90\u76f8\u5834\u30b7\u30e7\u30c3\u30d7\u306e\u53d6\u5f15\u4fa1\u683c\u304c\u4e00\u6642\u7684\u306b10%\u4e0b\u843d\u3057\u307e\u3059\u3002</dark_red>");
-        DEFAULT_MESSAGES.put("confirm.dissolve-prompt", "<red><bold>\u4f1a\u793e\u3092\u672c\u5f53\u306b\u89e3\u6563\u3057\u307e\u3059\u304b\uff1f</bold></red>");
-        DEFAULT_MESSAGES.put("confirm.withdraw-prompt", "<red><bold>\u9810\u91d1\u5168\u984d\u3092\u5f15\u304d\u51fa\u3057\u307e\u3059\u304b\uff1f</bold></red> <yellow>30\u79d2\u4ee5\u5185\u306b\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3067\u78ba\u5b9a\u3057\u307e\u3059\u3002</yellow>");
-        DEFAULT_MESSAGES.put("confirm.expired", "<red>\u78ba\u8a8d\u306e\u6709\u52b9\u671f\u9650\u304c\u5207\u308c\u307e\u3057\u305f\u3002\u3082\u3046\u4e00\u5ea6\u5b9f\u884c\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("fixed-deposit.matured", "<green><bold>\u5b9a\u671f\u9810\u91d1\u304c\u6e80\u671f\u3092\u8fce\u3048\u307e\u3057\u305f\uff01 \u5831\u916c {amount}\u5186 \u3092\u53d7\u9818\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("fixed-deposit.matured-2", "<aqua><bold>2\u67a0\u76ee\u306e\u5b9a\u671f\u9810\u91d1\u304c\u6e80\u671f\u3092\u8fce\u3048\u307e\u3057\u305f\uff01 \u5831\u916c {amount}\u5186 \u3092\u53d7\u9818\u3057\u307e\u3057\u305f\u3002</bold></aqua>");
-        DEFAULT_MESSAGES.put("fixed-deposit.matured-3", "<light_purple><bold>3\u67a0\u76ee\u306e\u5b9a\u671f\u9810\u91d1\u304c\u6e80\u671f\u3092\u8fce\u3048\u307e\u3057\u305f\uff01 \u5831\u916c {amount}\u5186 \u3092\u53d7\u9818\u3057\u307e\u3057\u305f\u3002</bold></light_purple>");
-        DEFAULT_MESSAGES.put("collateral.seized", "<dark_red><bold>\u3010\u62c5\u4fdd\u6ca1\u53ce\u3011</bold> \u62c5\u4fdd\u4ed8\u304d\u878d\u8cc7\u306e\u8fd4\u6e08\u671f\u9650\u3092\u904e\u304e\u305f\u305f\u3081\u3001\u62c5\u4fdd( {item} )\u306f\u8cea\u5c4b\u306b\u6ca1\u53ce\u3055\u308c\u307e\u3057\u305f\u3002</dark_red>");
-        DEFAULT_MESSAGES.put("loan.gov-overdue-penalty", "<dark_red><bold>\u3010\u5ef6\u6ede\u3011</bold> \u56fd\u55b6\u516c\u5eab\u30ed\u30fc\u30f3\u306e\u8fd4\u6e08\u671f\u9650\u3092\u904e\u304e\u305f\u305f\u3081\u3001\u5ef6\u6ede\u91d1 {amount}\u5186 \u304c\u52a0\u7b97\u3055\u308c\u307e\u3057\u305f\u3002</dark_red>");
-        DEFAULT_MESSAGES.put("loan.gov-overdue-ceiling", "<dark_red><bold>\u3010\u5ef6\u6ede\u3011</bold> \u56fd\u55b6\u516c\u5eab\u30ed\u30fc\u30f3\u304c\u5ef6\u6ede\u4e0a\u9650\uff08{amount}\u5186\uff09\u306b\u9054\u3057\u3066\u3044\u307e\u3059\u3002\u81f3\u6025\u8fd4\u6e08\u3057\u3066\u304f\u3060\u3055\u3044\u3002</dark_red>");
-        DEFAULT_MESSAGES.put("auction.no-bid-returned", "<gray>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u7d42\u4e86\u3011 {item} \u306e\u51fa\u54c1\u306f\u5165\u672d\u8005\u304c\u304a\u3089\u305a\u3001\u624b\u5143\u306b\u623b\u308a\u307e\u3059\u3002\uff08\u53d7\u53d6\u7bb1\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\uff09</gray>");
-        DEFAULT_MESSAGES.put("auction.items-received", "<gold><bold>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30cf\u30a6\u30b9\u3011</bold> \u843d\u672d\u54c1\u30fb\u8fd4\u5374\u54c1 {count}\u4ef6 \u3092\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u306b\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002</gold>");
-        DEFAULT_MESSAGES.put("item.reissue-cooldown", "<red>\u518d\u767a\u884c\u306e\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d\u3067\u3059\u3002\u3042\u3068 {seconds}\u79d2 \u304a\u5f85\u3061\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("item.reissued", "<green><bold>\u7d4c\u6e08\u624b\u5e33\u3092\u518d\u767a\u884c\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("help.header", "<gold><bold>=== MinecraftBank \u30b3\u30de\u30f3\u30c9\u4e00\u89a7 ===</bold></gold>");
-        DEFAULT_MESSAGES.put("help.menu", "<yellow>/meco</yellow> <gray>- \u7d4c\u6e08\u7dcf\u5408\u30e1\u30cb\u30e5\u30fc\u3092\u958b\u304f\uff08\ud83d\udcd6\u7d4c\u6e08\u624b\u5e33\u306e\u53f3\u30af\u30ea\u30c3\u30af\u3067\u3082\u958b\u3051\u307e\u3059\uff09</gray>");
-        DEFAULT_MESSAGES.put("help.shortcuts", "<yellow>/meco <bank|market|auction|resource|worldstock|merchant|vip|todo|quest|lottery|storage|loan|govloan|insurance|collateral|credit|deposit|personal|installment|mypage|leaderboard|achievement|repay></yellow> <gray>- \u5404\u753b\u9762\u306b\u76f4\u63a5\u30a2\u30af\u30bb\u30b9</gray>");
-        DEFAULT_MESSAGES.put("help.webpage", "<yellow>/meco webpage</yellow> <gray>- \u81ea\u5206\u5c02\u7528\u306eWeb\u500b\u4eba\u30da\u30fc\u30b8\u306e\u30ea\u30f3\u30af\u3092\u8868\u793a</gray>");
-        DEFAULT_MESSAGES.put("help.collect", "<yellow>/meco collect</yellow> <gray>- \u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u843d\u672d\u54c1\u306a\u3069\u306e\u53d7\u53d6\u7bb1\u3092\u305d\u306e\u5834\u3067\u518d\u53d7\u53d6</gray>");
-        DEFAULT_MESSAGES.put("help.item", "<yellow>/meco item</yellow> <gray>- \u7d4c\u6e08\u624b\u5e33\u3092\u306a\u304f\u3057\u305f\u5834\u5408\u306b\u518d\u767a\u884c\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("help.log", "<yellow>/meco log</yellow> <gray>- \u76f4\u8fd1\u306e\u53d6\u5f15\u5c65\u6b74\u3092\u8868\u793a</gray>");
-        DEFAULT_MESSAGES.put("help.news", "<yellow>/meco news</yellow> <gray>- \u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001(\u81ea\u5206\u5b9b)\u306eON/OFF\u5207\u66ff</gray>");
-        DEFAULT_MESSAGES.put("help.treasury", "<yellow>/meco treasury</yellow> <gray>- \u56fd\u5eab\u6b8b\u9ad8\u3092\u78ba\u8a8d</gray>");
-        DEFAULT_MESSAGES.put("help.tutorial", "<yellow>/meco tutorial</yellow> <gray>- \u521d\u5fc3\u8005\u30ac\u30a4\u30c9\u3092\u958b\u304d\u76f4\u3059</gray>");
-        DEFAULT_MESSAGES.put("help.donate-treasury", "<yellow>/meco donate treasury <\u91d1\u984d></yellow> <gray>- \u56fd\u5eab\u3078\u5bc4\u4ed8(\u4fe1\u7528\u30b9\u30b3\u30a2\u304c\u5c11\u3057\u4e0a\u304c\u308a\u307e\u3059)</gray>");
-        DEFAULT_MESSAGES.put("help.donate-player", "<yellow>/meco donate <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></yellow> <gray>- \u4ed6\u30d7\u30ec\u30a4\u30e4\u30fc\u3078\u5bc4\u4ed8</gray>");
-        DEFAULT_MESSAGES.put("help.admin-header", "<red><bold>--- \u7ba1\u7406\u8005\u30b3\u30de\u30f3\u30c9 ---</bold></red>");
-        DEFAULT_MESSAGES.put("help.admin-give", "<red>/meco admin give <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></red> <gray>- \u6240\u6301\u91d1\u3092\u4ed8\u4e0e</gray>");
-        DEFAULT_MESSAGES.put("help.admin-take", "<red>/meco admin take <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></red> <gray>- \u6240\u6301\u91d1\u3092\u6ca1\u53ce</gray>");
-        DEFAULT_MESSAGES.put("help.admin-setcredit", "<red>/meco admin setcredit <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u30b9\u30b3\u30a2></red> <gray>- \u4fe1\u7528\u30b9\u30b3\u30a2\u3092\u8a2d\u5b9a</gray>");
-        DEFAULT_MESSAGES.put("help.admin-reset", "<red>/meco admin reset <\u30d7\u30ec\u30a4\u30e4\u30fc></red> <gray>- \u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u5168\u30ea\u30bb\u30c3\u30c8</gray>");
-        DEFAULT_MESSAGES.put("help.admin-discord", "<red>/meco admin discord test</red> <gray>- Discord Bot\u9023\u643a\u306e\u758e\u901a\u30c6\u30b9\u30c8\u9001\u4fe1</gray>");
-        DEFAULT_MESSAGES.put("help.admin-selfcheck", "<red>/meco admin selfcheck [fix]</red> <gray>- \u30c7\u30fc\u30bf\u4e0d\u6574\u5408\u3092\u691c\u51fa(fix\u3067\u81ea\u52d5\u4fee\u5fa9)</gray>");
-        DEFAULT_MESSAGES.put("help.admin-reload", "<red>/meco admin reload</red> <gray>- config.yml\u3092\u518d\u8aad\u8fbc</gray>");
-        DEFAULT_MESSAGES.put("help.admin-save", "<red>/meco admin save</red> <gray>- \u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u5373\u6642\u4fdd\u5b58</gray>");
-        DEFAULT_MESSAGES.put("help.admin-backup", "<red>/meco admin backup</red> <gray>- data.db\u3092\u4eca\u3059\u3050\u30d0\u30c3\u30af\u30a2\u30c3\u30d7</gray>");
-        DEFAULT_MESSAGES.put("help.admin-config", "<red>/meco admin config</red> <gray>- config\u8a2d\u5b9a\u3092GUI\u3067\u7de8\u96c6</gray>");
-        DEFAULT_MESSAGES.put("admin.no-permission", "<red>\u7ba1\u7406\u8005\u6a29\u9650\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("admin.usage", "<yellow>\u4f7f\u7528\u6cd5: /meco admin <give|take|setcredit|reset|reload|save|backup|config|gui> ...</yellow>");
-        DEFAULT_MESSAGES.put("admin.reloaded", "<green><bold>config.yml / messages.yml \u3092\u518d\u8aad\u8fbc\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("admin.reloaded-alt", "<green><bold>config.yml / messages.yml\u3092\u518d\u8aad\u8fbc\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("admin.saved", "<green><bold>\u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u4fdd\u5b58\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("admin.backed-up", "<green><bold>data.db\u306e\u30d0\u30c3\u30af\u30a2\u30c3\u30d7\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("config.edit-prompt", "<yellow>{key} \u306e\u65b0\u3057\u3044\u5024\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002(\u30ad\u30e3\u30f3\u30bb\u30eb \u3067\u4e2d\u6b62)</yellow>");
-        DEFAULT_MESSAGES.put("config.invalid-value", "<red>\u300c{value}\u300d\u306f\u3053\u306e\u8a2d\u5b9a\u306e\u578b\u3068\u3057\u3066\u89e3\u91c8\u3067\u304d\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u6570\u5024\u8a2d\u5b9a\u306b\u306f\u6570\u5b57\u306e\u307f\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("config.updated", "<green><bold>{key} \u3092 {value} \u306b\u5909\u66f4\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("webpage.disabled", "<red>Web\u30c0\u30c3\u30b7\u30e5\u30dc\u30fc\u30c9\u304c\u7121\u52b9\u306b\u306a\u3063\u3066\u3044\u307e\u3059\u3002config.yml\u306ewebdashboard.enabled\u3092true\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("webpage.link", "<green>\u3042\u306a\u305f\u306e\u500b\u4eba\u30da\u30fc\u30b8:</green> <click:open_url:'{url}'><underlined><aqua>{url}</aqua></underlined></click>");
-        DEFAULT_MESSAGES.put("webpage.password-prompt", "<yellow>\u30aa\u30d5\u30e9\u30a4\u30f3\u64cd\u4f5c\u7528\u306e\u30d1\u30b9\u30ef\u30fc\u30c9\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044(4\u6587\u5b57\u4ee5\u4e0a)\u3002\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3067\u4e2d\u6b62\u3002</yellow>");
-        DEFAULT_MESSAGES.put("webpage.password-too-short", "<red>\u30d1\u30b9\u30ef\u30fc\u30c9\u306f4\u6587\u5b57\u4ee5\u4e0a\u306b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("webpage.password-set", "<green><bold>\u30aa\u30d5\u30e9\u30a4\u30f3\u64cd\u4f5c\u7528\u30d1\u30b9\u30ef\u30fc\u30c9\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002\u3053\u308c\u3067\u30ed\u30b0\u30a4\u30f3\u3057\u3066\u3044\u306a\u3044\u6642\u3082Web\u30da\u30fc\u30b8\u304b\u3089\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("webpage.password-cleared", "<green>\u30aa\u30d5\u30e9\u30a4\u30f3\u64cd\u4f5c\u7528\u30d1\u30b9\u30ef\u30fc\u30c9\u3092\u89e3\u9664\u3057\u307e\u3057\u305f\u3002\u4ee5\u5f8c\u306f\u30ed\u30b0\u30a4\u30f3\u4e2d\u306e\u307fWeb\u30da\u30fc\u30b8\u304b\u3089\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002</green>");
-        DEFAULT_MESSAGES.put("webpage.password-status-set", "<gray>(\u30aa\u30d5\u30e9\u30a4\u30f3\u64cd\u4f5c\u7528\u30d1\u30b9\u30ef\u30fc\u30c9\u8a2d\u5b9a\u6e08\u307f\u3002\u5909\u66f4/\u89e3\u9664\u306f /meco webpage password )</gray>");
-        DEFAULT_MESSAGES.put("webpage.password-status-unset", "<gray>(\u30ed\u30b0\u30a4\u30f3\u4e2d\u306e\u307fWeb\u304b\u3089\u64cd\u4f5c\u3067\u304d\u307e\u3059\u3002\u30aa\u30d5\u30e9\u30a4\u30f3\u3067\u3082\u64cd\u4f5c\u3057\u305f\u3044\u5834\u5408\u306f /meco webpage password \u3067\u30d1\u30b9\u30ef\u30fc\u30c9\u3092\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044)</gray>");
-        DEFAULT_MESSAGES.put("admin.need-playername", "<yellow>\u30d7\u30ec\u30a4\u30e4\u30fc\u540d\u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002</yellow>");
-        DEFAULT_MESSAGES.put("admin.usage-give", "<yellow>\u4f7f\u7528\u6cd5: /meco admin give <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></yellow>");
-        DEFAULT_MESSAGES.put("admin.give-success", "<green>{player} \u306b {amount}\u5186 \u3092\u4ed8\u4e0e\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("common.invalid-amount-number", "<red>\u91d1\u984d\u306f\u6570\u5024\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("admin.usage-take", "<yellow>\u4f7f\u7528\u6cd5: /meco admin take <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></yellow>");
-        DEFAULT_MESSAGES.put("admin.take-success", "<green>{player} \u304b\u3089 {amount}\u5186 \u3092\u6ca1\u53ce\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("admin.usage-setcredit", "<yellow>\u4f7f\u7528\u6cd5: /meco admin setcredit <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u30b9\u30b3\u30a2></yellow>");
-        DEFAULT_MESSAGES.put("admin.setcredit-success", "<green>{player} \u306e\u4fe1\u7528\u30b9\u30b3\u30a2\u3092 {score} \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("admin.invalid-score-number", "<red>\u30b9\u30b3\u30a2\u306f\u6570\u5024\u3067\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("admin.usage-setgovdebt", "<yellow>\u4f7f\u7528\u6cd5: /meco admin setgovdebt <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d>\uff080\u3067\u5b8c\u6e08\u6271\u3044\uff09</yellow>");
-        DEFAULT_MESSAGES.put("admin.setgovdebt-success", "<green>{player} \u306e\u56fd\u55b6\u30ed\u30fc\u30f3\u6b8b\u50b5\u3092 {amount}\u5186 \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("admin.reset-success", "<green><bold>{player} \u306e\u7d4c\u6e08\u30c7\u30fc\u30bf\u3092\u30ea\u30bb\u30c3\u30c8\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("admin.reset-note", "<gray>(\u4f1a\u793e\u30fb\u9023\u5408\u30c7\u30fc\u30bf\u306f\u5f71\u97ff\u304c\u5927\u304d\u3044\u305f\u3081\u5225\u9014 /meco admin reset \u306f\u500b\u4eba\u30c7\u30fc\u30bf\u306e\u307f\u5bfe\u8c61\u3067\u3059)</gray>");
+        DEFAULT_MESSAGES.put("welcome.first-join", "<gold><bold>【経済手帳】</bold> あなたに経済手帳が配布されました。右クリックで経済総合メニューを開けます。</gold>");
+        DEFAULT_MESSAGES.put("welcome.no-permission", "<red>このコマンドを使用する権限がありません。</red>");
+        DEFAULT_MESSAGES.put("common.insufficient-funds", "<red>手持ち資金が足りません。（所持金: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("common.invalid-number", "<red>数値を入力してください。（例: 5000）</red>");
+        DEFAULT_MESSAGES.put("common.cancelled", "<gray>入力をキャンセルしました。</gray>");
+        DEFAULT_MESSAGES.put("insurance.payout", "<blue><bold>【保険金支払い】 加入していた生命保険から {amount}円 が振り込まれました。</bold></blue>");
+        DEFAULT_MESSAGES.put("auction.won", "<green><bold>【落札】 {item} を {amount}円 で落札しました。（受取箱を確認してください）</bold></green>");
+        DEFAULT_MESSAGES.put("auction.sold", "<green><bold>【落札成立】</bold> {item} が {amount}円 で落札されました。（手数料 {fee}円 差引後 {net}円 を入金）</green>");
+        DEFAULT_MESSAGES.put("auction.outbid-refund", "<yellow>【オークション】 {item} へのあなたの入札は上回られました。入札金 {amount}円 を返金しました。</yellow>");
+        DEFAULT_MESSAGES.put("loan.player-approved", "<green><bold>融資契約が成立しました！ {amount}円 を受領しました。</bold></green>");
+        DEFAULT_MESSAGES.put("loan.gov-approved", "<green><bold>国営公庫から {amount}円 融資を受けました！ (適用金利: {rate}% / 総返済額: {total}円 / 期限: {minutes}分)</bold></green>");
+        DEFAULT_MESSAGES.put("loan.repaid-full", "<green><bold>プレイヤー間の借金を全額完済しました！</bold></green>");
+        DEFAULT_MESSAGES.put("achievement.unlocked", "<gold><bold>🎖 実績「{title}」を解放しました！</bold></gold>");
+        DEFAULT_MESSAGES.put("event.boom", "<green><bold>【経済イベント】黄金ラッシュ！</bold> 資源相場ショップの取引価格が一時的に10%上昇します。</green>");
+        DEFAULT_MESSAGES.put("event.tax", "<red><bold>【経済イベント】手数料高騰！</bold> 世界株式市場の売買手数料が一時的に2倍になります。</red>");
+        DEFAULT_MESSAGES.put("event.bonus", "<gold><bold>【経済イベント】ボーナス支給デー！</bold> 全プレイヤーに5,000円を支給しました。</gold>");
+        DEFAULT_MESSAGES.put("event.recession", "<dark_red><bold>【経済イベント】冬の時代！</bold> 資源相場ショップの取引価格が一時的に10%下落します。</dark_red>");
+        DEFAULT_MESSAGES.put("confirm.dissolve-prompt", "<red><bold>会社を本当に解散しますか？</bold></red>");
+        DEFAULT_MESSAGES.put("confirm.withdraw-prompt", "<red><bold>預金全額を引き出しますか？</bold></red> <yellow>30秒以内にもう一度クリックで確定します。</yellow>");
+        DEFAULT_MESSAGES.put("confirm.expired", "<red>確認の有効期限が切れました。もう一度実行してください。</red>");
+        DEFAULT_MESSAGES.put("fixed-deposit.matured", "<green><bold>定期預金が満期を迎えました！ 報酬 {amount}円 を受領しました。</bold></green>");
+        DEFAULT_MESSAGES.put("fixed-deposit.matured-2", "<aqua><bold>2枠目の定期預金が満期を迎えました！ 報酬 {amount}円 を受領しました。</bold></aqua>");
+        DEFAULT_MESSAGES.put("fixed-deposit.matured-3", "<light_purple><bold>3枠目の定期預金が満期を迎えました！ 報酬 {amount}円 を受領しました。</bold></light_purple>");
+        DEFAULT_MESSAGES.put("collateral.seized", "<dark_red><bold>【担保没収】</bold> 担保付き融資の返済期限を過ぎたため、担保( {item} )は質屋に没収されました。</dark_red>");
+        DEFAULT_MESSAGES.put("loan.gov-overdue-penalty", "<dark_red><bold>【延滞】</bold> 国営公庫ローンの返済期限を過ぎたため、延滞金 {amount}円 が加算されました。</dark_red>");
+        DEFAULT_MESSAGES.put("loan.gov-overdue-ceiling", "<dark_red><bold>【延滞】</bold> 国営公庫ローンが延滞上限（{amount}円）に達しています。至急返済してください。</dark_red>");
+        DEFAULT_MESSAGES.put("auction.no-bid-returned", "<gray>【オークション終了】 {item} の出品は入札者がおらず、手元に戻ります。（受取箱を確認してください）</gray>");
+        DEFAULT_MESSAGES.put("auction.items-received", "<gold><bold>【オークションハウス】</bold> 落札品・返却品 {count}件 をインベントリに受け取りました。</gold>");
+        DEFAULT_MESSAGES.put("item.reissue-cooldown", "<red>再発行のクールダウン中です。あと {seconds}秒 お待ちください。</red>");
+        DEFAULT_MESSAGES.put("item.reissued", "<green><bold>経済手帳を再発行しました。</bold></green>");
+        DEFAULT_MESSAGES.put("help.header", "<gold><bold>=== MinecraftBank コマンド一覧 ===</bold></gold>");
+        DEFAULT_MESSAGES.put("help.menu", "<yellow>/meco</yellow> <gray>- 経済総合メニューを開く（📖経済手帳の右クリックでも開けます）</gray>");
+        DEFAULT_MESSAGES.put("help.shortcuts", "<yellow>/meco <bank|market|auction|resource|worldstock|merchant|vip|todo|quest|lottery|storage|loan|govloan|insurance|collateral|credit|deposit|personal|installment|mypage|leaderboard|achievement|repay></yellow> <gray>- 各画面に直接アクセス</gray>");
+        DEFAULT_MESSAGES.put("help.webpage", "<yellow>/meco webpage</yellow> <gray>- 自分専用のWeb個人ページのリンクを表示</gray>");
+        DEFAULT_MESSAGES.put("help.collect", "<yellow>/meco collect</yellow> <gray>- オークション落札品などの受取箱をその場で再受取</gray>");
+        DEFAULT_MESSAGES.put("help.item", "<yellow>/meco item</yellow> <gray>- 経済手帳をなくした場合に再発行する</gray>");
+        DEFAULT_MESSAGES.put("help.log", "<yellow>/meco log</yellow> <gray>- 直近の取引履歴を表示</gray>");
+        DEFAULT_MESSAGES.put("help.news", "<yellow>/meco news</yellow> <gray>- 経済ニュース放送(自分宛)のON/OFF切替</gray>");
+        DEFAULT_MESSAGES.put("help.treasury", "<yellow>/meco treasury</yellow> <gray>- 国庫残高を確認</gray>");
+        DEFAULT_MESSAGES.put("help.tutorial", "<yellow>/meco tutorial</yellow> <gray>- 初心者ガイドを開き直す</gray>");
+        DEFAULT_MESSAGES.put("help.donate-treasury", "<yellow>/meco donate treasury <金額></yellow> <gray>- 国庫へ寄付(信用スコアが少し上がります)</gray>");
+        DEFAULT_MESSAGES.put("help.donate-player", "<yellow>/meco donate <プレイヤー> <金額></yellow> <gray>- 他プレイヤーへ寄付</gray>");
+        DEFAULT_MESSAGES.put("help.admin-header", "<red><bold>--- 管理者コマンド ---</bold></red>");
+        DEFAULT_MESSAGES.put("help.admin-give", "<red>/meco admin give <プレイヤー> <金額></red> <gray>- 所持金を付与</gray>");
+        DEFAULT_MESSAGES.put("help.admin-take", "<red>/meco admin take <プレイヤー> <金額></red> <gray>- 所持金を没収</gray>");
+        DEFAULT_MESSAGES.put("help.admin-setcredit", "<red>/meco admin setcredit <プレイヤー> <スコア></red> <gray>- 信用スコアを設定</gray>");
+        DEFAULT_MESSAGES.put("help.admin-reset", "<red>/meco admin reset <プレイヤー></red> <gray>- 経済データを全リセット</gray>");
+        DEFAULT_MESSAGES.put("help.admin-discord", "<red>/meco admin discord test</red> <gray>- Discord Bot連携の疎通テスト送信</gray>");
+        DEFAULT_MESSAGES.put("help.admin-selfcheck", "<red>/meco admin selfcheck [fix]</red> <gray>- データ不整合を検出(fixで自動修復)</gray>");
+        DEFAULT_MESSAGES.put("help.admin-reload", "<red>/meco admin reload</red> <gray>- config.ymlを再読込</gray>");
+        DEFAULT_MESSAGES.put("help.admin-save", "<red>/meco admin save</red> <gray>- 経済データを即時保存</gray>");
+        DEFAULT_MESSAGES.put("help.admin-backup", "<red>/meco admin backup</red> <gray>- data.dbを今すぐバックアップ</gray>");
+        DEFAULT_MESSAGES.put("help.admin-config", "<red>/meco admin config</red> <gray>- config設定をGUIで編集</gray>");
+        DEFAULT_MESSAGES.put("admin.no-permission", "<red>管理者権限がありません。</red>");
+        DEFAULT_MESSAGES.put("admin.usage", "<yellow>使用法: /meco admin <give|take|setcredit|reset|reload|save|backup|config|gui> ...</yellow>");
+        DEFAULT_MESSAGES.put("admin.reloaded", "<green><bold>config.yml / messages.yml を再読込しました。</bold></green>");
+        DEFAULT_MESSAGES.put("admin.reloaded-alt", "<green><bold>config.yml / messages.ymlを再読込しました。</bold></green>");
+        DEFAULT_MESSAGES.put("admin.saved", "<green><bold>経済データを保存しました。</bold></green>");
+        DEFAULT_MESSAGES.put("admin.backed-up", "<green><bold>data.dbのバックアップを作成しました。</bold></green>");
+        DEFAULT_MESSAGES.put("config.edit-prompt", "<yellow>{key} の新しい値をチャットに入力してください。(キャンセル で中止)</yellow>");
+        DEFAULT_MESSAGES.put("config.invalid-value", "<red>「{value}」はこの設定の型として解釈できませんでした。数値設定には数字のみ入力してください。</red>");
+        DEFAULT_MESSAGES.put("config.updated", "<green><bold>{key} を {value} に変更しました。</bold></green>");
+        DEFAULT_MESSAGES.put("webpage.disabled", "<red>Webダッシュボードが無効になっています。config.ymlのwebdashboard.enabledをtrueにしてください。</red>");
+        DEFAULT_MESSAGES.put("webpage.link", "<green>あなたの個人ページ:</green> <click:open_url:'{url}'><underlined><aqua>{url}</aqua></underlined></click>");
+        DEFAULT_MESSAGES.put("webpage.password-prompt", "<yellow>オフライン操作用のパスワードをチャットに入力してください(4文字以上)。「キャンセル」で中止。</yellow>");
+        DEFAULT_MESSAGES.put("webpage.password-too-short", "<red>パスワードは4文字以上にしてください。</red>");
+        DEFAULT_MESSAGES.put("webpage.password-set", "<green><bold>オフライン操作用パスワードを設定しました。これでログインしていない時もWebページから操作できます。</bold></green>");
+        DEFAULT_MESSAGES.put("webpage.password-cleared", "<green>オフライン操作用パスワードを解除しました。以後はログイン中のみWebページから操作できます。</green>");
+        DEFAULT_MESSAGES.put("webpage.password-status-set", "<gray>(オフライン操作用パスワード設定済み。変更/解除は /meco webpage password )</gray>");
+        DEFAULT_MESSAGES.put("webpage.password-status-unset", "<gray>(ログイン中のみWebから操作できます。オフラインでも操作したい場合は /meco webpage password でパスワードを設定してください)</gray>");
+        DEFAULT_MESSAGES.put("admin.need-playername", "<yellow>プレイヤー名を指定してください。</yellow>");
+        DEFAULT_MESSAGES.put("admin.usage-give", "<yellow>使用法: /meco admin give <プレイヤー> <金額></yellow>");
+        DEFAULT_MESSAGES.put("admin.give-success", "<green>{player} に {amount}円 を付与しました。</green>");
+        DEFAULT_MESSAGES.put("common.invalid-amount-number", "<red>金額は数値で指定してください。</red>");
+        DEFAULT_MESSAGES.put("admin.usage-take", "<yellow>使用法: /meco admin take <プレイヤー> <金額></yellow>");
+        DEFAULT_MESSAGES.put("admin.take-success", "<green>{player} から {amount}円 を没収しました。</green>");
+        DEFAULT_MESSAGES.put("admin.usage-setcredit", "<yellow>使用法: /meco admin setcredit <プレイヤー> <スコア></yellow>");
+        DEFAULT_MESSAGES.put("admin.setcredit-success", "<green>{player} の信用スコアを {score} に設定しました。</green>");
+        DEFAULT_MESSAGES.put("admin.invalid-score-number", "<red>スコアは数値で指定してください。</red>");
+        DEFAULT_MESSAGES.put("admin.usage-setgovdebt", "<yellow>使用法: /meco admin setgovdebt <プレイヤー> <金額>（0で完済扱い）</yellow>");
+        DEFAULT_MESSAGES.put("admin.setgovdebt-success", "<green>{player} の国営ローン残債を {amount}円 に設定しました。</green>");
+        DEFAULT_MESSAGES.put("admin.reset-success", "<green><bold>{player} の経済データをリセットしました。</bold></green>");
+        DEFAULT_MESSAGES.put("admin.reset-note", "<gray>(会社・連合データは影響が大きいため別途 /meco admin reset は個人データのみ対象です)</gray>");
         DEFAULT_MESSAGES.put("admin.usage-event", "<yellow>/meco admin event <random|boom|tax|bonus|recession></yellow>");
-        DEFAULT_MESSAGES.put("admin.discord-not-configured", "<red>Bot\u30c8\u30fc\u30af\u30f3\u307e\u305f\u306f\u30c1\u30e3\u30f3\u30cd\u30ebid\u304cconfig.yml\u306b\u8a2d\u5b9a\u3055\u308c\u3066\u3044\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("admin.discord-config-hint", "<gray>system.discord-bot-token / system.discord-channel-id \u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002</gray>");
-        DEFAULT_MESSAGES.put("admin.discord-test-sending", "<gray>Discord\u3078\u30c6\u30b9\u30c8\u9001\u4fe1\u4e2d...\u30b5\u30fc\u30d0\u30fc\u30b3\u30f3\u30bd\u30fc\u30eb\u306b\u7d50\u679c\u30ed\u30b0\u304c\u51fa\u307e\u3059\u3002</gray>");
-        DEFAULT_MESSAGES.put("admin.usage-discord-test", "<yellow>\u4f7f\u7528\u6cd5: /meco admin discord test</yellow>");
-        DEFAULT_MESSAGES.put("admin.selfcheck-ok", "<green><bold>\u3010\u81ea\u5df1\u8a3a\u65ad\u3011</bold> \u30c7\u30fc\u30bf\u4e0d\u6574\u5408\u306f\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("admin.selfcheck-issues", "<yellow><bold>\u3010\u81ea\u5df1\u8a3a\u65ad\u3011{count}\u4ef6\u306e\u4e0d\u6574\u5408\u3092\u691c\u51fa\u3057\u307e\u3057\u305f{note}</bold></yellow>");
-        DEFAULT_MESSAGES.put("admin.selfcheck-more", "<gray>...\u4ed6 {count}\u4ef6\uff08\u30b3\u30f3\u30bd\u30fc\u30eb\u30ed\u30b0\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\uff09</gray>");
+        DEFAULT_MESSAGES.put("admin.discord-not-configured", "<red>Botトークンまたはチャンネルidがconfig.ymlに設定されていません。</red>");
+        DEFAULT_MESSAGES.put("admin.discord-config-hint", "<gray>system.discord-bot-token / system.discord-channel-id を確認してください。</gray>");
+        DEFAULT_MESSAGES.put("admin.discord-test-sending", "<gray>Discordへテスト送信中...サーバーコンソールに結果ログが出ます。</gray>");
+        DEFAULT_MESSAGES.put("admin.usage-discord-test", "<yellow>使用法: /meco admin discord test</yellow>");
+        DEFAULT_MESSAGES.put("admin.selfcheck-ok", "<green><bold>【自己診断】</bold> データ不整合は見つかりませんでした。</green>");
+        DEFAULT_MESSAGES.put("admin.selfcheck-issues", "<yellow><bold>【自己診断】{count}件の不整合を検出しました{note}</bold></yellow>");
+        DEFAULT_MESSAGES.put("admin.selfcheck-more", "<gray>...他 {count}件（コンソールログを確認してください）</gray>");
         DEFAULT_MESSAGES.put("admin.selfcheck-issue-line", "<gray>- {issue}</gray>");
-        DEFAULT_MESSAGES.put("admin.usage-full", "<yellow>\u4f7f\u7528\u6cd5: /meco admin <give|take|setcredit|setgovdebt|reset|reload|save|event|discord|selfcheck|gui> ...</yellow>");
-        DEFAULT_MESSAGES.put("log.empty", "<gray>\u53d6\u5f15\u5c65\u6b74\u306f\u307e\u3060\u3042\u308a\u307e\u305b\u3093\u3002</gray>");
-        DEFAULT_MESSAGES.put("log.header", "<gold><bold>=== \u76f4\u8fd1\u306e\u53d6\u5f15\u5c65\u6b74 ===</bold></gold>");
+        DEFAULT_MESSAGES.put("admin.usage-full", "<yellow>使用法: /meco admin <give|take|setcredit|setgovdebt|reset|reload|save|event|discord|selfcheck|gui> ...</yellow>");
+        DEFAULT_MESSAGES.put("log.empty", "<gray>取引履歴はまだありません。</gray>");
+        DEFAULT_MESSAGES.put("log.header", "<gold><bold>=== 直近の取引履歴 ===</bold></gold>");
         DEFAULT_MESSAGES.put("log.entry", "<gray>{entry}</gray>");
-        DEFAULT_MESSAGES.put("news.enabled", "<green>\u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001\u3092\u3010ON\u3011\u306b\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("news.disabled", "<yellow>\u7d4c\u6e08\u30cb\u30e5\u30fc\u30b9\u653e\u9001\u3092\u3010OFF\u3011\u306b\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("treasury.balance", "<gold>\u3010\u56fd\u5eab\u3011 <white>{amount}\u5186</white></gold>");
-        DEFAULT_MESSAGES.put("treasury.admin-required", "<red>\u7ba1\u7406\u8005\u6a29\u9650\u304c\u5fc5\u8981\u3067\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("treasury.insufficient", "<red>\u56fd\u5eab\u6b8b\u9ad8\u304c\u4e0d\u8db3\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("common.invalid-amount", "<red>\u91d1\u984d\u304c\u4e0d\u6b63\u3067\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("treasury.usage", "<yellow>/meco treasury</yellow> / <yellow>/meco treasury bonus <\u91d1\u984d></yellow> / <yellow>/meco treasury set <\u91d1\u984d></yellow> / <yellow>/meco treasury donate <\u91d1\u984d></yellow>");
-        DEFAULT_MESSAGES.put("treasury.set", "<gold>\u56fd\u5eab\u6b8b\u9ad8\u3092 <white>{amount}\u5186</white> \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</gold>");
-        DEFAULT_MESSAGES.put("treasury.citizen-dividend", "<gold><bold>\u3010\u5e02\u6c11\u914d\u5f53\u3011</bold> \u56fd\u5eab\u304b\u3089 <white>{amount}\u5186</white> \u304c\u914d\u5f53\u3055\u308c\u307e\u3057\u305f\u3002</gold>");
-        DEFAULT_MESSAGES.put("treasury.welfare", "<green><bold>\u3010\u751f\u6d3b\u652f\u63f4\u3011</bold> \u56fd\u5eab\u304b\u3089\u751f\u6d3b\u652f\u63f4\u91d1 <white>{amount}\u5186</white> \u304c\u7d66\u4ed8\u3055\u308c\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("donate.usage-treasury", "<yellow>/meco donate treasury <\u91d1\u984d></yellow> <gray>- \u56fd\u5eab\u3078\u5bc4\u4ed8(\u4fe1\u7528\u30b9\u30b3\u30a2\u304c\u5c11\u3057\u4e0a\u304c\u308a\u307e\u3059)</gray>");
-        DEFAULT_MESSAGES.put("donate.usage-player", "<yellow>/meco donate <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></yellow> <gray>- \u4ed6\u30d7\u30ec\u30a4\u30e4\u30fc\u3078\u5bc4\u4ed8</gray>");
-        DEFAULT_MESSAGES.put("donate.usage-treasury-amount", "<yellow>/meco donate treasury <\u91d1\u984d></yellow>");
-        DEFAULT_MESSAGES.put("common.amount-must-be-positive", "<red>0\u5186\u3088\u308a\u5927\u304d\u3044\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("common.insufficient-funds-simple", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("donate.treasury-thanks", "<green><bold>\u56fd\u5eab\u3078 {amount}\u5186 \u3092\u5bc4\u4ed8\u3057\u307e\u3057\u305f\u3002\u3042\u308a\u304c\u3068\u3046\u3054\u3056\u3044\u307e\u3059\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("common.target-offline", "<red>\u5bfe\u8c61\u30d7\u30ec\u30a4\u30e4\u30fc\u304c\u30aa\u30f3\u30e9\u30a4\u30f3\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("donate.cannot-self", "<red>\u81ea\u5206\u81ea\u8eab\u306b\u306f\u5bc4\u4ed8\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("donate.usage-player-amount", "<yellow>/meco donate <\u30d7\u30ec\u30a4\u30e4\u30fc> <\u91d1\u984d></yellow>");
-        DEFAULT_MESSAGES.put("donate.player-success", "<green><bold>{player} \u306b {amount}\u5186 \u3092\u5bc4\u4ed8\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("donate.player-received", "<gold><bold>\u3010\u5bc4\u4ed8\u3011</bold> {player} \u304b\u3089 {amount}\u5186 \u306e\u5bc4\u4ed8\u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002</gold>");
-        DEFAULT_MESSAGES.put("guarantor.usage-request", "<yellow>/meco guarantor request <\u30d7\u30ec\u30a4\u30e4\u30fc></yellow> <gray>- \u4fdd\u8a3c\u4eba\u3092\u4f9d\u983c\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("guarantor.usage-accept", "<yellow>/meco guarantor accept</yellow> <gray>- \u4f9d\u983c\u3092\u627f\u8afe\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("guarantor.usage-decline", "<yellow>/meco guarantor decline</yellow> <gray>- \u4f9d\u983c\u3092\u62d2\u5426\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("guarantor.no-proposal-expired", "<red>\u6709\u52b9\u306a\u4fdd\u8a3c\u4eba\u4f9d\u983c\u304c\u3042\u308a\u307e\u305b\u3093\u3002\uff08\u671f\u9650\u5207\u308c\u306e\u53ef\u80fd\u6027\u304c\u3042\u308a\u307e\u3059\uff09</red>");
-        DEFAULT_MESSAGES.put("guarantor.borrower-no-debt", "<red>\u4f9d\u983c\u8005\u306b\u306f\u3082\u3046\u5bfe\u8c61\u306e\u501f\u91d1\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("guarantor.became", "<green><bold>{player} \u306e\u4fdd\u8a3c\u4eba\u306b\u306a\u308a\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("guarantor.became-notice", "<green>{player} \u304c\u3042\u306a\u305f\u306e\u4fdd\u8a3c\u4eba\u306b\u306a\u308a\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("guarantor.declined-self", "<yellow>\u4fdd\u8a3c\u4eba\u4f9d\u983c\u3092\u62d2\u5426\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("guarantor.declined-notice", "<red>{player} \u306f\u4fdd\u8a3c\u4eba\u4f9d\u983c\u3092\u62d2\u5426\u3057\u307e\u3057\u305f\u3002</red>");
-        DEFAULT_MESSAGES.put("guarantor.no-proposal", "<red>\u6709\u52b9\u306a\u4fdd\u8a3c\u4eba\u4f9d\u983c\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("guarantor.no-debt", "<red>\u3042\u306a\u305f\u306b\u306f\u73fe\u5728\u3001\u5bfe\u8c61\u3068\u306a\u308b\u501f\u91d1\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("guarantor.already-set", "<red>\u3059\u3067\u306b\u4fdd\u8a3c\u4eba\u304c\u8a2d\u5b9a\u3055\u308c\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("guarantor.usage-request-arg", "<yellow>/meco guarantor request <\u30d7\u30ec\u30a4\u30e4\u30fc></yellow>");
-        DEFAULT_MESSAGES.put("guarantor.cannot-self", "<red>\u81ea\u5206\u81ea\u8eab\u3092\u4fdd\u8a3c\u4eba\u306b\u306f\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("guarantor.requested", "<green><bold>{player} \u306b\u4fdd\u8a3c\u4eba\u3092\u4f9d\u983c\u3057\u307e\u3057\u305f\u3002\uff085\u5206\u4ee5\u5185\u306b\u8fd4\u7b54\u304c\u5fc5\u8981\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("guarantor.request-received", "<gold><bold>\u3010\u4fdd\u8a3c\u4eba\u4f9d\u983c\u3011</bold> {player} \u304c\u3042\u306a\u305f\u306b\u878d\u8cc7\u306e\u4fdd\u8a3c\u4eba\u3092\u4f9d\u983c\u3057\u3066\u3044\u307e\u3059\u3002</gold>");
-        DEFAULT_MESSAGES.put("guarantor.request-instructions", "<yellow>\u627f\u8afe: /meco guarantor accept \uff0f \u62d2\u5426: /meco guarantor decline</yellow>");
-        DEFAULT_MESSAGES.put("guarantor.request-warning", "<gray>\u203b\u4fdd\u8a3c\u4eba\u306b\u306a\u308b\u3068\u3001\u4f9d\u983c\u8005\u304c\u8fd4\u6e08\u4e0d\u80fd\u306b\u306a\u3063\u305f\u969b\u306b\u4fe1\u7528\u30b9\u30b3\u30a2\u3078\u5f71\u97ff\u3057\u307e\u3059\u3002</gray>");
-        DEFAULT_MESSAGES.put("guarantor.usage", "<yellow>\u4f7f\u7528\u6cd5: /meco guarantor <request|accept|decline></yellow>");
-        DEFAULT_MESSAGES.put("trade.usage", "<yellow>\u4f7f\u7528\u6cd5: /meco trade <\u30d7\u30ec\u30a4\u30e4\u30fc|accept|decline></yellow>");
-        DEFAULT_MESSAGES.put("trade.request-sent", "<green><bold>{player} \u306b\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u3092\u7533\u3057\u8fbc\u307f\u307e\u3057\u305f\u3002\uff0860\u79d2\u4ee5\u5185\u306b\u8fd4\u7b54\u304c\u5fc5\u8981\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("trade.request-received", "<gold><bold>\u3010\u4ea4\u63db\u4f9d\u983c\u3011</bold> {player} \u304c\u3042\u306a\u305f\u306b\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u3092\u7533\u3057\u8fbc\u3093\u3067\u3044\u307e\u3059\u3002</gold>");
-        DEFAULT_MESSAGES.put("trade.request-instructions", "<yellow>\u627f\u8afe: /meco trade accept \uff0f \u62d2\u5426: /meco trade decline</yellow>");
-        DEFAULT_MESSAGES.put("trade.no-request", "<red>\u6709\u52b9\u306a\u4ea4\u63db\u4f9d\u983c\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("trade.no-request-expired", "<red>\u6709\u52b9\u306a\u4ea4\u63db\u4f9d\u983c\u304c\u3042\u308a\u307e\u305b\u3093\u3002\uff08\u671f\u9650\u5207\u308c\u306e\u53ef\u80fd\u6027\u304c\u3042\u308a\u307e\u3059\uff09</red>");
-        DEFAULT_MESSAGES.put("trade.declined-self", "<yellow>\u4ea4\u63db\u4f9d\u983c\u3092\u62d2\u5426\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("trade.declined-notice", "<red>{player} \u306f\u4ea4\u63db\u4f9d\u983c\u3092\u62d2\u5426\u3057\u307e\u3057\u305f\u3002</red>");
-        DEFAULT_MESSAGES.put("trade.cannot-self", "<red>\u81ea\u5206\u81ea\u8eab\u3068\u306f\u4ea4\u63db\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("trade.already-in-progress", "<red>\u65e2\u306b\u4ea4\u63db\u304c\u9032\u884c\u4e2d\u304b\u3001\u4fdd\u7559\u4e2d\u306e\u4f9d\u983c\u304c\u3042\u308a\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("trade.money-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u63d0\u793a\u3059\u308b\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff080\u3067\u30ad\u30e3\u30f3\u30bb\u30eb\u53ef\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("trade.money-set", "<green>\u63d0\u793a\u91d1\u984d\u3092 {amount}\u5186 \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("trade.money-insufficient", "<red>\u6240\u6301\u91d1\u304c\u8db3\u308a\u306a\u3044\u305f\u3081\u3001\u305d\u306e\u91d1\u984d\u306f\u63d0\u793a\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("trade.cancelled", "<red><bold>\u53d6\u5f15\u306f\u30ad\u30e3\u30f3\u30bb\u30eb\u3055\u308c\u307e\u3057\u305f\u3002\u63d0\u793a\u3057\u3066\u3044\u305f\u30a2\u30a4\u30c6\u30e0\u306f\u8fd4\u5374\u3055\u308c\u307e\u3057\u305f\u3002</bold></red>");
-        DEFAULT_MESSAGES.put("trade.completed", "<green><bold>\u3010\u6210\u7acb\u3011\u30a2\u30a4\u30c6\u30e0\u4ea4\u63db\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("help.trade", "<yellow>/meco trade <\u30d7\u30ec\u30a4\u30e4\u30fc></yellow> <gray>- \u5b89\u5168\u306b\u30a2\u30a4\u30c6\u30e0\u30fb\u304a\u91d1\u3092\u4ea4\u63db\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("quest.max-reached", "<red>\u63b2\u793a\u3067\u304d\u308b\u4f9d\u983c\u6570\u306e\u4e0a\u9650({count}\u4ef6)\u306b\u9054\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.post-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u4f9d\u983c\u306e\u5831\u916c\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u3042\u306a\u305f\u306e\u4eca\u306e\u5834\u6240\u304c\u76ee\u7684\u5730\u306b\u306a\u308a\u307e\u3059\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("quest.withdrawn", "<yellow>\u4f9d\u983c\u3092\u53d6\u308a\u4e0b\u3052\u3001\u5831\u916c {amount}\u5186 \u3092\u8fd4\u91d1\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("quest.cannot-withdraw", "<gray>\u53d7\u6ce8\u4e2d\u307e\u305f\u306f\u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d\u306e\u4f9d\u983c\u306f\u53d6\u308a\u4e0b\u3052\u3089\u308c\u307e\u305b\u3093\u3002</gray>");
-        DEFAULT_MESSAGES.put("quest.accepted", "<green><bold>\u4f9d\u983c\u3092\u53d7\u6ce8\u3057\u307e\u3057\u305f\uff01\u76ee\u7684\u5730({world} {x}, {y}, {z})\u307e\u3067\u79fb\u52d5\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("quest.accepted-notice", "<aqua>{player} \u304c\u3042\u306a\u305f\u306e\u4f9d\u983c\u3092\u53d7\u6ce8\u3057\u307e\u3057\u305f\u3002</aqua>");
-        DEFAULT_MESSAGES.put("quest.abandoned", "<yellow>\u4f9d\u983c\u3092\u653e\u68c4\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("quest.not-acceptable", "<gray>\u3053\u306e\u4f9d\u983c\u306f\u73fe\u5728\u53d7\u6ce8\u3067\u304d\u307e\u305b\u3093\u3002</gray>");
-        DEFAULT_MESSAGES.put("quest.team-post-prompt-reward", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u30c1\u30fc\u30e0\u4f9d\u983c\u306e\u300c\u4e00\u4eba\u3042\u305f\u308a\u300d\u306e\u5831\u916c\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u3042\u306a\u305f\u306e\u4eca\u306e\u5834\u6240\u304c\u76ee\u7684\u5730\u306b\u306a\u308a\u307e\u3059\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("quest.team-post-prompt-size", "<gold><bold>\u6b21\u306b\u3001\u5fc5\u8981\u306a\u4eba\u6570\uff082\u301c{max}\u4eba\uff09\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("quest.team-size-too-small", "<red>\u30c1\u30fc\u30e0\u4f9d\u983c\u306e\u4eba\u6570\u306f2\u4eba\u4ee5\u4e0a\u3092\u6307\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u30021\u4eba\u306e\u5834\u5408\u306f\u901a\u5e38\u306e\u4f9d\u983c\u63b2\u793a\u3092\u3054\u5229\u7528\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.team-size-too-large", "<red>\u30c1\u30fc\u30e0\u4f9d\u983c\u306e\u4eba\u6570\u306f\u6700\u5927{max}\u4eba\u307e\u3067\u3067\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.team-joined", "<green><bold>\u30c1\u30fc\u30e0\u4f9d\u983c\u306b\u53c2\u52a0\u3057\u307e\u3057\u305f\uff01\u76ee\u7684\u5730({world} {x}, {y}, {z})\u307e\u3067\u79fb\u52d5\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08{joined}/{required}\u4eba\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("quest.team-join-notice", "<aqua>{player} \u304c\u3042\u306a\u305f\u306e\u30c1\u30fc\u30e0\u4f9d\u983c\u306b\u53c2\u52a0\u3057\u307e\u3057\u305f\u3002\uff08{joined}/{required}\u4eba\uff09</aqua>");
-        DEFAULT_MESSAGES.put("quest.team-staffed", "<green><bold>\u30c1\u30fc\u30e0\u306e\u4eba\u6570\u304c\u63c3\u3044\u307e\u3057\u305f\uff01\u5168\u54e1\u3067\u76ee\u7684\u5730\u307e\u3067\u79fb\u52d5\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("quest.team-left-recruiting", "<yellow>\u30c1\u30fc\u30e0\u4f9d\u983c\u306e\u53c2\u52a0\u3092\u53d6\u308a\u6d88\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("quest.team-abandoned", "<red>\u30c1\u30fc\u30e0\u30e1\u30f3\u30d0\u30fc\u304c\u96e2\u8131\u3057\u305f\u305f\u3081\u3001\u4f9d\u983c\u306f\u52df\u96c6\u4e2d\u306b\u623b\u308a\u307e\u3057\u305f\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.team-withdraw-blocked", "<gray>\u53c2\u52a0\u8005\u304c\u3044\u308b\u30c1\u30fc\u30e0\u4f9d\u983c\u306f\u53d6\u308a\u4e0b\u3052\u3089\u308c\u307e\u305b\u3093\u3002\u5168\u54e1\u304c\u96e2\u8131\u3059\u308b\u306e\u3092\u5f85\u3063\u3066\u304f\u3060\u3055\u3044\u3002</gray>");
-        DEFAULT_MESSAGES.put("quest.team-arrived-waiting", "<yellow>\u76ee\u7684\u5730\u306b\u5230\u9054\u3057\u307e\u3057\u305f\u3002\u4ed6\u306e\u30e1\u30f3\u30d0\u30fc\u306e\u5230\u7740\u3092\u5f85\u3063\u3066\u3044\u307e\u3059\u3002\uff08{arrived}/{required}\u4eba\uff09</yellow>");
-        DEFAULT_MESSAGES.put("quest.team-completed", "<green><bold>\u3010\u30c1\u30fc\u30e0\u4f9d\u983c\u9054\u6210\u3011 \u63a2\u7d22\u4f9d\u983c\u3092\u9054\u6210\u3057\u3001\u5831\u916c {amount}\u5186 \u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("admin.search-player-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u691c\u7d22\u3057\u305f\u3044\u30d7\u30ec\u30a4\u30e4\u30fc\u540d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("admin.give-prompt", "<gold><bold>\u4ed8\u4e0e\u3059\u308b\u91d1\u984d\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("admin.take-prompt", "<gold><bold>\u6ca1\u53ce\u3059\u308b\u91d1\u984d\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("admin.setcredit-prompt", "<gold><bold>\u8a2d\u5b9a\u3059\u308b\u4fe1\u7528\u30b9\u30b3\u30a2(0\u301c800)\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("admin.reset-confirm", "<red><bold>\u672c\u5f53\u306b\u30ea\u30bb\u30c3\u30c8\u3059\u308b\u5834\u5408\u306f\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff0815\u79d2\u4ee5\u5185\uff09</bold></red>");
-        DEFAULT_MESSAGES.put("event.random-triggered", "<green>\u30e9\u30f3\u30c0\u30e0\u7d4c\u6e08\u30a4\u30d9\u30f3\u30c8\u3092\u767a\u751f\u3055\u305b\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("event.boom-triggered", "<green>\u9ec4\u91d1\u30e9\u30c3\u30b7\u30e5\u3092\u767a\u751f\u3055\u305b\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("event.tax-triggered", "<green>\u624b\u6570\u6599\u9ad8\u9a30\u3092\u767a\u751f\u3055\u305b\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("event.bonus-triggered", "<green>\u30dc\u30fc\u30ca\u30b9\u652f\u7d66\u30c7\u30fc\u3092\u767a\u751f\u3055\u305b\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("event.recession-triggered", "<green>\u51ac\u306e\u6642\u4ee3\u3092\u767a\u751f\u3055\u305b\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("collateral.select-item", "<red>\u62c5\u4fdd\u30a2\u30a4\u30c6\u30e0\u3092\u9078\u629e\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("collateral.borrowed", "<green><bold>{item} \u3092\u62c5\u4fdd\u306b {amount}\u5186 \u3092\u501f\u308a\u5165\u308c\u307e\u3057\u305f\u3002\u8fd4\u6e08\u671f\u9650\u306f {minutes}\u5206\u5f8c\u3067\u3059\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("collateral.repaid", "<green><bold>\u62c5\u4fdd\u878d\u8cc7\u3092\u5b8c\u6e08\u3057\u3001\u30a2\u30a4\u30c6\u30e0\u3092\u53d6\u308a\u623b\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("collateral.repay-insufficient", "<red>\u8fd4\u6e08\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002\uff08\u5fc5\u8981\u984d: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("treasury.balance-gui", "<gold><bold>\ud83c\udfdb \u56fd\u5eab\u6b8b\u9ad8: {amount}\u5186</bold></gold>");
-        DEFAULT_MESSAGES.put("treasury.balance-note", "<gray>\u6cd5\u4eba\u7a0e\u30fb\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u624b\u6570\u6599\u306a\u3069\u304c\u7a4d\u307f\u7acb\u3066\u3089\u308c\u3066\u3044\u307e\u3059\u3002</gray>");
-        DEFAULT_MESSAGES.put("donate.treasury-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u56fd\u5eab\u3078\u5bc4\u4ed8\u3059\u308b\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u30ad\u30e3\u30f3\u30bb\u30eb\u3059\u308b\u5834\u5408\u306f\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3068\u5165\u529b\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("tutorial.completed", "<green>\u30c1\u30e5\u30fc\u30c8\u30ea\u30a2\u30eb\u3092\u5b8c\u4e86\u3057\u307e\u3057\u305f\uff01</green>");
-        DEFAULT_MESSAGES.put("auction.list-price-prompt", "<gold>\u958b\u59cb\u4fa1\u683c\u3092\u30c1\u30e3\u30c3\u30c8\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3067\u8fd4\u5374\u3057\u307e\u3059\u3002</gold>");
-        DEFAULT_MESSAGES.put("collateral.item-not-valid", "<red>\u305d\u306e\u30a2\u30a4\u30c6\u30e0\u306f\u62c5\u4fdd\u3068\u3057\u3066\u8a55\u4fa1\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.listing-limit", "<red>\u540c\u6642\u51fa\u54c1\u6570\u306e\u4e0a\u9650\uff08{count}\u4ef6\uff09\u306b\u9054\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.listing-ended", "<red>\u3053\u306e\u51fa\u54c1\u306f\u3059\u3067\u306b\u7d42\u4e86\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.cannot-bid-own", "<red>\u81ea\u5206\u306e\u51fa\u54c1\u306b\u306f\u5165\u672d\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.items-inventory-full", "<yellow>\u30a4\u30f3\u30d9\u30f3\u30c8\u30ea\u304c\u6e80\u676f\u306e\u305f\u3081 {count} \u500b\u3092\u53d7\u3051\u53d6\u308c\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u7a7a\u304d\u3092\u4f5c\u3063\u3066\u304b\u3089 /meco collect \u3067\u3082\u3046\u4e00\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002</yellow>");
-        DEFAULT_MESSAGES.put("auction.cancel-has-bid", "<red>\u3059\u3067\u306b\u5165\u672d\u304c\u5165\u3063\u3066\u3044\u308b\u305f\u3081\u3001\u3053\u306e\u51fa\u54c1\u306f\u53d6\u308a\u4e0b\u3052\u3089\u308c\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.cancel-success", "<green><bold>{item} \u306e\u51fa\u54c1\u3092\u53d6\u308a\u4e0b\u3052\u307e\u3057\u305f\u3002\uff08\u53d7\u53d6\u7bb1\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("auction.search-prompt", "<gold>\u691c\u7d22\u3057\u305f\u3044\u30a2\u30a4\u30c6\u30e0\u540d\uff08\u306e\u4e00\u90e8\uff09\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u300c\u30af\u30ea\u30a2\u300d\u3067\u691c\u7d22\u3092\u89e3\u9664\u3001\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3067\u9589\u3058\u307e\u3059\u3002</gold>");
-        DEFAULT_MESSAGES.put("auction.search-set", "<green>\u691c\u7d22\u8a9e\u3092\u300c{query}\u300d\u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("auction.search-cleared", "<gray>\u691c\u7d22\u6761\u4ef6\u3092\u30af\u30ea\u30a2\u3057\u307e\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("auction.bid-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u672d\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u6700\u4f4e {amount}\u5186 / \u30ad\u30e3\u30f3\u30bb\u30eb\u3059\u308b\u5834\u5408\u306f\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3068\u5165\u529b\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("insurance.already-active", "<red>\u3059\u3067\u306b\u4fdd\u967a\u306b\u52a0\u5165\u4e2d\u3067\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("insurance.joined", "<green><bold>\u751f\u547d\u4fdd\u967a\u306b\u52a0\u5165\u3057\u307e\u3057\u305f\uff01\u6709\u52b9\u671f\u9593: {minutes}\u5206</bold></green>");
-        DEFAULT_MESSAGES.put("insurance.premium-insufficient", "<red>\u4fdd\u967a\u6599\uff08{amount}\u5186\uff09\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("personal.deposit-step", "<green>{amount}\u5186 \u9810\u91d1\u3002</green>");
-        DEFAULT_MESSAGES.put("personal.deposit-full", "<green>\u5168\u984d\u9810\u91d1\u3002</green>");
-        DEFAULT_MESSAGES.put("personal.withdraw-step", "<red>{amount}\u5186 \u5f15\u51fa\u3002</red>");
-        DEFAULT_MESSAGES.put("personal.withdraw-full", "<red>\u5168\u984d\u5f15\u51fa\u3002</red>");
-        DEFAULT_MESSAGES.put("personal.deposit-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u9810\u91d1\u3057\u305f\u3044\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u30ad\u30e3\u30f3\u30bb\u30eb\u3059\u308b\u5834\u5408\u306f\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3068\u5165\u529b\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("personal.withdraw-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u5f15\u304d\u51fa\u3057\u305f\u3044\u91d1\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u30ad\u30e3\u30f3\u30bb\u30eb\u3059\u308b\u5834\u5408\u306f\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3068\u5165\u529b\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("loan.cannot-borrow-self-bank", "<red>\u81ea\u5206\u81ea\u8eab\u306e\u9280\u884c\u304b\u3089\u501f\u308a\u308b\u3053\u3068\u306f\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("loan.already-has-debt", "<red>\u65e2\u306b\u4ed6\u306e\u30d7\u30ec\u30a4\u30e4\u30fc\u304b\u3089\u306e\u501f\u91d1\u304c\u3042\u308a\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("loan.plan-not-exist", "<red>\u3053\u306e\u30d7\u30e9\u30f3\u306f\u3059\u3067\u306b\u5b58\u5728\u3057\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("loan.bank-capital-insufficient", "<red>\u3053\u306e\u9280\u884c\u306e\u8cc7\u672c\u91d1\u30d7\u30fc\u30eb\u304c\u4e0d\u8db3\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("loan.player-approved-notice", "<green><bold>\u3010\u878d\u8cc7\u6210\u7acb\u3011 {player} \u304c\u3042\u306a\u305f\u306e\u30d7\u30e9\u30f3\u304b\u3089 {amount}\u5186 \u3092\u501f\u308a\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("loan.player-repaid-full-plain", "<green>\u30d7\u30ec\u30a4\u30e4\u30fc\u9593\u306e\u501f\u91d1\u3092\u5b8c\u6e08\u3057\u307e\u3057\u305f\uff01</green>");
-        DEFAULT_MESSAGES.put("loan.repay-partial", "<yellow>{amount}\u5186 \u3092\u8fd4\u6e08\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("loan.repay-full-insufficient", "<red>\u5168\u984d\u8fd4\u6e08\u3059\u308b\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("loan.gov-repaid-full-plain", "<green>\u56fd\u55b6\u516c\u5eab\u306e\u30ed\u30fc\u30f3\u3092\u5b8c\u6e08\u3057\u307e\u3057\u305f\uff01</green>");
-        DEFAULT_MESSAGES.put("loan.gov-repaid-full-bold", "<green><bold>\u56fd\u55b6\u516c\u5eab\u306e\u30ed\u30fc\u30f3\u3092\u5168\u984d\u5b8c\u6e08\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("bank.already-established", "<red>\u3059\u3067\u306b\u9280\u884c\u3092\u8a2d\u7acb\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("bank.established", "<green><bold>\u9280\u884c\u3092\u8a2d\u7acb\u3057\u307e\u3057\u305f\uff01\u982d\u53d6\u30d1\u30cd\u30eb\u304c\u958b\u653e\u3055\u308c\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("bank.establish-cost-insufficient", "<red>\u8a2d\u7acb\u8cbb\u7528\uff08{amount}\u5186\uff09\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("bank.capital-added", "<green>\u8cc7\u672c\u91d1\u30d7\u30fc\u30eb\u306b +10,000\u5186 \u8ffd\u52a0\u3002</green>");
-        DEFAULT_MESSAGES.put("bank.capital-withdrawn", "<red>\u8cc7\u672c\u91d1\u30d7\u30fc\u30eb\u304b\u3089 -10,000\u5186 \u5f15\u304d\u51fa\u3057\u3002</red>");
-        DEFAULT_MESSAGES.put("bank.capital-insufficient-pool", "<red>\u8cc7\u672c\u91d1\u30d7\u30fc\u30eb\u306b\u305d\u308c\u3060\u3051\u306e\u8cc7\u91d1\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("bank.plan-withdrawn", "<yellow>\u30d7\u30e9\u30f3({slot}\u67a0\u76ee)\u3092\u53d6\u308a\u4e0b\u3052\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("bank.no-published-plan", "<red>\u516c\u958b\u4e2d\u306e\u30d7\u30e9\u30f3\u306f\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("bank.plan-amount-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u878d\u8cc7\u984d\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u30ad\u30e3\u30f3\u30bb\u30eb\u3059\u308b\u5834\u5408\u306f\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3068\u5165\u529b\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("bank.plan-interest-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u5229\u606f(%)\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u30ad\u30e3\u30f3\u30bb\u30eb\u3059\u308b\u5834\u5408\u306f\u300c\u30ad\u30e3\u30f3\u30bb\u30eb\u300d\u3068\u5165\u529b\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("bank.plan-published", "<green><bold>\u878d\u8cc7\u30d7\u30e9\u30f3({slot}\u67a0\u76ee)\u3092\u5e02\u5834\u306b\u516c\u958b\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("loan.gov-cap-exceeded", "<red>\u501f\u5165\u4e0a\u9650\uff08{amount}\u5186\uff09\u3092\u8d85\u3048\u308b\u305f\u3081\u3001\u3053\u308c\u4ee5\u4e0a\u501f\u308a\u3089\u308c\u307e\u305b\u3093\u3002\u4fe1\u7528\u30b9\u30b3\u30a2\u3092\u4e0a\u3052\u308b\u304b\u8fd4\u6e08\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.already-exists", "<red>\u3059\u3067\u306b\u5b9a\u671f\u9810\u91d1\u304c\u5b58\u5728\u3057\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot1-created", "<green>{amount}\u5186 \u3092\u5b9a\u671f\u9810\u91d1\u306b\u9810\u3051\u307e\u3057\u305f\uff08\u6e80\u671f: {seconds}\u79d2\u5f8c / \u5229\u7387: +{rate}%\uff09</green>");
-        DEFAULT_MESSAGES.put("deposit.funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c {amount}\u5186 \u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot1-none", "<red>\u5b9a\u671f\u9810\u91d1\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot1-not-matured", "<red>\u307e\u3060\u6e80\u671f\u3092\u8fce\u3048\u3066\u3044\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot2-exists", "<red>\u3059\u3067\u306b2\u67a0\u76ee\u306b\u5b9a\u671f\u9810\u91d1\u304c\u5b58\u5728\u3057\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot2-created", "<aqua>{amount}\u5186 \u30922\u67a0\u76ee\u306e\u5b9a\u671f\u9810\u91d1\u306b\u9810\u3051\u307e\u3057\u305f\u3002</aqua>");
-        DEFAULT_MESSAGES.put("deposit.slot2-none", "<red>2\u67a0\u76ee\u306b\u5b9a\u671f\u9810\u91d1\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot2-not-matured", "<red>2\u67a0\u76ee\u306f\u307e\u3060\u6e80\u671f\u3092\u8fce\u3048\u3066\u3044\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot3-exists", "<red>\u3059\u3067\u306b3\u67a0\u76ee\u306b\u5b9a\u671f\u9810\u91d1\u304c\u5b58\u5728\u3057\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot3-created", "<light_purple>{amount}\u5186 \u30923\u67a0\u76ee\u306e\u5b9a\u671f\u9810\u91d1\u306b\u9810\u3051\u307e\u3057\u305f\u3002</light_purple>");
-        DEFAULT_MESSAGES.put("deposit.slot3-none", "<red>3\u67a0\u76ee\u306b\u5b9a\u671f\u9810\u91d1\u304c\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("deposit.slot3-not-matured", "<red>3\u67a0\u76ee\u306f\u307e\u3060\u6e80\u671f\u3092\u8fce\u3048\u3066\u3044\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.completed", "<green><bold>\u3010\u4f9d\u983c\u9054\u6210\u3011 \u63a2\u7d22\u4f9d\u983c\u3092\u9054\u6210\u3057\u3001\u5831\u916c {amount}\u5186 \u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("quest.completed-notice", "<aqua>{player} \u304c\u3042\u306a\u305f\u306e\u4f9d\u983c\u3092\u9054\u6210\u3057\u307e\u3057\u305f\u3002</aqua>");
-        DEFAULT_MESSAGES.put("quest.relisted", "<aqua>\u3042\u306a\u305f\u306e\u4f9d\u983c\u304c\u518d\u51fa\u54c1\u3055\u308c\u307e\u3057\u305f\u3002\uff08\u5831\u916c {amount}\u5186 \u3092\u518d\u5fb4\u53ce\uff09</aqua>");
-        DEFAULT_MESSAGES.put("quest.removed-insufficient-funds", "<red>\u8cc7\u91d1\u4e0d\u8db3\u306e\u305f\u3081\u3001\u4f9d\u983c\u30dc\u30fc\u30c9\u304b\u3089\u4f9d\u983c\u3092\u53d6\u308a\u4e0b\u3052\u307e\u3057\u305f\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.listing-cancelled-returned", "<gray>\u3010\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u30cf\u30a6\u30b9\u3011 \u51fa\u54c1\u624b\u7d9a\u304d\u4e2d\u3060\u3063\u305f\u30a2\u30a4\u30c6\u30e0\u3092\u8fd4\u5374\u3057\u307e\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("loan.login-seized-full", "<green><bold>[\u5b8c\u6e08] \u30ed\u30b0\u30a4\u30f3\u6642\u306b\u501f\u91d1\u304c\u3059\u3079\u3066\u5fb4\u53ce\u3055\u308c\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("loan.login-seized-partial", "<red><bold>[\u57f7\u884c]</bold> \u501f\u91d1 <yellow>{amount}\u5186</yellow> \u5f37\u5236\u5fb4\u53ce\u3002</red>");
-        DEFAULT_MESSAGES.put("loan.guarantor-seized-notice", "<dark_red><bold>\u3010\u4fdd\u8a3c\u50b5\u52d9\u3011</bold> {player} \u306e\u501f\u91d1\u8fd4\u6e08\u4e0d\u80fd\u306b\u3064\u304d\u3001\u4fdd\u8a3c\u4eba\u3068\u3057\u3066 {amount}\u5186 \u304c\u5fb4\u53ce\u3055\u308c\u3001\u4fe1\u7528\u30b9\u30b3\u30a2\u304c\u4f4e\u4e0b\u3057\u307e\u3057\u305f\u3002</dark_red>");
-        DEFAULT_MESSAGES.put("loan.guarantor-repaid-full", "<green><bold>[\u5b8c\u6e08] \u4fdd\u8a3c\u4eba\u306b\u3088\u308a\u501f\u91d1\u304c\u5b8c\u6e08\u3055\u308c\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("insurance.claim-cooldown", "<gray>[\u4fdd\u967a] \u30af\u30fc\u30eb\u30c0\u30a6\u30f3\u4e2d\u306e\u305f\u3081\u3001\u4eca\u56de\u306e\u6b7b\u4ea1\u3067\u306f\u4fdd\u967a\u91d1\u306f\u652f\u6255\u308f\u308c\u307e\u305b\u3093\u3067\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("input.cancelled-auction-item-returned", "<gray>\u51fa\u54c1\u3092\u30ad\u30e3\u30f3\u30bb\u30eb\u3057\u3001\u30a2\u30a4\u30c6\u30e0\u3092\u8fd4\u5374\u3057\u307e\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("input.cancelled", "<gray>\u5165\u529b\u3092\u30ad\u30e3\u30f3\u30bb\u30eb\u3057\u307e\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("admin.player-not-found", "<red>\u30d7\u30ec\u30a4\u30e4\u30fc\u300c{name}\u300d\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.reward-insufficient", "<red>\u6240\u6301\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("quest.posted", "<green><bold>\u4f9d\u983c\u3092\u63b2\u793a\u3057\u307e\u3057\u305f\uff01\u5831\u916c {amount}\u5186 \u3092\u30a8\u30b9\u30af\u30ed\u30fc\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("worldstock.search-prompt", "<gold><bold>\u30c1\u30e3\u30c3\u30c8\u306b\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: AAPL, TSLA, 7203.T\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("worldstock.invalid-symbol", "<red>\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u306e\u5f62\u5f0f\u304c\u6b63\u3057\u304f\u3042\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.searching", "<gray>{symbol} \u306e\u682a\u4fa1\u3092\u53d6\u5f97\u4e2d...</gray>");
-        DEFAULT_MESSAGES.put("worldstock.not-found", "<red>{symbol} \u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u30c6\u30a3\u30c3\u30ab\u30fc\u30b7\u30f3\u30dc\u30eb\u3092\u78ba\u8a8d\u3059\u308b\u304b\u3001\u3057\u3070\u3089\u304f\u7d4c\u3063\u3066\u304b\u3089\u518d\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.not-owned", "<red>\u3053\u306e\u9298\u67c4\u3092\u4fdd\u6709\u3057\u3066\u3044\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.bought", "<green><bold>{symbol} \u3092 {qty}\u682a \u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186 / \u5358\u4fa1 {native} / \u624b\u6570\u6599 {fee}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("worldstock.sold", "<green><bold>{symbol} \u3092 {qty}\u682a \u58f2\u5374\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186 / \u5358\u4fa1 {native} / \u640d\u76ca: {pnl}\u5186 / \u624b\u6570\u6599 {fee}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("worldstock.sell-not-enough-shares", "<red>\u58f2\u5374\u3057\u305f\u3044\u682a\u6570\u304c\u4fdd\u6709\u6570\u3092\u8d85\u3048\u3066\u3044\u307e\u3059\u3002\uff08\u4fdd\u6709: {owned}\u682a / \u6307\u5b9a: {requested}\u682a\uff09\u90e8\u5206\u7d04\u5b9a\u306f\u3057\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.bulk-qty-too-large", "<red>\u4e00\u5ea6\u306b\u53d6\u5f15\u3067\u304d\u308b\u682a\u6570\u306e\u4e0a\u9650\uff08{max}\u682a\uff09\u3092\u8d85\u3048\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.bulk-buy-prompt", "<gold><bold>{symbol} \u3092\u8cfc\u5165\u3059\u308b\u682a\u6570\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 25\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("worldstock.bulk-sell-prompt", "<gold><bold>{symbol} \u3092\u58f2\u5374\u3059\u308b\u682a\u6570\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 25\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("worldstock.cooldown", "<red>\u3053\u306e\u9298\u67c4\u306f\u53d6\u5f15\u5f8c {seconds}\u79d2\u7d4c\u904e\u3059\u308b\u307e\u3067\u518d\u5ea6\u53d6\u5f15\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.daily-count-limit", "<red>\u672c\u65e5\u306e\u4e16\u754c\u682a\u53d6\u5f15\u56de\u6570\u306e\u4e0a\u9650\uff08{count}\u56de\uff09\u306b\u9054\u3057\u307e\u3057\u305f\u3002\u307e\u305f\u660e\u65e5\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.daily-amount-limit", "<red>\u672c\u65e5\u306e\u4e16\u754c\u682a\u53d6\u5f15\u91d1\u984d\u306e\u4e0a\u9650\uff08{amount}\u5186\uff09\u306b\u9054\u3059\u308b\u305f\u3081\u3001\u3053\u306e\u53d6\u5f15\u306f\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.daily-profit-limit", "<red>\u672c\u65e5\u306e\u4e16\u754c\u682a\u5b9f\u73fe\u5229\u76ca\u306e\u4e0a\u9650\uff08{amount}\u5186\uff09\u306b\u9054\u3057\u305f\u305f\u3081\u3001\u3053\u308c\u4ee5\u4e0a\u306e\u5229\u76ca\u78ba\u5b9a\u58f2\u308a\u306f\u3067\u304d\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("worldstock.alert-prompt", "<gold><bold>{symbol} \u306e\u5024\u52d5\u304d\u30a2\u30e9\u30fc\u30c8\u95be\u5024(%)\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 5 \u3067 \u00b15% \u5909\u52d5\u6642\u306b\u901a\u77e5\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("worldstock.alert-set", "<green><bold>{symbol} \u306b\u5024\u52d5\u304d\u30a2\u30e9\u30fc\u30c8\u3092\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002\uff08\u73fe\u5728\u5024\u304b\u3089 \u00b1{percent}% \u5909\u52d5\u3067\u901a\u77e5\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("worldstock.alert-cancelled", "<gray>{symbol} \u306e\u5024\u52d5\u304d\u30a2\u30e9\u30fc\u30c8\u3092\u89e3\u9664\u3057\u307e\u3057\u305f\u3002</gray>");
-        DEFAULT_MESSAGES.put("worldstock.alert-triggered", "<gold><bold>\ud83d\udd14 {symbol} \u304c\u57fa\u6e96\u5024\u304b\u3089{percent}%\u4ee5\u4e0a\u5909\u52d5\u3057\u307e\u3057\u305f\uff01\uff08\u73fe\u5728\u5024: {price}\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("worldstock.dividend-paid", "<green>\u4e16\u754c\u682a\u306e\u914d\u5f53\u91d1\u3068\u3057\u3066 {amount}\u5186 \u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("resourceshop.not-enough-items", "<red>{material}\u304c\u8db3\u308a\u307e\u305b\u3093\u3002\uff08\u6240\u6301: {have}\u500b / \u5fc5\u8981: {need}\u500b\uff09</red>");
-        DEFAULT_MESSAGES.put("resourceshop.funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("resourceshop.sold", "<green><bold>{material}\u3092{qty}\u500b\u58f2\u5374\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("resourceshop.bought", "<green><bold>{material}\u3092{qty}\u500b\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("resourceshop.sell-qty-prompt", "<gold><bold>{material}\u3092\u58f2\u308b\u500b\u6570\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 40\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("resourceshop.buy-qty-prompt", "<gold><bold>{material}\u3092\u8cb7\u3046\u500b\u6570\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 40\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("lottery.funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("lottery.ticket-bought", "<green><bold>\u5b9d\u304f\u3058\u30c1\u30b1\u30c3\u30c8\u3092{count}\u679a\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("lottery.buy-qty-prompt", "<gold><bold>\u8cfc\u5165\u3059\u308b\u30c1\u30b1\u30c3\u30c8\u306e\u679a\u6570\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\uff08\u4f8b: 3\uff09</bold></gold>");
-        DEFAULT_MESSAGES.put("merchant.funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("merchant.bought", "<green><bold>{item} \u3092\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("merchant.location-hint", "<gold><bold>\u5de1\u56de\u5546\u4eba\u306f\u73fe\u5728 {world} ({x}, {y}, {z}) \u4ed8\u8fd1\u306b\u3044\u307e\u3059\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("treasure.found", "<gold><bold>\u3010\u57cb\u8535\u91d1\u767a\u898b\u3011 \u57cb\u8535\u91d1\u30c1\u30a7\u30b9\u30c8\u3092\u767a\u898b\u3057\u3001{amount}\u5186 \u3092\u624b\u306b\u5165\u308c\u307e\u3057\u305f\uff01</bold></gold>");
-        DEFAULT_MESSAGES.put("merchant.installment-purchased", "<green><bold>{item} \u3092\u5206\u5272\u6255\u3044\u3067\u8cfc\u5165\u3057\u307e\u3057\u305f\uff01\u521d\u56de {first}\u5186\u3092\u652f\u6255\u3044\u307e\u3057\u305f\u3002\uff08\u6b8b\u308a{count}\u56de\u4e2d {remaining}\u56de\u3001\u5404{each}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("installment.paid", "<green>\u5206\u5272\u6255\u3044: {item} \u306e {amount}\u5186 \u3092\u5f15\u304d\u843d\u3068\u3057\u307e\u3057\u305f\u3002\uff08\u6b8b\u308a{remaining}\u56de\uff09</green>");
-        DEFAULT_MESSAGES.put("installment.completed", "<green><bold>\u5206\u5272\u6255\u3044: {item} \u306e\u652f\u6255\u3044\u304c\u5b8c\u4e86\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("installment.missed", "<red>\u5206\u5272\u6255\u3044: {item} \u306e {amount}\u5186 \u304c\u5f15\u304d\u843d\u3068\u305b\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u4fe1\u7528\u30b9\u30b3\u30a2\u304c\u6e1b\u5c11\u3057\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.bid-too-low", "<red>\u5165\u672d\u984d\u304c\u4f4e\u3059\u304e\u307e\u3059\u3002\uff08\u6700\u4f4e {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("auction.buyout-purchased", "<green><bold>\u5373\u6c7a\u4fa1\u683c\u3067\u8cfc\u5165\u3057\u307e\u3057\u305f\uff01</bold></green>");
-        DEFAULT_MESSAGES.put("auction.bid-placed", "<green><bold>{item} \u306b {amount}\u5186 \u3067\u5165\u672d\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("personal.deposit-custom", "<green><bold>{amount}\u5186 \u3092\u9810\u91d1\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("personal.withdraw-insufficient", "<red>\u9810\u91d1\u6b8b\u9ad8\u304c\u8db3\u308a\u307e\u305b\u3093\u3002\uff08\u6b8b\u9ad8: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("personal.withdraw-custom", "<green><bold>{amount}\u5186 \u3092\u5f15\u304d\u51fa\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("bank.plan-amount-set", "<green>\u878d\u8cc7\u984d\u3092 {amount}\u5186 \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("bank.plan-interest-set", "<green>\u5229\u606f\u3092 {amount}% \u306b\u8a2d\u5b9a\u3057\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("auction.draft-not-found", "<red>\u51fa\u54c1\u3059\u308b\u30a2\u30a4\u30c6\u30e0\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u3082\u3046\u4e00\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.buyout-prompt", "<gold><bold>\u5373\u6c7a\u4fa1\u683c(Buy Now)\u3092\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u8a2d\u5b9a\u3057\u306a\u3044\u5834\u5408\u306f 0 \u3068\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("auction.listing-info-not-found", "<red>\u51fa\u54c1\u60c5\u5831\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3067\u3057\u305f\u3002\u3082\u3046\u4e00\u5ea6\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.buyout-too-low", "<red>\u5373\u6c7a\u4fa1\u683c\u306f\u958b\u59cb\u4fa1\u683c\uff08{amount}\u5186\uff09\u3088\u308a\u9ad8\u304f\u8a2d\u5b9a\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u51fa\u54c1\u3092\u30ad\u30e3\u30f3\u30bb\u30eb\u3057\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("auction.listed", "<green><bold>{item} \u3092\u30aa\u30fc\u30af\u30b7\u30e7\u30f3\u306b\u51fa\u54c1\u3057\u307e\u3057\u305f\uff01\uff08\u958b\u59cb\u4fa1\u683c: {amount}\u5186{buyoutMsg} / \u671f\u9593: {minutes}\u5206\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("storage.funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("storage.rented", "<green><bold>\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3092\u5951\u7d04\u3057\u307e\u3057\u305f\uff01\uff08\u5bb6\u8cc3 {amount}\u5186 / {hours}\u6642\u9593\u3054\u3068\uff09</bold></green> <red>\u5bb6\u8cc3\u306e\u652f\u6255\u3044\u306b1\u56de\u3067\u3082\u5931\u6557\u3059\u308b\u3068\u3001\u5951\u7d04\u306f\u5931\u52b9\u3057\u5009\u5eab\u306e\u4e2d\u8eab\u306f\u5168\u3066\u6ca1\u53ce\u3055\u308c\u307e\u3059\u306e\u3067\u3054\u6ce8\u610f\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("storage.rent-paid", "<green>\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u306e\u5bb6\u8cc3 {amount}\u5186 \u3092\u652f\u6255\u3044\u307e\u3057\u305f\u3002</green>");
-        DEFAULT_MESSAGES.put("storage.forfeited", "<red><bold>\u3010\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3011\u5bb6\u8cc3\u306e\u652f\u6255\u3044\u306b\u5931\u6557\u3057\u305f\u305f\u3081\u5951\u7d04\u304c\u5931\u52b9\u3057\u3001\u5009\u5eab\u306e\u4e2d\u8eab\u306f\u5168\u3066\u6ca1\u53ce\u3055\u308c\u307e\u3057\u305f\u3002</bold></red>");
-        DEFAULT_MESSAGES.put("storage.not-renting", "<red>\u30ec\u30f3\u30bf\u30eb\u5009\u5eab\u3092\u5951\u7d04\u3057\u3066\u3044\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("group.created", "<green><bold>\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u300c{name}\u300d\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\uff01\uff08ID: {id}\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("group.create-funds-insufficient", "<red>\u4f5c\u6210\u8cbb\u7528\u304c\u4e0d\u8db3\u3057\u3066\u3044\u307e\u3059\u3002\uff08\u5fc5\u8981\u984d: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("group.create-name-prompt", "<gold><bold>\u4f5c\u6210\u3059\u308b\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u306e\u540d\u524d\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("group.not-found", "<red>\u6307\u5b9a\u3057\u305f\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("group.not-owner", "<red>\u3053\u306e\u64cd\u4f5c\u306f\u30aa\u30fc\u30ca\u30fc\u306e\u307f\u5b9f\u884c\u3067\u304d\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("group.already-member", "<red>\u305d\u306e\u30d7\u30ec\u30a4\u30e4\u30fc\u306f\u65e2\u306b\u30e1\u30f3\u30d0\u30fc\u3067\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("group.full", "<red>\u30e1\u30f3\u30d0\u30fc\u6570\u304c\u4e0a\u9650\u306b\u9054\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("group.invited", "<green><bold>{player} \u3092\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u306b\u62db\u5f85\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("group.invite-received", "<gold><bold>\u3010\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u3011</bold> {player} \u304c\u3042\u306a\u305f\u3092\u300c{group}\u300d\u306b\u62db\u5f85\u3057\u307e\u3057\u305f\u3002</gold>");
-        DEFAULT_MESSAGES.put("group.kicked", "<yellow>{player} \u3092\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u304b\u3089\u8ffd\u653e\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("group.kicked-notice", "<yellow>\u3010\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u3011</yellow> \u300c{group}\u300d\u306e\u30e1\u30f3\u30d0\u30fc\u69cb\u6210\u304c\u5909\u66f4\u3055\u308c\u307e\u3057\u305f\u3002");
-        DEFAULT_MESSAGES.put("group.owner-cannot-leave", "<red>\u30aa\u30fc\u30ca\u30fc\u306f\u8131\u9000\u3067\u304d\u307e\u305b\u3093\u3002\u89e3\u6563\u3059\u308b\u5834\u5408\u306f /meco group disband <\u540d\u524d> \u3092\u4f7f\u7528\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("group.left", "<yellow>\u300c{group}\u300d\u304b\u3089\u8131\u9000\u3057\u307e\u3057\u305f\u3002</yellow>");
-        DEFAULT_MESSAGES.put("group.disbanded", "<gold><bold>\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u304c\u89e3\u6563\u3055\u308c\u307e\u3057\u305f\u3002\u6b8b\u9ad8\u304b\u3089 {amount}\u5186 \u304c\u632f\u308a\u8fbc\u307e\u308c\u307e\u3057\u305f\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("group.disband-confirm", "<red><bold>\u672c\u5f53\u306b\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u3092\u89e3\u6563\u3057\u307e\u3059\u304b\uff1f</bold></red> <yellow>\u6b8b\u9ad8\u306f\u30e1\u30f3\u30d0\u30fc\u5168\u54e1\u306b\u5747\u7b49\u5272\u308a\u3055\u308c\u307e\u3059\u300230\u79d2\u4ee5\u5185\u306b\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3067\u78ba\u5b9a\u3057\u307e\u3059\u3002</yellow>");
-        DEFAULT_MESSAGES.put("group.deposit-prompt", "<gold><bold>\u5165\u91d1\u3059\u308b\u91d1\u984d\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("group.deposited", "<green><bold>\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u3078 {amount}\u5186 \u3092\u5165\u91d1\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("group.withdraw-prompt", "<gold><bold>\u5f15\u304d\u51fa\u3059\u91d1\u984d\u3092\u30c1\u30e3\u30c3\u30c8\u306b\u5165\u529b\u3057\u3066\u304f\u3060\u3055\u3044\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("group.withdraw-insufficient", "<red>\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u306e\u6b8b\u9ad8\u304c\u8db3\u308a\u307e\u305b\u3093\u3002\uff08\u6b8b\u9ad8: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("group.withdrawn", "<green><bold>\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u304b\u3089 {amount}\u5186 \u3092\u5f15\u304d\u51fa\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("help.group", "<yellow>/meco group <create|invite|kick|leave|disband></yellow> <gray>- \u8907\u6570\u4eba\u3067\u5171\u6709\u3059\u308b\u30b0\u30eb\u30fc\u30d7\u8caf\u91d1\u7bb1\u3092\u7ba1\u7406\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("fund.created", "<green><bold>\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c{name}\u300d\u3092\u4f5c\u6210\u3057\u307e\u3057\u305f\uff01\uff08ID: {id}\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("fund.create-funds-insufficient", "<red>\u4f5c\u6210\u8cbb\u7528\u304c\u4e0d\u8db3\u3057\u3066\u3044\u307e\u3059\u3002\uff08\u5fc5\u8981\u984d: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("fund.not-found", "<red>\u6307\u5b9a\u3057\u305f\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u304c\u898b\u3064\u304b\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.not-manager", "<red>\u3053\u306e\u64cd\u4f5c\u306f\u30d5\u30a1\u30f3\u30c9\u306e\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u306e\u307f\u5b9f\u884c\u3067\u304d\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.already-contributor", "<red>\u305d\u306e\u30d7\u30ec\u30a4\u30e4\u30fc\u306f\u65e2\u306b\u51fa\u8cc7\u8005\u3067\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.full", "<red>\u51fa\u8cc7\u8005\u6570\u304c\u4e0a\u9650\u306b\u9054\u3057\u3066\u3044\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.invited", "<green><bold>{player} \u3092\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u306b\u62db\u5f85\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("fund.invite-received", "<gold><bold>\u3010\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u3011</bold> {player} \u304c\u3042\u306a\u305f\u3092\u300c{fund}\u300d\u306b\u62db\u5f85\u3057\u307e\u3057\u305f\u3002/meco fund contribute {fund} <\u91d1\u984d> \u3067\u51fa\u8cc7\u3067\u304d\u307e\u3059\u3002</gold>");
-        DEFAULT_MESSAGES.put("fund.not-invited", "<red>\u305d\u306e\u30d5\u30a1\u30f3\u30c9\u306e\u51fa\u8cc7\u8005(\u307e\u305f\u306f\u30de\u30cd\u30fc\u30b8\u30e3\u30fc)\u3067\u306f\u3042\u308a\u307e\u305b\u3093\u3002\u5148\u306b\u62db\u5f85\u3057\u3066\u3082\u3089\u3046\u5fc5\u8981\u304c\u3042\u308a\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.contributed", "<green><bold>\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u300c{fund}\u300d\u3078 {amount}\u5186 \u51fa\u8cc7\u3057\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("fund.contribute-funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002\uff08\u6240\u6301\u91d1: {amount}\u5186\uff09</red>");
-        DEFAULT_MESSAGES.put("fund.redeemed", "<green><bold>\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u304b\u3089\u89e3\u7d04\u3057\u3001\u6301\u5206 {amount}\u5186 \u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("fund.redeem-confirm", "<red><bold>\u672c\u5f53\u306b\u6301\u5206\u3092\u5168\u984d\u89e3\u7d04\u3057\u307e\u3059\u304b\uff1f</bold></red> <yellow>\u3082\u3046\u4e00\u5ea6\u30af\u30ea\u30c3\u30af\u3059\u308b\u3068\u78ba\u5b9a\u3057\u307e\u3059(30\u79d2\u4ee5\u5185)\u3002</yellow>");
-        DEFAULT_MESSAGES.put("fund.redeem-insufficient-cash", "<red>\u30d5\u30a1\u30f3\u30c9\u306e\u73fe\u91d1\u6b8b\u9ad8\u304c\u4e0d\u8db3\u3057\u3066\u3044\u308b\u305f\u3081\u89e3\u7d04\u3067\u304d\u307e\u305b\u3093\u3002\u30de\u30cd\u30fc\u30b8\u30e3\u30fc\u306b\u4fdd\u6709\u9298\u67c4\u306e\u58f2\u5374\u3092\u4f9d\u983c\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.disband-has-holdings", "<red>\u4fdd\u6709\u9298\u67c4\u304c\u6b8b\u3063\u3066\u3044\u308b\u305f\u3081\u89e3\u6563\u3067\u304d\u307e\u305b\u3093\u3002\u5148\u306b\u904b\u7528\u753b\u9762\u3067\u3059\u3079\u3066\u58f2\u5374\u3057\u3066\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("fund.disbanded", "<gold><bold>\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u304c\u89e3\u6563\u3055\u308c\u307e\u3057\u305f\u3002\u6301\u5206\u306b\u5fdc\u3058\u3066 {amount}\u5186 \u304c\u632f\u308a\u8fbc\u307e\u308c\u307e\u3057\u305f\u3002</bold></gold>");
-        DEFAULT_MESSAGES.put("fund.trade-funds-insufficient", "<red>\u30d5\u30a1\u30f3\u30c9\u306e\u73fe\u91d1\u6b8b\u9ad8\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("help.fund", "<yellow>/meco fund <create|invite|contribute|redeem|disband></yellow> <gray>- \u8907\u6570\u4eba\u3067\u51fa\u8cc7\u3057\u5408\u3046\u5171\u540c\u6295\u8cc7\u30d5\u30a1\u30f3\u30c9\u3092\u7ba1\u7406\u3059\u308b</gray>");
-        DEFAULT_MESSAGES.put("vip.not-eligible", "<red>VIP\u9650\u5b9a\u3067\u3059\u3002\u4fe1\u7528\u30b9\u30b3\u30a2\u3092\u4e0a\u3052\u3066\u30b7\u30eb\u30d0\u30fc\u4f1a\u54e1\u4ee5\u4e0a\u306b\u306a\u308b\u3068\u5229\u7528\u3067\u304d\u307e\u3059\u3002</red>");
-        DEFAULT_MESSAGES.put("vip.shop-bought", "<green><bold>VIP\u9650\u5b9a\u30b7\u30e7\u30c3\u30d7\u3067 {item} \u3092\u8cfc\u5165\u3057\u307e\u3057\u305f\u3002\uff08{amount}\u5186\uff09</bold></green>");
-        DEFAULT_MESSAGES.put("vip.shop-funds-insufficient", "<red>\u624b\u6301\u3061\u8cc7\u91d1\u304c\u8db3\u308a\u307e\u305b\u3093\u3002</red>");
-        DEFAULT_MESSAGES.put("vip.stipend-claimed", "<green><bold>\u65e5\u6b21VIP\u624b\u5f53\uff08{tier}\uff09\u3068\u3057\u3066 {amount}\u5186 \u3092\u53d7\u3051\u53d6\u308a\u307e\u3057\u305f\u3002</bold></green>");
-        DEFAULT_MESSAGES.put("vip.stipend-cooldown", "<red>\u65e5\u6b21VIP\u624b\u5f53\u306f\u53d7\u53d6\u6e08\u307f\u3067\u3059\u3002\u6b21\u56de\u53d7\u53d6\u307e\u3067\u3042\u3068 {time}\u3002</red>");
-        DEFAULT_MESSAGES.put("vip.stipend-treasury-empty", "<red>\u56fd\u5eab\u6b8b\u9ad8\u304c\u4e0d\u8db3\u3057\u3066\u3044\u308b\u305f\u3081\u3001\u73fe\u5728\u306f\u65e5\u6b21VIP\u624b\u5f53\u3092\u652f\u7d66\u3067\u304d\u307e\u305b\u3093\u3002\u3057\u3070\u3089\u304f\u7d4c\u3063\u3066\u304b\u3089\u304a\u8a66\u3057\u304f\u3060\u3055\u3044\u3002</red>");
-        DEFAULT_MESSAGES.put("vip.stipend-disabled", "<red>\u65e5\u6b21VIP\u624b\u5f53\u306f\u73fe\u5728\u7121\u52b9\u5316\u3055\u308c\u3066\u3044\u307e\u3059\u3002</red>");
+        DEFAULT_MESSAGES.put("news.enabled", "<green>経済ニュース放送を【ON】にしました。</green>");
+        DEFAULT_MESSAGES.put("news.disabled", "<yellow>経済ニュース放送を【OFF】にしました。</yellow>");
+        DEFAULT_MESSAGES.put("treasury.balance", "<gold>【国庫】 <white>{amount}円</white></gold>");
+        DEFAULT_MESSAGES.put("treasury.admin-required", "<red>管理者権限が必要です。</red>");
+        DEFAULT_MESSAGES.put("treasury.insufficient", "<red>国庫残高が不足しています。</red>");
+        DEFAULT_MESSAGES.put("common.invalid-amount", "<red>金額が不正です。</red>");
+        DEFAULT_MESSAGES.put("treasury.usage", "<yellow>/meco treasury</yellow> / <yellow>/meco treasury bonus <金額></yellow> / <yellow>/meco treasury set <金額></yellow> / <yellow>/meco treasury donate <金額></yellow>");
+        DEFAULT_MESSAGES.put("treasury.set", "<gold>国庫残高を <white>{amount}円</white> に設定しました。</gold>");
+        DEFAULT_MESSAGES.put("treasury.citizen-dividend", "<gold><bold>【市民配当】</bold> 国庫から <white>{amount}円</white> が配当されました。</gold>");
+        DEFAULT_MESSAGES.put("treasury.welfare", "<green><bold>【生活支援】</bold> 国庫から生活支援金 <white>{amount}円</white> が給付されました。</green>");
+        DEFAULT_MESSAGES.put("donate.usage-treasury", "<yellow>/meco donate treasury <金額></yellow> <gray>- 国庫へ寄付(信用スコアが少し上がります)</gray>");
+        DEFAULT_MESSAGES.put("donate.usage-player", "<yellow>/meco donate <プレイヤー> <金額></yellow> <gray>- 他プレイヤーへ寄付</gray>");
+        DEFAULT_MESSAGES.put("donate.usage-treasury-amount", "<yellow>/meco donate treasury <金額></yellow>");
+        DEFAULT_MESSAGES.put("common.amount-must-be-positive", "<red>0円より大きい金額を入力してください。</red>");
+        DEFAULT_MESSAGES.put("common.insufficient-funds-simple", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("donate.treasury-thanks", "<green><bold>国庫へ {amount}円 を寄付しました。ありがとうございます！</bold></green>");
+        DEFAULT_MESSAGES.put("common.target-offline", "<red>対象プレイヤーがオンラインではありません。</red>");
+        DEFAULT_MESSAGES.put("donate.cannot-self", "<red>自分自身には寄付できません。</red>");
+        DEFAULT_MESSAGES.put("donate.usage-player-amount", "<yellow>/meco donate <プレイヤー> <金額></yellow>");
+        DEFAULT_MESSAGES.put("donate.player-success", "<green><bold>{player} に {amount}円 を寄付しました。</bold></green>");
+        DEFAULT_MESSAGES.put("donate.player-received", "<gold><bold>【寄付】</bold> {player} から {amount}円 の寄付を受け取りました。</gold>");
+        DEFAULT_MESSAGES.put("guarantor.usage-request", "<yellow>/meco guarantor request <プレイヤー></yellow> <gray>- 保証人を依頼する</gray>");
+        DEFAULT_MESSAGES.put("guarantor.usage-accept", "<yellow>/meco guarantor accept</yellow> <gray>- 依頼を承諾する</gray>");
+        DEFAULT_MESSAGES.put("guarantor.usage-decline", "<yellow>/meco guarantor decline</yellow> <gray>- 依頼を拒否する</gray>");
+        DEFAULT_MESSAGES.put("guarantor.no-proposal-expired", "<red>有効な保証人依頼がありません。（期限切れの可能性があります）</red>");
+        DEFAULT_MESSAGES.put("guarantor.borrower-no-debt", "<red>依頼者にはもう対象の借金がありません。</red>");
+        DEFAULT_MESSAGES.put("guarantor.became", "<green><bold>{player} の保証人になりました。</bold></green>");
+        DEFAULT_MESSAGES.put("guarantor.became-notice", "<green>{player} があなたの保証人になりました。</green>");
+        DEFAULT_MESSAGES.put("guarantor.declined-self", "<yellow>保証人依頼を拒否しました。</yellow>");
+        DEFAULT_MESSAGES.put("guarantor.declined-notice", "<red>{player} は保証人依頼を拒否しました。</red>");
+        DEFAULT_MESSAGES.put("guarantor.no-proposal", "<red>有効な保証人依頼がありません。</red>");
+        DEFAULT_MESSAGES.put("guarantor.no-debt", "<red>あなたには現在、対象となる借金がありません。</red>");
+        DEFAULT_MESSAGES.put("guarantor.already-set", "<red>すでに保証人が設定されています。</red>");
+        DEFAULT_MESSAGES.put("guarantor.usage-request-arg", "<yellow>/meco guarantor request <プレイヤー></yellow>");
+        DEFAULT_MESSAGES.put("guarantor.cannot-self", "<red>自分自身を保証人にはできません。</red>");
+        DEFAULT_MESSAGES.put("guarantor.requested", "<green><bold>{player} に保証人を依頼しました。（5分以内に返答が必要）</bold></green>");
+        DEFAULT_MESSAGES.put("guarantor.request-received", "<gold><bold>【保証人依頼】</bold> {player} があなたに融資の保証人を依頼しています。</gold>");
+        DEFAULT_MESSAGES.put("guarantor.request-instructions", "<yellow>承諾: /meco guarantor accept ／ 拒否: /meco guarantor decline</yellow>");
+        DEFAULT_MESSAGES.put("guarantor.request-warning", "<gray>※保証人になると、依頼者が返済不能になった際に信用スコアへ影響します。</gray>");
+        DEFAULT_MESSAGES.put("guarantor.usage", "<yellow>使用法: /meco guarantor <request|accept|decline></yellow>");
+        DEFAULT_MESSAGES.put("trade.usage", "<yellow>使用法: /meco trade <プレイヤー|accept|decline></yellow>");
+        DEFAULT_MESSAGES.put("trade.request-sent", "<green><bold>{player} にアイテム交換を申し込みました。（60秒以内に返答が必要）</bold></green>");
+        DEFAULT_MESSAGES.put("trade.request-received", "<gold><bold>【交換依頼】</bold> {player} があなたにアイテム交換を申し込んでいます。</gold>");
+        DEFAULT_MESSAGES.put("trade.request-instructions", "<yellow>承諾: /meco trade accept ／ 拒否: /meco trade decline</yellow>");
+        DEFAULT_MESSAGES.put("trade.no-request", "<red>有効な交換依頼がありません。</red>");
+        DEFAULT_MESSAGES.put("trade.no-request-expired", "<red>有効な交換依頼がありません。（期限切れの可能性があります）</red>");
+        DEFAULT_MESSAGES.put("trade.declined-self", "<yellow>交換依頼を拒否しました。</yellow>");
+        DEFAULT_MESSAGES.put("trade.declined-notice", "<red>{player} は交換依頼を拒否しました。</red>");
+        DEFAULT_MESSAGES.put("trade.cannot-self", "<red>自分自身とは交換できません。</red>");
+        DEFAULT_MESSAGES.put("trade.already-in-progress", "<red>既に交換が進行中か、保留中の依頼があります。</red>");
+        DEFAULT_MESSAGES.put("trade.money-prompt", "<gold><bold>チャットに提示する金額を入力してください。（0でキャンセル可）</bold></gold>");
+        DEFAULT_MESSAGES.put("trade.money-set", "<green>提示金額を {amount}円 に設定しました。</green>");
+        DEFAULT_MESSAGES.put("trade.money-insufficient", "<red>所持金が足りないため、その金額は提示できません。</red>");
+        DEFAULT_MESSAGES.put("trade.cancelled", "<red><bold>取引はキャンセルされました。提示していたアイテムは返却されました。</bold></red>");
+        DEFAULT_MESSAGES.put("trade.completed", "<green><bold>【成立】アイテム交換が完了しました！</bold></green>");
+        DEFAULT_MESSAGES.put("help.trade", "<yellow>/meco trade <プレイヤー></yellow> <gray>- 安全にアイテム・お金を交換する</gray>");
+        DEFAULT_MESSAGES.put("quest.max-reached", "<red>掲示できる依頼数の上限({count}件)に達しています。</red>");
+        DEFAULT_MESSAGES.put("quest.post-prompt", "<gold><bold>チャットに依頼の報酬額を入力してください。（あなたの今の場所が目的地になります）</bold></gold>");
+        DEFAULT_MESSAGES.put("quest.withdrawn", "<yellow>依頼を取り下げ、報酬 {amount}円 を返金しました。</yellow>");
+        DEFAULT_MESSAGES.put("quest.cannot-withdraw", "<gray>受注中またはクールダウン中の依頼は取り下げられません。</gray>");
+        DEFAULT_MESSAGES.put("quest.accepted", "<green><bold>依頼を受注しました！目的地({world} {x}, {y}, {z})まで移動してください。</bold></green>");
+        DEFAULT_MESSAGES.put("quest.accepted-notice", "<aqua>{player} があなたの依頼を受注しました。</aqua>");
+        DEFAULT_MESSAGES.put("quest.abandoned", "<yellow>依頼を放棄しました。</yellow>");
+        DEFAULT_MESSAGES.put("quest.not-acceptable", "<gray>この依頼は現在受注できません。</gray>");
+        DEFAULT_MESSAGES.put("quest.team-post-prompt-reward", "<gold><bold>チャットにチーム依頼の「一人あたり」の報酬額を入力してください。（あなたの今の場所が目的地になります）</bold></gold>");
+        DEFAULT_MESSAGES.put("quest.team-post-prompt-size", "<gold><bold>次に、必要な人数（2〜{max}人）をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("quest.team-size-too-small", "<red>チーム依頼の人数は2人以上を指定してください。1人の場合は通常の依頼掲示をご利用ください。</red>");
+        DEFAULT_MESSAGES.put("quest.team-size-too-large", "<red>チーム依頼の人数は最大{max}人までです。</red>");
+        DEFAULT_MESSAGES.put("quest.team-joined", "<green><bold>チーム依頼に参加しました！目的地({world} {x}, {y}, {z})まで移動してください。（{joined}/{required}人）</bold></green>");
+        DEFAULT_MESSAGES.put("quest.team-join-notice", "<aqua>{player} があなたのチーム依頼に参加しました。（{joined}/{required}人）</aqua>");
+        DEFAULT_MESSAGES.put("quest.team-staffed", "<green><bold>チームの人数が揃いました！全員で目的地まで移動してください。</bold></green>");
+        DEFAULT_MESSAGES.put("quest.team-left-recruiting", "<yellow>チーム依頼の参加を取り消しました。</yellow>");
+        DEFAULT_MESSAGES.put("quest.team-abandoned", "<red>チームメンバーが離脱したため、依頼は募集中に戻りました。</red>");
+        DEFAULT_MESSAGES.put("quest.team-withdraw-blocked", "<gray>参加者がいるチーム依頼は取り下げられません。全員が離脱するのを待ってください。</gray>");
+        DEFAULT_MESSAGES.put("quest.team-arrived-waiting", "<yellow>目的地に到達しました。他のメンバーの到着を待っています。（{arrived}/{required}人）</yellow>");
+        DEFAULT_MESSAGES.put("quest.team-completed", "<green><bold>【チーム依頼達成】 探索依頼を達成し、報酬 {amount}円 を受け取りました！</bold></green>");
+        DEFAULT_MESSAGES.put("admin.search-player-prompt", "<gold><bold>チャットに検索したいプレイヤー名を入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("admin.give-prompt", "<gold><bold>付与する金額をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("admin.take-prompt", "<gold><bold>没収する金額をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("admin.setcredit-prompt", "<gold><bold>設定する信用スコア(0〜800)をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("admin.reset-confirm", "<red><bold>本当にリセットする場合はもう一度クリックしてください。（15秒以内）</bold></red>");
+        DEFAULT_MESSAGES.put("event.random-triggered", "<green>ランダム経済イベントを発生させました。</green>");
+        DEFAULT_MESSAGES.put("event.boom-triggered", "<green>黄金ラッシュを発生させました。</green>");
+        DEFAULT_MESSAGES.put("event.tax-triggered", "<green>手数料高騰を発生させました。</green>");
+        DEFAULT_MESSAGES.put("event.bonus-triggered", "<green>ボーナス支給デーを発生させました。</green>");
+        DEFAULT_MESSAGES.put("event.recession-triggered", "<green>冬の時代を発生させました。</green>");
+        DEFAULT_MESSAGES.put("collateral.select-item", "<red>担保アイテムを選択してください。</red>");
+        DEFAULT_MESSAGES.put("collateral.borrowed", "<green><bold>{item} を担保に {amount}円 を借り入れました。返済期限は {minutes}分後です。</bold></green>");
+        DEFAULT_MESSAGES.put("collateral.repaid", "<green><bold>担保融資を完済し、アイテムを取り戻しました！</bold></green>");
+        DEFAULT_MESSAGES.put("collateral.repay-insufficient", "<red>返済資金が足りません。（必要額: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("treasury.balance-gui", "<gold><bold>🏛 国庫残高: {amount}円</bold></gold>");
+        DEFAULT_MESSAGES.put("treasury.balance-note", "<gray>法人税・オークション手数料などが積み立てられています。</gray>");
+        DEFAULT_MESSAGES.put("donate.treasury-prompt", "<gold><bold>チャットに国庫へ寄付する金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+        DEFAULT_MESSAGES.put("tutorial.completed", "<green>チュートリアルを完了しました！</green>");
+        DEFAULT_MESSAGES.put("auction.list-price-prompt", "<gold>開始価格をチャット入力してください。「キャンセル」で返却します。</gold>");
+        DEFAULT_MESSAGES.put("collateral.item-not-valid", "<red>そのアイテムは担保として評価できません。</red>");
+        DEFAULT_MESSAGES.put("auction.listing-limit", "<red>同時出品数の上限（{count}件）に達しています。</red>");
+        DEFAULT_MESSAGES.put("auction.listing-ended", "<red>この出品はすでに終了しています。</red>");
+        DEFAULT_MESSAGES.put("auction.cannot-bid-own", "<red>自分の出品には入札できません。</red>");
+        DEFAULT_MESSAGES.put("auction.items-inventory-full", "<yellow>インベントリが満杯のため {count} 個を受け取れませんでした。空きを作ってから /meco collect でもう一度お試しください。</yellow>");
+        DEFAULT_MESSAGES.put("auction.cancel-has-bid", "<red>すでに入札が入っているため、この出品は取り下げられません。</red>");
+        DEFAULT_MESSAGES.put("auction.cancel-success", "<green><bold>{item} の出品を取り下げました。（受取箱を確認してください）</bold></green>");
+        DEFAULT_MESSAGES.put("auction.search-prompt", "<gold>検索したいアイテム名（の一部）をチャットに入力してください。「クリア」で検索を解除、「キャンセル」で閉じます。</gold>");
+        DEFAULT_MESSAGES.put("auction.search-set", "<green>検索語を「{query}」に設定しました。</green>");
+        DEFAULT_MESSAGES.put("auction.search-cleared", "<gray>検索条件をクリアしました。</gray>");
+        DEFAULT_MESSAGES.put("auction.bid-prompt", "<gold><bold>チャットに入札額を入力してください。（最低 {amount}円 / キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+        DEFAULT_MESSAGES.put("insurance.already-active", "<red>すでに保険に加入中です。</red>");
+        DEFAULT_MESSAGES.put("insurance.joined", "<green><bold>生命保険に加入しました！有効期間: {minutes}分</bold></green>");
+        DEFAULT_MESSAGES.put("insurance.premium-insufficient", "<red>保険料（{amount}円）が足りません。</red>");
+        DEFAULT_MESSAGES.put("personal.deposit-step", "<green>{amount}円 預金。</green>");
+        DEFAULT_MESSAGES.put("personal.deposit-full", "<green>全額預金。</green>");
+        DEFAULT_MESSAGES.put("personal.withdraw-step", "<red>{amount}円 引出。</red>");
+        DEFAULT_MESSAGES.put("personal.withdraw-full", "<red>全額引出。</red>");
+        DEFAULT_MESSAGES.put("personal.deposit-prompt", "<gold><bold>チャットに預金したい金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+        DEFAULT_MESSAGES.put("personal.withdraw-prompt", "<gold><bold>チャットに引き出したい金額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+        DEFAULT_MESSAGES.put("loan.cannot-borrow-self-bank", "<red>自分自身の銀行から借りることはできません。</red>");
+        DEFAULT_MESSAGES.put("loan.already-has-debt", "<red>既に他のプレイヤーからの借金があります。</red>");
+        DEFAULT_MESSAGES.put("loan.plan-not-exist", "<red>このプランはすでに存在しません。</red>");
+        DEFAULT_MESSAGES.put("loan.bank-capital-insufficient", "<red>この銀行の資本金プールが不足しています。</red>");
+        DEFAULT_MESSAGES.put("loan.player-approved-notice", "<green><bold>【融資成立】 {player} があなたのプランから {amount}円 を借りました！</bold></green>");
+        DEFAULT_MESSAGES.put("loan.player-repaid-full-plain", "<green>プレイヤー間の借金を完済しました！</green>");
+        DEFAULT_MESSAGES.put("loan.repay-partial", "<yellow>{amount}円 を返済しました。</yellow>");
+        DEFAULT_MESSAGES.put("loan.repay-full-insufficient", "<red>全額返済する資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("loan.gov-repaid-full-plain", "<green>国営公庫のローンを完済しました！</green>");
+        DEFAULT_MESSAGES.put("loan.gov-repaid-full-bold", "<green><bold>国営公庫のローンを全額完済しました！</bold></green>");
+        DEFAULT_MESSAGES.put("bank.already-established", "<red>すでに銀行を設立しています。</red>");
+        DEFAULT_MESSAGES.put("bank.established", "<green><bold>銀行を設立しました！頭取パネルが開放されました。</bold></green>");
+        DEFAULT_MESSAGES.put("bank.establish-cost-insufficient", "<red>設立費用（{amount}円）が足りません。</red>");
+        DEFAULT_MESSAGES.put("bank.capital-added", "<green>資本金プールに +10,000円 追加。</green>");
+        DEFAULT_MESSAGES.put("bank.capital-withdrawn", "<red>資本金プールから -10,000円 引き出し。</red>");
+        DEFAULT_MESSAGES.put("bank.capital-insufficient-pool", "<red>資本金プールにそれだけの資金がありません。</red>");
+        DEFAULT_MESSAGES.put("bank.plan-withdrawn", "<yellow>プラン({slot}枠目)を取り下げました。</yellow>");
+        DEFAULT_MESSAGES.put("bank.no-published-plan", "<red>公開中のプランはありません。</red>");
+        DEFAULT_MESSAGES.put("bank.plan-amount-prompt", "<gold><bold>チャットに融資額を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+        DEFAULT_MESSAGES.put("bank.plan-interest-prompt", "<gold><bold>チャットに利息(%)を入力してください。（キャンセルする場合は「キャンセル」と入力）</bold></gold>");
+        DEFAULT_MESSAGES.put("bank.plan-published", "<green><bold>融資プラン({slot}枠目)を市場に公開しました！</bold></green>");
+        DEFAULT_MESSAGES.put("loan.gov-cap-exceeded", "<red>借入上限（{amount}円）を超えるため、これ以上借りられません。信用スコアを上げるか返済してください。</red>");
+        DEFAULT_MESSAGES.put("deposit.already-exists", "<red>すでに定期預金が存在します。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot1-created", "<green>{amount}円 を定期預金に預けました（満期: {seconds}秒後 / 利率: +{rate}%）</green>");
+        DEFAULT_MESSAGES.put("deposit.funds-insufficient", "<red>手持ち資金が {amount}円 足りません。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot1-none", "<red>定期預金がありません。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot1-not-matured", "<red>まだ満期を迎えていません。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot2-exists", "<red>すでに2枠目に定期預金が存在します。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot2-created", "<aqua>{amount}円 を2枠目の定期預金に預けました。</aqua>");
+        DEFAULT_MESSAGES.put("deposit.slot2-none", "<red>2枠目に定期預金がありません。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot2-not-matured", "<red>2枠目はまだ満期を迎えていません。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot3-exists", "<red>すでに3枠目に定期預金が存在します。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot3-created", "<light_purple>{amount}円 を3枠目の定期預金に預けました。</light_purple>");
+        DEFAULT_MESSAGES.put("deposit.slot3-none", "<red>3枠目に定期預金がありません。</red>");
+        DEFAULT_MESSAGES.put("deposit.slot3-not-matured", "<red>3枠目はまだ満期を迎えていません。</red>");
+        DEFAULT_MESSAGES.put("quest.completed", "<green><bold>【依頼達成】 探索依頼を達成し、報酬 {amount}円 を受け取りました！</bold></green>");
+        DEFAULT_MESSAGES.put("quest.completed-notice", "<aqua>{player} があなたの依頼を達成しました。</aqua>");
+        DEFAULT_MESSAGES.put("quest.relisted", "<aqua>あなたの依頼が再出品されました。（報酬 {amount}円 を再徴収）</aqua>");
+        DEFAULT_MESSAGES.put("quest.removed-insufficient-funds", "<red>資金不足のため、依頼ボードから依頼を取り下げました。</red>");
+        DEFAULT_MESSAGES.put("auction.listing-cancelled-returned", "<gray>【オークションハウス】 出品手続き中だったアイテムを返却しました。</gray>");
+        DEFAULT_MESSAGES.put("loan.login-seized-full", "<green><bold>[完済] ログイン時に借金がすべて徴収されました。</bold></green>");
+        DEFAULT_MESSAGES.put("loan.login-seized-partial", "<red><bold>[執行]</bold> 借金 <yellow>{amount}円</yellow> 強制徴収。</red>");
+        DEFAULT_MESSAGES.put("loan.guarantor-seized-notice", "<dark_red><bold>【保証債務】</bold> {player} の借金返済不能につき、保証人として {amount}円 が徴収され、信用スコアが低下しました。</dark_red>");
+        DEFAULT_MESSAGES.put("loan.guarantor-repaid-full", "<green><bold>[完済] 保証人により借金が完済されました。</bold></green>");
+        DEFAULT_MESSAGES.put("insurance.claim-cooldown", "<gray>[保険] クールダウン中のため、今回の死亡では保険金は支払われませんでした。</gray>");
+        DEFAULT_MESSAGES.put("input.cancelled-auction-item-returned", "<gray>出品をキャンセルし、アイテムを返却しました。</gray>");
+        DEFAULT_MESSAGES.put("input.cancelled", "<gray>入力をキャンセルしました。</gray>");
+        DEFAULT_MESSAGES.put("admin.player-not-found", "<red>プレイヤー「{name}」が見つかりませんでした。</red>");
+        DEFAULT_MESSAGES.put("quest.reward-insufficient", "<red>所持金が足りません。</red>");
+        DEFAULT_MESSAGES.put("quest.posted", "<green><bold>依頼を掲示しました！報酬 {amount}円 をエスクローしました。</bold></green>");
+        DEFAULT_MESSAGES.put("worldstock.search-prompt", "<gold><bold>チャットにティッカーシンボルを入力してください。（例: AAPL, TSLA, 7203.T）</bold></gold>");
+        DEFAULT_MESSAGES.put("worldstock.invalid-symbol", "<red>ティッカーシンボルの形式が正しくありません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.searching", "<gray>{symbol} の株価を取得中...</gray>");
+        DEFAULT_MESSAGES.put("worldstock.not-found", "<red>{symbol} が見つかりませんでした。ティッカーシンボルを確認するか、しばらく経ってから再度お試しください。</red>");
+        DEFAULT_MESSAGES.put("worldstock.funds-insufficient", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.not-owned", "<red>この銘柄を保有していません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.bought", "<green><bold>{symbol} を {qty}株 購入しました。（{amount}円 / 単価 {native} / 手数料 {fee}円）</bold></green>");
+        DEFAULT_MESSAGES.put("worldstock.sold", "<green><bold>{symbol} を {qty}株 売却しました。（{amount}円 / 単価 {native} / 損益: {pnl}円 / 手数料 {fee}円）</bold></green>");
+        DEFAULT_MESSAGES.put("worldstock.sell-not-enough-shares", "<red>売却したい株数が保有数を超えています。（保有: {owned}株 / 指定: {requested}株）部分約定はしません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.bulk-qty-too-large", "<red>一度に取引できる株数の上限（{max}株）を超えています。</red>");
+        DEFAULT_MESSAGES.put("worldstock.bulk-buy-prompt", "<gold><bold>{symbol} を購入する株数をチャットに入力してください。（例: 25）</bold></gold>");
+        DEFAULT_MESSAGES.put("worldstock.bulk-sell-prompt", "<gold><bold>{symbol} を売却する株数をチャットに入力してください。（例: 25）</bold></gold>");
+        DEFAULT_MESSAGES.put("worldstock.cooldown", "<red>この銘柄は取引後 {seconds}秒経過するまで再度取引できません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.daily-count-limit", "<red>本日の世界株取引回数の上限（{count}回）に達しました。また明日お試しください。</red>");
+        DEFAULT_MESSAGES.put("worldstock.daily-amount-limit", "<red>本日の世界株取引金額の上限（{amount}円）に達するため、この取引はできません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.daily-profit-limit", "<red>本日の世界株実現利益の上限（{amount}円）に達したため、これ以上の利益確定売りはできません。</red>");
+        DEFAULT_MESSAGES.put("worldstock.alert-prompt", "<gold><bold>{symbol} の値動きアラート閾値(%)をチャットに入力してください。（例: 5 で ±5% 変動時に通知）</bold></gold>");
+        DEFAULT_MESSAGES.put("worldstock.alert-set", "<green><bold>{symbol} に値動きアラートを設定しました。（現在値から ±{percent}% 変動で通知）</bold></green>");
+        DEFAULT_MESSAGES.put("worldstock.alert-cancelled", "<gray>{symbol} の値動きアラートを解除しました。</gray>");
+        DEFAULT_MESSAGES.put("worldstock.alert-triggered", "<gold><bold>🔔 {symbol} が基準値から{percent}%以上変動しました！（現在値: {price}）</bold></gold>");
+        DEFAULT_MESSAGES.put("worldstock.dividend-paid", "<green>世界株の配当金として {amount}円 を受け取りました。</green>");
+        DEFAULT_MESSAGES.put("resourceshop.not-enough-items", "<red>{material}が足りません。（所持: {have}個 / 必要: {need}個）</red>");
+        DEFAULT_MESSAGES.put("resourceshop.funds-insufficient", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("resourceshop.sold", "<green><bold>{material}を{qty}個売却しました。（{amount}円）</bold></green>");
+        DEFAULT_MESSAGES.put("resourceshop.bought", "<green><bold>{material}を{qty}個購入しました。（{amount}円）</bold></green>");
+        DEFAULT_MESSAGES.put("resourceshop.sell-qty-prompt", "<gold><bold>{material}を売る個数をチャットに入力してください。（例: 40）</bold></gold>");
+        DEFAULT_MESSAGES.put("resourceshop.buy-qty-prompt", "<gold><bold>{material}を買う個数をチャットに入力してください。（例: 40）</bold></gold>");
+        DEFAULT_MESSAGES.put("lottery.funds-insufficient", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("lottery.ticket-bought", "<green><bold>宝くじチケットを{count}枚購入しました。（{amount}円）</bold></green>");
+        DEFAULT_MESSAGES.put("lottery.buy-qty-prompt", "<gold><bold>購入するチケットの枚数をチャットに入力してください。（例: 3）</bold></gold>");
+        DEFAULT_MESSAGES.put("merchant.funds-insufficient", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("merchant.bought", "<green><bold>{item} を購入しました。（{amount}円）</bold></green>");
+        DEFAULT_MESSAGES.put("merchant.location-hint", "<gold><bold>巡回商人は現在 {world} ({x}, {y}, {z}) 付近にいます。</bold></gold>");
+        DEFAULT_MESSAGES.put("treasure.found", "<gold><bold>【埋蔵金発見】 埋蔵金チェストを発見し、{amount}円 を手に入れました！</bold></gold>");
+        DEFAULT_MESSAGES.put("merchant.installment-purchased", "<green><bold>{item} を分割払いで購入しました！初回 {first}円を支払いました。（残り{count}回中 {remaining}回、各{each}円）</bold></green>");
+        DEFAULT_MESSAGES.put("installment.paid", "<green>分割払い: {item} の {amount}円 を引き落としました。（残り{remaining}回）</green>");
+        DEFAULT_MESSAGES.put("installment.completed", "<green><bold>分割払い: {item} の支払いが完了しました！</bold></green>");
+        DEFAULT_MESSAGES.put("installment.missed", "<red>分割払い: {item} の {amount}円 が引き落とせませんでした。信用スコアが減少します。</red>");
+        DEFAULT_MESSAGES.put("auction.bid-too-low", "<red>入札額が低すぎます。（最低 {amount}円）</red>");
+        DEFAULT_MESSAGES.put("auction.buyout-purchased", "<green><bold>即決価格で購入しました！</bold></green>");
+        DEFAULT_MESSAGES.put("auction.bid-placed", "<green><bold>{item} に {amount}円 で入札しました。</bold></green>");
+        DEFAULT_MESSAGES.put("personal.deposit-custom", "<green><bold>{amount}円 を預金しました。</bold></green>");
+        DEFAULT_MESSAGES.put("personal.withdraw-insufficient", "<red>預金残高が足りません。（残高: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("personal.withdraw-custom", "<green><bold>{amount}円 を引き出しました。</bold></green>");
+        DEFAULT_MESSAGES.put("bank.plan-amount-set", "<green>融資額を {amount}円 に設定しました。</green>");
+        DEFAULT_MESSAGES.put("bank.plan-interest-set", "<green>利息を {amount}% に設定しました。</green>");
+        DEFAULT_MESSAGES.put("auction.draft-not-found", "<red>出品するアイテムが見つかりませんでした。もう一度お試しください。</red>");
+        DEFAULT_MESSAGES.put("auction.buyout-prompt", "<gold><bold>即決価格(Buy Now)を入力してください。設定しない場合は 0 と入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("auction.listing-info-not-found", "<red>出品情報が見つかりませんでした。もう一度お試しください。</red>");
+        DEFAULT_MESSAGES.put("auction.buyout-too-low", "<red>即決価格は開始価格（{amount}円）より高く設定してください。出品をキャンセルします。</red>");
+        DEFAULT_MESSAGES.put("auction.listed", "<green><bold>{item} をオークションに出品しました！（開始価格: {amount}円{buyoutMsg} / 期間: {minutes}分）</bold></green>");
+        DEFAULT_MESSAGES.put("storage.funds-insufficient", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("storage.rented", "<green><bold>レンタル倉庫を契約しました！（家賃 {amount}円 / {hours}時間ごと）</bold></green> <red>家賃の支払いに1回でも失敗すると、契約は失効し倉庫の中身は全て没収されますのでご注意ください。</red>");
+        DEFAULT_MESSAGES.put("storage.rent-paid", "<green>レンタル倉庫の家賃 {amount}円 を支払いました。</green>");
+        DEFAULT_MESSAGES.put("storage.forfeited", "<red><bold>【レンタル倉庫】家賃の支払いに失敗したため契約が失効し、倉庫の中身は全て没収されました。</bold></red>");
+        DEFAULT_MESSAGES.put("storage.not-renting", "<red>レンタル倉庫を契約していません。</red>");
+        DEFAULT_MESSAGES.put("group.created", "<green><bold>グループ貯金箱「{name}」を作成しました！（ID: {id}）</bold></green>");
+        DEFAULT_MESSAGES.put("group.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("group.create-name-prompt", "<gold><bold>作成するグループ貯金箱の名前をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("group.not-found", "<red>指定したグループ貯金箱が見つかりません。</red>");
+        DEFAULT_MESSAGES.put("group.not-owner", "<red>この操作はオーナーのみ実行できます。</red>");
+        DEFAULT_MESSAGES.put("group.already-member", "<red>そのプレイヤーは既にメンバーです。</red>");
+        DEFAULT_MESSAGES.put("group.full", "<red>メンバー数が上限に達しています。</red>");
+        DEFAULT_MESSAGES.put("group.invited", "<green><bold>{player} をグループ貯金箱に招待しました。</bold></green>");
+        DEFAULT_MESSAGES.put("group.invite-received", "<gold><bold>【グループ貯金箱】</bold> {player} があなたを「{group}」に招待しました。</gold>");
+        DEFAULT_MESSAGES.put("group.kicked", "<yellow>{player} をグループ貯金箱から追放しました。</yellow>");
+        DEFAULT_MESSAGES.put("group.kicked-notice", "<yellow>【グループ貯金箱】</yellow> 「{group}」のメンバー構成が変更されました。");
+        DEFAULT_MESSAGES.put("group.owner-cannot-leave", "<red>オーナーは脱退できません。解散する場合は /meco group disband <名前> を使用してください。</red>");
+        DEFAULT_MESSAGES.put("group.left", "<yellow>「{group}」から脱退しました。</yellow>");
+        DEFAULT_MESSAGES.put("group.disbanded", "<gold><bold>グループ貯金箱が解散されました。残高から {amount}円 が振り込まれました。</bold></gold>");
+        DEFAULT_MESSAGES.put("group.disband-confirm", "<red><bold>本当にグループ貯金箱を解散しますか？</bold></red> <yellow>残高はメンバー全員に均等割りされます。30秒以内にもう一度クリックで確定します。</yellow>");
+        DEFAULT_MESSAGES.put("group.deposit-prompt", "<gold><bold>入金する金額をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("group.deposited", "<green><bold>グループ貯金箱へ {amount}円 を入金しました。</bold></green>");
+        DEFAULT_MESSAGES.put("group.withdraw-prompt", "<gold><bold>引き出す金額をチャットに入力してください。</bold></gold>");
+        DEFAULT_MESSAGES.put("group.withdraw-insufficient", "<red>グループ貯金箱の残高が足りません。（残高: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("group.withdrawn", "<green><bold>グループ貯金箱から {amount}円 を引き出しました。</bold></green>");
+        DEFAULT_MESSAGES.put("help.group", "<yellow>/meco group <create|invite|kick|leave|disband></yellow> <gray>- 複数人で共有するグループ貯金箱を管理する</gray>");
+        DEFAULT_MESSAGES.put("fund.created", "<green><bold>共同投資ファンド「{name}」を作成しました！（ID: {id}）</bold></green>");
+        DEFAULT_MESSAGES.put("fund.create-funds-insufficient", "<red>作成費用が不足しています。（必要額: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("fund.not-found", "<red>指定した共同投資ファンドが見つかりません。</red>");
+        DEFAULT_MESSAGES.put("fund.not-manager", "<red>この操作はファンドのマネージャーのみ実行できます。</red>");
+        DEFAULT_MESSAGES.put("fund.already-contributor", "<red>そのプレイヤーは既に出資者です。</red>");
+        DEFAULT_MESSAGES.put("fund.full", "<red>出資者数が上限に達しています。</red>");
+        DEFAULT_MESSAGES.put("fund.invited", "<green><bold>{player} を共同投資ファンドに招待しました。</bold></green>");
+        DEFAULT_MESSAGES.put("fund.invite-received", "<gold><bold>【共同投資ファンド】</bold> {player} があなたを「{fund}」に招待しました。/meco fund contribute {fund} <金額> で出資できます。</gold>");
+        DEFAULT_MESSAGES.put("fund.not-invited", "<red>そのファンドの出資者(またはマネージャー)ではありません。先に招待してもらう必要があります。</red>");
+        DEFAULT_MESSAGES.put("fund.contributed", "<green><bold>共同投資ファンド「{fund}」へ {amount}円 出資しました。</bold></green>");
+        DEFAULT_MESSAGES.put("fund.contribute-funds-insufficient", "<red>手持ち資金が足りません。（所持金: {amount}円）</red>");
+        DEFAULT_MESSAGES.put("fund.redeemed", "<green><bold>共同投資ファンドから解約し、持分 {amount}円 を受け取りました。</bold></green>");
+        DEFAULT_MESSAGES.put("fund.redeem-confirm", "<red><bold>本当に持分を全額解約しますか？</bold></red> <yellow>もう一度クリックすると確定します(30秒以内)。</yellow>");
+        DEFAULT_MESSAGES.put("fund.redeem-insufficient-cash", "<red>ファンドの現金残高が不足しているため解約できません。マネージャーに保有銘柄の売却を依頼してください。</red>");
+        DEFAULT_MESSAGES.put("fund.disband-has-holdings", "<red>保有銘柄が残っているため解散できません。先に運用画面ですべて売却してください。</red>");
+        DEFAULT_MESSAGES.put("fund.disbanded", "<gold><bold>共同投資ファンドが解散されました。持分に応じて {amount}円 が振り込まれました。</bold></gold>");
+        DEFAULT_MESSAGES.put("fund.trade-funds-insufficient", "<red>ファンドの現金残高が足りません。</red>");
+        DEFAULT_MESSAGES.put("help.fund", "<yellow>/meco fund <create|invite|contribute|redeem|disband></yellow> <gray>- 複数人で出資し合う共同投資ファンドを管理する</gray>");
+        DEFAULT_MESSAGES.put("vip.not-eligible", "<red>VIP限定です。信用スコアを上げてシルバー会員以上になると利用できます。</red>");
+        DEFAULT_MESSAGES.put("vip.shop-bought", "<green><bold>VIP限定ショップで {item} を購入しました。（{amount}円）</bold></green>");
+        DEFAULT_MESSAGES.put("vip.shop-funds-insufficient", "<red>手持ち資金が足りません。</red>");
+        DEFAULT_MESSAGES.put("vip.stipend-claimed", "<green><bold>日次VIP手当（{tier}）として {amount}円 を受け取りました。</bold></green>");
+        DEFAULT_MESSAGES.put("vip.stipend-cooldown", "<red>日次VIP手当は受取済みです。次回受取まであと {time}。</red>");
+        DEFAULT_MESSAGES.put("vip.stipend-treasury-empty", "<red>国庫残高が不足しているため、現在は日次VIP手当を支給できません。しばらく経ってからお試しください。</red>");
+        DEFAULT_MESSAGES.put("vip.stipend-disabled", "<red>日次VIP手当は現在無効化されています。</red>");
     }
 
     private static final class PluginDataStore {
@@ -12051,7 +11997,7 @@ lbl1231:
                 this.conn.setAutoCommit(false);
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite\u30c8\u30e9\u30f3\u30b6\u30af\u30b7\u30e7\u30f3\u958b\u59cb\u306b\u5931\u6557\u3057\u307e\u3057\u305f", e);
+                throw new RuntimeException("SQLiteトランザクション開始に失敗しました", e);
             }
         }
 
@@ -12066,7 +12012,7 @@ lbl1231:
                 catch (SQLException sQLException) {
                     // empty catch block
                 }
-                throw new RuntimeException("SQLite\u3078\u306e\u30b3\u30df\u30c3\u30c8\u306b\u5931\u6557\u3057\u307e\u3057\u305f", e);
+                throw new RuntimeException("SQLiteへのコミットに失敗しました", e);
             }
             finally {
                 try {
@@ -12088,7 +12034,7 @@ lbl1231:
                 ps.executeUpdate();
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite\u66f8\u8fbc\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                throw new RuntimeException("SQLite書込に失敗しました: " + section + "/" + path, e);
             }
         }
 
@@ -12109,7 +12055,7 @@ lbl1231:
                 }
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite\u8aad\u8fbc\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                throw new RuntimeException("SQLite読込に失敗しました: " + section + "/" + path, e);
             }
         }
 
@@ -12205,7 +12151,7 @@ lbl1231:
                 this.setString(section, path, Base64.getEncoder().encodeToString(baos.toByteArray()));
             }
             catch (IOException e) {
-                throw new RuntimeException("ItemStack\u306e\u30b7\u30ea\u30a2\u30e9\u30a4\u30ba\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                throw new RuntimeException("ItemStackのシリアライズに失敗しました: " + section + "/" + path, e);
             }
         }
 
@@ -12232,7 +12178,7 @@ lbl1231:
                     throw throwable;
                 }
                 catch (Exception e) {
-                    throw new RuntimeException("ItemStack\u306e\u30c7\u30b7\u30ea\u30a2\u30e9\u30a4\u30ba\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                    throw new RuntimeException("ItemStackのデシリアライズに失敗しました: " + section + "/" + path, e);
                 }
             }
             ois.close();
@@ -12252,7 +12198,7 @@ lbl1231:
                 this.setString(section, path, Base64.getEncoder().encodeToString(baos.toByteArray()));
             }
             catch (IOException e) {
-                throw new RuntimeException("ItemStack\u30ea\u30b9\u30c8\u306e\u30b7\u30ea\u30a2\u30e9\u30a4\u30ba\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                throw new RuntimeException("ItemStackリストのシリアライズに失敗しました: " + section + "/" + path, e);
             }
         }
 
@@ -12279,7 +12225,7 @@ lbl1231:
                 }
             }
             catch (Exception e) {
-                throw new RuntimeException("ItemStack\u30ea\u30b9\u30c8\u306e\u30c7\u30b7\u30ea\u30a2\u30e9\u30a4\u30ba\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                throw new RuntimeException("ItemStackリストのデシリアライズに失敗しました: " + section + "/" + path, e);
             }
         }
 
@@ -12309,7 +12255,7 @@ lbl1231:
                 }
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite getKeys\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + pathPrefix, e);
+                throw new RuntimeException("SQLite getKeysに失敗しました: " + section + "/" + pathPrefix, e);
             }
             return result;
         }
@@ -12321,7 +12267,7 @@ lbl1231:
                 ps.executeUpdate();
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite\u524a\u9664\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + path, e);
+                throw new RuntimeException("SQLite削除に失敗しました: " + section + "/" + path, e);
             }
         }
 
@@ -12331,7 +12277,7 @@ lbl1231:
                 ps.executeUpdate();
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite\u30bb\u30af\u30b7\u30e7\u30f3\u524a\u9664\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section, e);
+                throw new RuntimeException("SQLiteセクション削除に失敗しました: " + section, e);
             }
         }
 
@@ -12343,7 +12289,7 @@ lbl1231:
                 ps.executeUpdate();
             }
             catch (SQLException e) {
-                throw new RuntimeException("SQLite\u90e8\u5206\u524a\u9664\u306b\u5931\u6557\u3057\u307e\u3057\u305f: " + section + "/" + pathPrefix, e);
+                throw new RuntimeException("SQLite部分削除に失敗しました: " + section + "/" + pathPrefix, e);
             }
         }
     }
