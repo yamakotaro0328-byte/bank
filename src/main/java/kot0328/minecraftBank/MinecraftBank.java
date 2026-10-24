@@ -302,7 +302,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private long cfgInsuranceDurationMs = 86400000L;
    private long cfgInsuranceClaimCooldownMs = 300000L;
    private final HashMap<UUID, HashSet<String>> unlockedAchievements = new HashMap<>();
-   private static final String[] ACHIEVEMENT_IDS = new String[]{
+   private static final String[] ACHIEVEMENT_IDS = {
       "first_loan_repaid", "first_gov_loan_repaid", "millionaire", "first_fixed_deposit", "credit_master"
    };
    private String cfgDiscordBotToken = "";
@@ -1791,7 +1791,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          int delivered = 0;
 
          for (ItemStack item : items) {
-            HashMap<Integer, ItemStack> overflow = p.getInventory().addItem(new ItemStack[]{item});
+            HashMap<Integer, ItemStack> overflow = p.getInventory().addItem(item);
             if (overflow.isEmpty()) {
                delivered++;
             } else {
@@ -1878,7 +1878,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          if (item.getItemMeta() instanceof EnchantmentStorageMeta esm) {
             for (Entry<Enchantment, Integer> ench : esm.getStoredEnchants().entrySet()) {
                if (!ench.getKey().isCursed()) {
-                  enchantBonus += Math.min(ench.getValue().intValue(), ench.getKey().getMaxLevel()) * 300.0;
+                  enchantBonus += Math.min(ench.getValue(), ench.getKey().getMaxLevel()) * 300.0;
                }
             }
 
@@ -1886,7 +1886,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          } else if (item.getItemMeta() != null && item.getItemMeta().hasEnchants() && item.getType().getMaxDurability() > 0) {
             for (Entry<Enchantment, Integer> ench : item.getItemMeta().getEnchants().entrySet()) {
                if (!ench.getKey().isCursed()) {
-                  enchantBonus += Math.min(ench.getValue().intValue(), ench.getKey().getMaxLevel()) * 150.0;
+                  enchantBonus += Math.min(ench.getValue(), ench.getKey().getMaxLevel()) * 150.0;
                }
             }
 
@@ -2807,8 +2807,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (c.getConfigurationSection("auction_item") != null) {
          for (String key : c.getConfigurationSection("auction_item").getKeys(false)) {
             Object obj = c.get("auction_item." + key);
-            if (obj instanceof ItemStack) {
-               this.auctionItem.put(UUID.fromString(key), (ItemStack)obj);
+            if (obj instanceof ItemStack stack) {
+               this.auctionItem.put(UUID.fromString(key), stack);
             }
          }
       }
@@ -2844,8 +2844,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                List<ItemStack> list = new ArrayList<>();
 
                for (Object o : raw) {
-                  if (o instanceof ItemStack) {
-                     list.add((ItemStack)o);
+                  if (o instanceof ItemStack stack) {
+                     list.add(stack);
                   }
                }
 
@@ -2857,8 +2857,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (c.getConfigurationSection("auction_draft") != null) {
          for (String key : c.getConfigurationSection("auction_draft").getKeys(false)) {
             Object obj = c.get("auction_draft." + key);
-            if (obj instanceof ItemStack) {
-               this.auctionListingDraft.put(UUID.fromString(key), (ItemStack)obj);
+            if (obj instanceof ItemStack stack) {
+               this.auctionListingDraft.put(UUID.fromString(key), stack);
             }
          }
       }
@@ -2890,8 +2890,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (c.getConfigurationSection("collateral_item") != null) {
          for (String key : c.getConfigurationSection("collateral_item").getKeys(false)) {
             Object obj = c.get("collateral_item." + key);
-            if (obj instanceof ItemStack) {
-               this.collateralItem.put(UUID.fromString(key), (ItemStack)obj);
+            if (obj instanceof ItemStack stack) {
+               this.collateralItem.put(UUID.fromString(key), stack);
             }
          }
       }
@@ -3056,7 +3056,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            shares.put(parts[0], qty);
                            avgCosts.put(parts[0], Double.parseDouble(parts[2].trim()));
                         }
-                     } catch (NumberFormatException var21) {
+                     } catch (NumberFormatException ignored) {
                      }
                   }
                }
@@ -3099,7 +3099,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   if (sep > 0) {
                      try {
                         lastTrade.put(line.substring(0, sep), Long.parseLong(line.substring(sep + 1).trim()));
-                     } catch (NumberFormatException var20) {
+                     } catch (NumberFormatException ignored) {
                      }
                   }
                }
@@ -3144,7 +3144,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          for (String key : c.getConfigurationSection("resource_prices").getKeys(false)) {
             try {
                this.resourcePrices.put(Material.valueOf(key), c.getDouble("resource_prices." + key));
-            } catch (IllegalArgumentException var19) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3160,7 +3160,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      Material mat = Material.valueOf(entry.substring(0, sep));
                      double mult = Double.parseDouble(entry.substring(sep + 1));
                      this.resourcePersonalBuyMultiplier.computeIfAbsent(pu, k -> new HashMap<>()).put(mat, mult);
-                  } catch (IllegalArgumentException var18) {
+                  } catch (IllegalArgumentException ignored) {
                   }
                }
             }
@@ -3182,7 +3182,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   deal.stockTotal = c.getInt(base + "stock_total", 0);
                   deal.stockRemaining = c.getInt(base + "stock_remaining", 0);
                   this.merchantDeals.add(deal);
-               } catch (IllegalArgumentException var17) {
+               } catch (IllegalArgumentException ignored) {
                }
             }
          }
@@ -3203,7 +3203,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   deal.stockTotal = c.getInt(base + "stock_total", 0);
                   deal.stockRemaining = c.getInt(base + "stock_remaining", 0);
                   this.vipShopDeals.add(deal);
-               } catch (IllegalArgumentException var16) {
+               } catch (IllegalArgumentException ignored) {
                }
             }
          }
@@ -3255,24 +3255,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       if (c.getConfigurationSection("installment_plans") != null) {
-         Iterator var78 = c.getConfigurationSection("installment_plans").getKeys(false).iterator();
-
-         label532:
-         while (true) {
-            String ownerKey;
+         for (String ownerKey : c.getConfigurationSection("installment_plans").getKeys(false)) {
             UUID owner;
-            while (true) {
-               if (!var78.hasNext()) {
-                  break label532;
-               }
-
-               ownerKey = (String)var78.next();
-
-               try {
-                  owner = UUID.fromString(ownerKey);
-                  break;
-               } catch (IllegalArgumentException ex) {
-               }
+            try {
+               owner = UUID.fromString(ownerKey);
+            } catch (IllegalArgumentException ex) {
+               continue;
             }
 
             if (c.getConfigurationSection("installment_plans." + ownerKey) != null) {
@@ -3290,7 +3278,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      if (plan.installmentsRemaining > 0) {
                         this.installmentPlans.computeIfAbsent(owner, k -> new ArrayList<>()).add(plan);
                      }
-                  } catch (IllegalArgumentException var15) {
+                  } catch (IllegalArgumentException ignored) {
                   }
                }
             }
@@ -3305,7 +3293,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          for (String key : c.getConfigurationSection("lottery.tickets").getKeys(false)) {
             try {
                this.lotteryTickets.put(UUID.fromString(key), c.getInt("lottery.tickets." + key));
-            } catch (IllegalArgumentException var14) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3320,10 +3308,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                   for (String slotKey : c.getConfigurationSection("storage_items." + key).getKeys(false)) {
                      Object obj = c.get("storage_items." + key + "." + slotKey);
-                     if (obj instanceof ItemStack) {
+                     if (obj instanceof ItemStack stack) {
                         try {
-                           slots.put(Integer.parseInt(slotKey), (ItemStack)obj);
-                        } catch (NumberFormatException var13) {
+                           slots.put(Integer.parseInt(slotKey), stack);
+                        } catch (NumberFormatException ignored) {
                         }
                      }
                   }
@@ -3332,7 +3320,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      this.pendingStorageContents.put(u, slots);
                   }
                }
-            } catch (IllegalArgumentException var23) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3348,7 +3336,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                acc.balance = c.getDouble(base + "balance", 0.0);
                acc.members = new HashSet<>(c.getStringList(base + "members").stream().map(UUID::fromString).toList());
                this.groupAccounts.put(acc.id, acc);
-            } catch (IllegalArgumentException var12) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3378,13 +3366,13 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         UUID contributor = UUID.fromString(contribKey);
                         double amount = c.getDouble(base + "contributions." + contribKey, 0.0);
                         fund.contributions.put(contributor, amount);
-                     } catch (IllegalArgumentException var11) {
+                     } catch (IllegalArgumentException ignored) {
                      }
                   }
                }
 
                this.investmentFunds.put(fund.id, fund);
-            } catch (IllegalArgumentException var22) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3621,7 +3609,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      shares.put(parts[0], qty);
                      avgCosts.put(parts[0], Double.parseDouble(parts[2].trim()));
                   }
-               } catch (NumberFormatException var24) {
+               } catch (NumberFormatException ignored) {
                }
             }
          }
@@ -3650,7 +3638,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (sep > 0) {
                try {
                   lastTrade.put(line.substring(0, sep), Long.parseLong(line.substring(sep + 1).trim()));
-               } catch (NumberFormatException var23) {
+               } catch (NumberFormatException ignored) {
                }
             }
          }
@@ -3685,7 +3673,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       for (String key : this.db.getKeys("resource_prices")) {
          try {
             this.resourcePrices.put(Material.valueOf(key), this.db.getDouble("resource_prices", key, 0.0));
-         } catch (IllegalArgumentException var22) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3699,7 +3687,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   Material mat = Material.valueOf(entry.substring(0, sep));
                   double mult = Double.parseDouble(entry.substring(sep + 1));
                   this.resourcePersonalBuyMultiplier.computeIfAbsent(pu, k -> new HashMap<>()).put(mat, mult);
-               } catch (IllegalArgumentException var21) {
+               } catch (IllegalArgumentException ignored) {
                }
             }
          }
@@ -3720,7 +3708,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                deal.stockTotal = this.db.getInt("traveling_merchant", base + "stock_total", 0);
                deal.stockRemaining = this.db.getInt("traveling_merchant", base + "stock_remaining", 0);
                this.merchantDeals.add(deal);
-            } catch (IllegalArgumentException var20) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3740,7 +3728,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                deal.stockTotal = this.db.getInt("vip_shop", base + "stock_total", 0);
                deal.stockRemaining = this.db.getInt("vip_shop", base + "stock_remaining", 0);
                this.vipShopDeals.add(deal);
-            } catch (IllegalArgumentException var19) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3812,7 +3800,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                if (plan.installmentsRemaining > 0) {
                   this.installmentPlans.computeIfAbsent(owner, k -> new ArrayList<>()).add(plan);
                }
-            } catch (IllegalArgumentException var18) {
+            } catch (IllegalArgumentException ignored) {
             }
          }
       }
@@ -3825,7 +3813,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       for (String key : this.db.getKeys("lottery", "tickets")) {
          try {
             this.lotteryTickets.put(UUID.fromString(key), this.db.getInt("lottery", "tickets." + key, 0));
-         } catch (IllegalArgumentException var17) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3840,7 +3828,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                if (item != null) {
                   try {
                      slots.put(Integer.parseInt(slotKey), item);
-                  } catch (NumberFormatException var16) {
+                  } catch (NumberFormatException ignored) {
                   }
                }
             }
@@ -3848,7 +3836,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (!slots.isEmpty()) {
                this.pendingStorageContents.put(u, slots);
             }
-         } catch (IllegalArgumentException var26) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3867,7 +3855,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             acc.balance = this.db.getDouble("group_accounts", base + "balance", 0.0);
             acc.members = new HashSet<>(this.db.getStringList("group_accounts", base + "members").stream().map(UUID::fromString).toList());
             this.groupAccounts.put(acc.id, acc);
-         } catch (IllegalArgumentException var15) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3900,12 +3888,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   UUID contributor = UUID.fromString(contribKey);
                   double amount = this.db.getDouble("investment_funds", base + "contributions." + contribKey, 0.0);
                   fund.contributions.put(contributor, amount);
-               } catch (IllegalArgumentException var14) {
+               } catch (IllegalArgumentException ignored) {
                }
             }
 
             this.investmentFunds.put(fund.id, fund);
-         } catch (IllegalArgumentException var25) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3925,7 +3913,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (vkey2 != null) {
                this.dashboardTokens.put(UUID.fromString(key2), vkey2);
             }
-         } catch (IllegalArgumentException var13) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3935,7 +3923,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (vkey3 != null) {
                this.webPasswordHash.put(UUID.fromString(key3), vkey3);
             }
-         } catch (IllegalArgumentException var12) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -3945,7 +3933,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             if (vkey4 != null) {
                this.webAdminPasswordHash.put(UUID.fromString(key4), vkey4);
             }
-         } catch (IllegalArgumentException var11) {
+         } catch (IllegalArgumentException ignored) {
          }
       }
 
@@ -4863,7 +4851,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack draft = this.auctionListingDraft.remove(u);
          this.auctionListingStartPrice.remove(u);
          if (draft != null) {
-            for (ItemStack over : p.getInventory().addItem(new ItemStack[]{draft}).values()) {
+            for (ItemStack over : p.getInventory().addItem(draft).values()) {
                p.getWorld().dropItem(p.getLocation(), over);
             }
 
@@ -4886,7 +4874,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void applyResourceTradeImpact(Material mat, int qty, boolean isBuy) {
       double base = RESOURCE_BASE_PRICES.getOrDefault(mat, 0.0);
-      if (!(base <= 0.0)) {
+      if (base > 0.0) {
          double price = this.getResourcePrice(mat);
          double step = 1.0 + this.cfgResourcePriceImpactRate;
          price *= Math.pow(isBuy ? step : 1.0 / step, qty);
@@ -5066,7 +5054,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.errorSound(p);
       } else {
          this.ecoWithdraw(p, total);
-         Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{new ItemStack(mat, qty)});
+         Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack(mat, qty));
 
          for (ItemStack over : leftover.values()) {
             p.getWorld().dropItem(p.getLocation(), over);
@@ -5204,9 +5192,9 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void payCitizenDividend() {
       if (this.cfgCitizenDividendEnabled) {
-         if (!(this.treasury < this.cfgCitizenDividendMinTreasury)) {
+         if (this.treasury >= this.cfgCitizenDividendMinTreasury) {
             double amount = this.cfgCitizenDividendAmount;
-            if (!(amount <= 0.0)) {
+            if (amount > 0.0) {
                int paid = 0;
 
                for (Player p : Bukkit.getOnlinePlayers()) {
@@ -5232,7 +5220,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private void payWelfare() {
       if (this.cfgWelfareEnabled) {
          double amount = this.cfgWelfareAmount;
-         if (!(amount <= 0.0)) {
+         if (amount > 0.0) {
             long now = System.currentTimeMillis();
 
             for (Player p : Bukkit.getOnlinePlayers()) {
@@ -5246,7 +5234,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   + this.fixedDeposit.getOrDefault(u, 0.0)
                   + this.fixedDeposit2.getOrDefault(u, 0.0)
                   + this.fixedDeposit3.getOrDefault(u, 0.0);
-               if (!(totalAssets >= this.cfgWelfareThreshold)) {
+               if (totalAssets < this.cfgWelfareThreshold) {
                   if (this.isDailyCounterResetDue(u, this.welfareCountResetAt, now)) {
                      this.welfareCountToday.put(u, 0);
                   }
@@ -5277,7 +5265,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          List<WorldStockAlert> alerts = entry.getValue();
          if (alerts != null && !alerts.isEmpty()) {
             for (WorldStockAlert alert : new ArrayList<>(alerts)) {
-               if (!(alert.baselinePrice <= 0.0)) {
+               if (alert.baselinePrice > 0.0) {
                   alertsBySymbol.computeIfAbsent(alert.symbol, k -> new ArrayList<>()).add(Map.entry(owner, alert));
                }
             }
@@ -5295,7 +5283,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      UUID owner = pair.getKey();
                      WorldStockAlert alertx = pair.getValue();
                      double moveRatio = Math.abs((quote.price - alertx.baselinePrice) / alertx.baselinePrice);
-                     if (!(moveRatio < alertx.thresholdPercent / 100.0)) {
+                     if (moveRatio >= alertx.thresholdPercent / 100.0) {
                         List<WorldStockAlert> list = this.worldStockAlerts.get(owner);
                         if (list != null) {
                            list.removeIf(
@@ -5453,7 +5441,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                return true;
             }
 
-            Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{this.createHubItem()});
+            Map<Integer, ItemStack> leftover = p.getInventory().addItem(this.createHubItem());
 
             for (ItemStack over : leftover.values()) {
                p.getWorld().dropItemNaturally(p.getLocation(), over);
@@ -6487,7 +6475,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   } else if (args.length >= 3 && args[1].equalsIgnoreCase("bonus")) {
                      try {
                         double amount = parseFiniteDouble(args[2]);
-                        if (!(amount <= 0.0) && !(this.treasury < amount)) {
+                        if (amount > 0.0 && this.treasury >= amount) {
                            List<Player> online = new ArrayList<>(Bukkit.getOnlinePlayers());
                            if (online.isEmpty()) {
                               return true;
@@ -6831,7 +6819,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          Enchantment unbreaking = (Enchantment)Registry.ENCHANTMENT.get(NamespacedKey.minecraft("unbreaking"));
          if (unbreaking != null) {
             meta.addEnchant(unbreaking, 1, true);
-            meta.addItemFlags(new ItemFlag[]{ItemFlag.HIDE_ENCHANTS});
+            meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
          }
 
          meta.setItemModel(new NamespacedKey("minecraftbank", "economy_notebook"));
@@ -7742,7 +7730,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          this.clickSound(p);
       } else if (item.hasItemMeta()) {
-         String symbol = (String)item.getItemMeta().getPersistentDataContainer().get(this.worldStockKey, PersistentDataType.STRING);
+         String symbol = item.getItemMeta().getPersistentDataContainer().get(this.worldStockKey, PersistentDataType.STRING);
          if (symbol != null) {
             if (mat == Material.CLOCK) {
                this.worldStockQuoteCache.remove(symbol);
@@ -7767,7 +7755,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             } else {
                WorldStockQuote q = this.worldStockQuoteCache.get(symbol);
                if (q != null) {
-                  String action = (String)item.getItemMeta().getPersistentDataContainer().get(this.worldStockActionKey, PersistentDataType.STRING);
+                  String action = item.getItemMeta().getPersistentDataContainer().get(this.worldStockActionKey, PersistentDataType.STRING);
                   if (action != null) {
                      String buyQtyKey = fund != null ? "fund_stock_buy_qty:" + fund.id + ";" + symbol : "world_stock_buy_qty:" + symbol;
                      String sellQtyKey = fund != null ? "fund_stock_sell_qty:" + fund.id + ";" + symbol : "world_stock_sell_qty:" + symbol;
@@ -8152,7 +8140,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          ItemStack item = inv.getItem(i);
          if (item != null && item.getType() != Material.AIR) {
             if (ownerOnline != null && ownerOnline.isOnline()) {
-               Map<Integer, ItemStack> overflow = ownerOnline.getInventory().addItem(new ItemStack[]{item});
+               Map<Integer, ItemStack> overflow = ownerOnline.getInventory().addItem(item);
 
                for (ItemStack over : overflow.values()) {
                   ownerOnline.getWorld().dropItemNaturally(ownerOnline.getLocation(), over);
@@ -8171,7 +8159,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          session.finished = true;
          OfflinePlayer offA = Bukkit.getOfflinePlayer(session.playerA);
          OfflinePlayer offB = Bukkit.getOfflinePlayer(session.playerB);
-         if (!(econ.getBalance(offA) < session.moneyOfferedA) && !(econ.getBalance(offB) < session.moneyOfferedB)) {
+         if (econ.getBalance(offA) >= session.moneyOfferedA && econ.getBalance(offB) >= session.moneyOfferedB) {
             List<ItemStack> itemsFromA = this.collectTradeItems(session.inventory, 0, 17);
             List<ItemStack> itemsFromB = this.collectTradeItems(session.inventory, 27, 44);
             if (session.moneyOfferedA > 0.0) {
@@ -8285,7 +8273,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       if (!items.isEmpty()) {
          if (receiverOnline != null && receiverOnline.isOnline()) {
             for (ItemStack item : items) {
-               Map<Integer, ItemStack> overflow = receiverOnline.getInventory().addItem(new ItemStack[]{item});
+               Map<Integer, ItemStack> overflow = receiverOnline.getInventory().addItem(item);
 
                for (ItemStack over : overflow.values()) {
                   receiverOnline.getWorld().dropItemNaturally(receiverOnline.getLocation(), over);
@@ -8612,7 +8600,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          gui.setItem(
             slot++,
             this.createItem(
-               mat, "<gold><bold>#" + rank + " " + name + "</bold></gold>", "<gray>総資産:</gray> <green>" + this.fmtCur(entry.getValue().doubleValue()) + "</green>"
+               mat, "<gold><bold>#" + rank + " " + name + "</bold></gold>", "<gray>総資産:</gray> <green>" + this.fmtCur(entry.getValue()) + "</green>"
             )
          );
          rank++;
@@ -8801,7 +8789,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                lore.add(this.guiText("<gray>出品者:</gray> <white>" + Bukkit.getOfflinePlayer(seller).getName() + "</white>"));
                lore.add(this.guiText("<gray>現在価格:</gray> <gold>" + this.fmtCur(bid) + "</gold>"));
                if (buyout != null) {
-                  lore.add(this.guiText("<gray>即決価格:</gray> <light_purple>" + this.fmtCur(buyout.doubleValue()) + "</light_purple>"));
+                  lore.add(this.guiText("<gray>即決価格:</gray> <light_purple>" + this.fmtCur(buyout) + "</light_purple>"));
                }
 
                lore.add(
@@ -8939,51 +8927,21 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          if (name == null) {
             name = "unknown";
          }
-         String medal = switch (rank) {
-            case 1 -> "\ud83e\udd47";
-            case 2 -> "\ud83e\udd48";
-            case 3 -> "\ud83e\udd49";
-            default -> "#" + rank;
+         String color = switch (rank) {
+            case 1 -> "gold";
+            case 2 -> "white";
+            case 3 -> "#cd7f32";
+            default -> "gray";
          };
-         String var12;
-         if (rank == 3) {
-            var12 = "<color:#cd7f32>";
-         } else {
-            switch (rank) {
-               case 1:
-                  var12 = "<gold>";
-                  break;
-               case 2:
-                  var12 = "<white>";
-                  break;
-               default:
-                  var12 = "<gray>";
-            }
-         }
-
-         String openTag = var12;
-         if (rank == 3) {
-            var12 = "</color>";
-         } else {
-            switch (rank) {
-               case 1:
-                  var12 = "</gold>";
-                  break;
-               case 2:
-                  var12 = "</white>";
-                  break;
-               default:
-                  var12 = "</gray>";
-            }
-         }
-
-         String closeTag = var12;
+         String openTag = "<" + color + ">";
+         String closeTag = "</" + color + ">";
+         String medal = rank <= 3 ? rank + "位" : "#" + rank;
          gui.setItem(
             slot++,
             this.createItem(
                Material.PLAYER_HEAD,
                openTag + "<bold>" + medal + " " + name + "</bold>" + closeTag,
-               "<gray>累計落札売上:</gray> <green>" + this.fmtCur(entry.getValue().doubleValue()) + "</green>"
+               "<gray>累計落札売上:</gray> <green>" + this.fmtCur(entry.getValue()) + "</green>"
             )
          );
          rank++;
@@ -9512,7 +9470,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    private void payWorldStockDividends() {
       double perRunRate = this.cfgWorldStockDividendAnnualRate * (this.cfgWorldStockDividendIntervalHours / 8760.0);
-      if (!(perRunRate <= 0.0)) {
+      if (perRunRate > 0.0) {
          for (Entry<UUID, HashMap<String, Integer>> entry : this.playerWorldStocks.entrySet()) {
             UUID owner = entry.getKey();
             HashMap<String, Integer> holdings = entry.getValue();
@@ -9606,7 +9564,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.createItem(
                Material.PLAYER_HEAD,
                "<yellow><bold>#" + rank + " " + name + "</bold></yellow>",
-               "<gray>評価額合計: </gray><gold>" + this.fmtCur(entry.getValue().doubleValue()) + "</gold>",
+               "<gray>評価額合計: </gray><gold>" + this.fmtCur(entry.getValue()) + "</gold>",
                "<gray>保有銘柄数: </gray><white>" + symbols + "</white>"
             )
          );
@@ -10108,8 +10066,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                // the locker was shrunk since these were stored: refill free slots, hand back the rest
                for (ItemStack item : overflow) {
-                  for (ItemStack left : inv.addItem(new ItemStack[]{item}).values()) {
-                     for (ItemStack drop : p.getInventory().addItem(new ItemStack[]{left}).values()) {
+                  for (ItemStack left : inv.addItem(item).values()) {
+                     for (ItemStack drop : p.getInventory().addItem(left).values()) {
                         p.getWorld().dropItemNaturally(p.getLocation(), drop);
                      }
                   }
@@ -10630,7 +10588,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                this.sendShortfall(p, price, econ.getBalance(p));
                this.errorSound(p);
             } else {
-               Map<Integer, ItemStack> leftoverPlan = p.getInventory().addItem(new ItemStack[]{new ItemStack(deal.material, 1)});
+               Map<Integer, ItemStack> leftoverPlan = p.getInventory().addItem(new ItemStack(deal.material, 1));
 
                for (ItemStack over : leftoverPlan.values()) {
                   p.getWorld().dropItem(p.getLocation(), over);
@@ -10666,7 +10624,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             }
          } else {
             this.ecoWithdraw(p, price);
-            Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{new ItemStack(deal.material, 1)});
+            Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack(deal.material, 1));
 
             for (ItemStack over : leftover.values()) {
                p.getWorld().dropItem(p.getLocation(), over);
@@ -10903,7 +10861,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.errorSound(p);
          } else {
             this.ecoWithdraw(p, price);
-            Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{new ItemStack(deal.material, 1)});
+            Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack(deal.material, 1));
 
             for (ItemStack over : leftover.values()) {
                p.getWorld().dropItem(p.getLocation(), over);
@@ -11411,7 +11369,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openWorldStockLeaderboardGUI(p);
                         this.clickSound(p);
                      } else if (item.hasItemMeta()) {
-                        String symbol = (String)item.getItemMeta().getPersistentDataContainer().get(this.worldStockKey, PersistentDataType.STRING);
+                        String symbol = item.getItemMeta().getPersistentDataContainer().get(this.worldStockKey, PersistentDataType.STRING);
                         if (symbol != null) {
                            this.openWorldStockDetailGUI(p, symbol);
                            this.clickSound(p);
@@ -11449,7 +11407,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openResourceShopGUI(p);
                         this.clickSound(p);
                      } else if (item.hasItemMeta()) {
-                        String matName = (String)item.getItemMeta().getPersistentDataContainer().get(this.resourceMaterialKey, PersistentDataType.STRING);
+                        String matName = item.getItemMeta().getPersistentDataContainer().get(this.resourceMaterialKey, PersistentDataType.STRING);
                         if (matName != null) {
                            Material listedMat;
                            try {
@@ -11467,8 +11425,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openResourceShopListGUI(p, this.resourceShopViewCategory.getOrDefault(u, "ore"));
                         this.clickSound(p);
                      } else if (item.hasItemMeta()) {
-                        String matName = (String)item.getItemMeta().getPersistentDataContainer().get(this.resourceMaterialKey, PersistentDataType.STRING);
-                        String action = (String)item.getItemMeta().getPersistentDataContainer().get(this.resourceActionKey, PersistentDataType.STRING);
+                        String matName = item.getItemMeta().getPersistentDataContainer().get(this.resourceMaterialKey, PersistentDataType.STRING);
+                        String action = item.getItemMeta().getPersistentDataContainer().get(this.resourceActionKey, PersistentDataType.STRING);
                         if (matName != null && action != null) {
                            Material rmat;
                            try {
@@ -11554,7 +11512,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.openHubGUI(p);
                         this.clickSound(p);
                      } else if (item.hasItemMeta()) {
-                        String dealIdStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.merchantDealKey, PersistentDataType.STRING);
+                        String dealIdStr = item.getItemMeta().getPersistentDataContainer().get(this.merchantDealKey, PersistentDataType.STRING);
                         if (dealIdStr != null) {
                            UUID dealId;
                            try {
@@ -11577,7 +11535,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.claimVipStipend(p);
                         this.openVipLoungeGUI(p);
                      } else if (item.hasItemMeta()) {
-                        String vipDealIdStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.vipDealKey, PersistentDataType.STRING);
+                        String vipDealIdStr = item.getItemMeta().getPersistentDataContainer().get(this.vipDealKey, PersistentDataType.STRING);
                         if (vipDealIdStr != null) {
                            UUID vipDealId;
                            try {
@@ -11617,7 +11575,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            this.msgKey(p, "quest.team-post-prompt-reward");
                         }
                      } else if (item.hasItemMeta()) {
-                        String qIdStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.questIdKey, PersistentDataType.STRING);
+                        String qIdStr = item.getItemMeta().getPersistentDataContainer().get(this.questIdKey, PersistentDataType.STRING);
                         if (qIdStr != null) {
                            Quest q = this.quests.get(UUID.fromString(qIdStr));
                            if (q == null) {
@@ -11800,7 +11758,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.msgKey(p, "admin.search-player-prompt");
                      } else {
                         if (mat == Material.PLAYER_HEAD && item.hasItemMeta()) {
-                           String idStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.adminTargetKey, PersistentDataType.STRING);
+                           String idStr = item.getItemMeta().getPersistentDataContainer().get(this.adminTargetKey, PersistentDataType.STRING);
                            if (idStr != null) {
                               this.openAdminPlayerDetailGUI(p, UUID.fromString(idStr));
                               this.clickSound(p);
@@ -11943,7 +11901,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         } else {
                            if (mat == Material.PAPER) {
                               ItemMeta meta = item.getItemMeta();
-                              String key = meta != null ? (String)meta.getPersistentDataContainer().get(this.configKeyTag, PersistentDataType.STRING) : null;
+                              String key = meta != null ? meta.getPersistentDataContainer().get(this.configKeyTag, PersistentDataType.STRING) : null;
                               if (key != null) {
                                  this.awaitChatInput(u, "config_edit:" + key);
                                  this.msgKey(p, "config.edit-prompt", "key", key);
@@ -11971,7 +11929,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            double value = selected == null ? 0.0 : this.evaluateItemValue(selected);
                            if (value <= 0.0) {
                               if (selected != null) {
-                                 for (ItemStack over : p.getInventory().addItem(new ItemStack[]{selected}).values()) {
+                                 for (ItemStack over : p.getInventory().addItem(selected).values()) {
                                     p.getWorld().dropItem(p.getLocation(), over);
                                  }
                               }
@@ -12009,7 +11967,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                               this.collateralDueTime.remove(u);
                               this.collateralLender.remove(u);
                               if (returned != null) {
-                                 Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{returned});
+                                 Map<Integer, ItemStack> leftover = p.getInventory().addItem(returned);
 
                                  for (ItemStack over : leftover.values()) {
                                     p.getWorld().dropItem(p.getLocation(), over);
@@ -12122,7 +12080,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      } else {
                         if (mat == Material.PLAYER_HEAD && item.hasItemMeta()) {
-                           String idStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.tradeTargetKey, PersistentDataType.STRING);
+                           String idStr = item.getItemMeta().getPersistentDataContainer().get(this.tradeTargetKey, PersistentDataType.STRING);
                            if (idStr != null) {
                               Player target = Bukkit.getPlayer(UUID.fromString(idStr));
                               if (target == null) {
@@ -12146,7 +12104,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.msgKey(p, "group.create-name-prompt");
                      } else {
                         if (mat == Material.CHEST && item.hasItemMeta()) {
-                           String idStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.groupAccountKey, PersistentDataType.STRING);
+                           String idStr = item.getItemMeta().getPersistentDataContainer().get(this.groupAccountKey, PersistentDataType.STRING);
                            if (idStr != null) {
                               this.openGroupAccountGUI(p, UUID.fromString(idStr));
                               this.clickSound(p);
@@ -12202,7 +12160,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      } else {
                         if (mat == Material.PLAYER_HEAD && item.hasItemMeta()) {
-                           String targetStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.groupTargetKey, PersistentDataType.STRING);
+                           String targetStr = item.getItemMeta().getPersistentDataContainer().get(this.groupTargetKey, PersistentDataType.STRING);
                            if (targetStr == null) {
                               return;
                            }
@@ -12256,7 +12214,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         this.clickSound(p);
                      } else {
                         if ((mat == Material.EMERALD_BLOCK || mat == Material.EMERALD) && item.hasItemMeta()) {
-                           String idStr = (String)item.getItemMeta().getPersistentDataContainer().get(this.investmentFundKey, PersistentDataType.STRING);
+                           String idStr = item.getItemMeta().getPersistentDataContainer().get(this.investmentFundKey, PersistentDataType.STRING);
                            if (idStr == null) {
                               return;
                            }
@@ -12317,7 +12275,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            p.closeInventory();
                            this.msgKey(p, "worldstock.search-prompt");
                         } else if (item.hasItemMeta()) {
-                           String symbol = (String)item.getItemMeta().getPersistentDataContainer().get(this.worldStockKey, PersistentDataType.STRING);
+                           String symbol = item.getItemMeta().getPersistentDataContainer().get(this.worldStockKey, PersistentDataType.STRING);
                            if (symbol != null) {
                               this.openFundStockDetailGUI(p, fund.id, symbol);
                               this.clickSound(p);
@@ -12418,7 +12376,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                     this.msgKey(p, "item.reissue-cooldown", "seconds", String.valueOf(remain / 1000L + 1L));
                                     this.errorSound(p);
                                  } else {
-                                    Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{this.createHubItem()});
+                                    Map<Integer, ItemStack> leftover = p.getInventory().addItem(this.createHubItem());
 
                                     for (ItemStack over : leftover.values()) {
                                        p.getWorld().dropItemNaturally(p.getLocation(), over);
@@ -12600,7 +12558,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else {
                         ItemMeta clickedMeta = item.getItemMeta();
                         if (clickedMeta != null) {
-                           String idStr = (String)clickedMeta.getPersistentDataContainer().get(this.auctionIdKey, PersistentDataType.STRING);
+                           String idStr = clickedMeta.getPersistentDataContainer().get(this.auctionIdKey, PersistentDataType.STRING);
                            if (idStr != null) {
                               UUID auctionId = UUID.fromString(idStr);
                               UUID seller = this.auctionSeller.get(auctionId);
@@ -12657,7 +12615,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else if (mat == Material.EMERALD) {
                         ItemMeta confirmMeta = item.getItemMeta();
                         String idStr = confirmMeta != null
-                           ? (String)confirmMeta.getPersistentDataContainer().get(this.auctionIdKey, PersistentDataType.STRING)
+                           ? confirmMeta.getPersistentDataContainer().get(this.auctionIdKey, PersistentDataType.STRING)
                            : null;
                         if (idStr == null) {
                            this.openAuctionGUI(p);
@@ -12824,7 +12782,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      } else {
                         ItemMeta meta = item.getItemMeta();
                         if (meta != null) {
-                           String lStr = (String)meta.getPersistentDataContainer().get(this.lenderKey, PersistentDataType.STRING);
+                           String lStr = meta.getPersistentDataContainer().get(this.lenderKey, PersistentDataType.STRING);
                            if (lStr != null) {
                               UUID lenderId = UUID.fromString(lStr);
                               if (lenderId.equals(u)) {
@@ -12852,7 +12810,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                  return;
                               }
 
-                              String shownPlan = (String)meta.getPersistentDataContainer().get(this.loanPlanKey, PersistentDataType.STRING);
+                              String shownPlan = meta.getPersistentDataContainer().get(this.loanPlanKey, PersistentDataType.STRING);
                               if (!planData.equals(shownPlan)) {
                                  this.msgKey(p, "loan.plan-changed");
                                  this.errorSound(p);
@@ -13469,7 +13427,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                UUID u = p.getUniqueId();
                ItemStack selected = this.collateralSelection.remove(u);
                if (selected != null && !this.collateralItem.containsKey(u)) {
-                  Map<Integer, ItemStack> overflow = p.getInventory().addItem(new ItemStack[]{selected});
+                  Map<Integer, ItemStack> overflow = p.getInventory().addItem(selected);
 
                   for (ItemStack extra : overflow.values()) {
                      p.getWorld().dropItemNaturally(p.getLocation(), extra);
@@ -13626,7 +13584,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                if (q.state == QuestState.IN_PROGRESS && q.teamMembers.contains(u)) {
                   World tw = Bukkit.getWorld(q.worldName);
                   if (tw != null && tw.equals(p.getWorld())) {
-                     if (!(p.getLocation().distance(new Location(tw, q.x, q.y, q.z)) > this.cfgQuestRadius)) {
+                     if (p.getLocation().distance(new Location(tw, q.x, q.y, q.z)) <= this.cfgQuestRadius) {
                         if (!q.teamArrived.contains(u)) {
                            q.teamArrived.add(u);
                            if (q.teamArrived.size() < q.teamMembers.size()) {
@@ -13676,7 +13634,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             } else if (q != null && q.state == QuestState.IN_PROGRESS && u.equals(q.acceptedBy)) {
                World w = Bukkit.getWorld(q.worldName);
                if (w != null && w.equals(p.getWorld())) {
-                  if (!(p.getLocation().distance(new Location(w, q.x, q.y, q.z)) > this.cfgQuestRadius)) {
+                  if (p.getLocation().distance(new Location(w, q.x, q.y, q.z)) <= this.cfgQuestRadius) {
                      this.ecoDeposit(p, q.reward);
                      this.weeklyTradeVolume = this.weeklyTradeVolume + q.reward;
                      this.msgKey(p, "quest.completed", "amount", this.fmtCur(q.reward));
@@ -13858,7 +13816,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       if (!this.hubItemIssued.contains(u)) {
          this.hubItemIssued.add(u);
-         Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{this.createHubItem()});
+         Map<Integer, ItemStack> leftover = p.getInventory().addItem(this.createHubItem());
 
          for (ItemStack over : leftover.values()) {
             p.getWorld().dropItemNaturally(p.getLocation(), over);
@@ -13880,7 +13838,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.deliverLoanOfflineNotices(p);
       ItemStack draft = this.auctionListingDraft.remove(u);
       if (draft != null) {
-         Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{draft});
+         Map<Integer, ItemStack> leftover = p.getInventory().addItem(draft);
 
          for (ItemStack over : leftover.values()) {
             p.getWorld().dropItemNaturally(p.getLocation(), over);
@@ -14505,7 +14463,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
             try {
                this.sendJsonResponse(exchange, 500, "{\"ok\":false,\"message\":\"internal error\"}");
-            } catch (IOException var14) {
+            } catch (IOException ignored) {
             }
 
             return;
@@ -15325,7 +15283,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            return;
                         }
 
-                        if (!(amount < 0.0)
+                        if (amount >= 0.0
                            && (amount != 0.0 || type.equals("auction_buyout_price") || type.startsWith("admin_setcredit:") || type.equals("trade_money"))) {
                            double pocket = econ.getBalance(p);
                            double bank = this.personalBank.getOrDefault(u, 0.0);
@@ -15688,8 +15646,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
                                     double buyout = amount;
                                     if (buyout > 0.0 && buyout <= startPrice) {
-                                       this.msgKey(p, "auction.buyout-too-low", "amount", this.fmtCur(startPrice.doubleValue()));
-                                       Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{draft});
+                                       this.msgKey(p, "auction.buyout-too-low", "amount", this.fmtCur(startPrice));
+                                       Map<Integer, ItemStack> leftover = p.getInventory().addItem(draft);
 
                                        for (ItemStack over : leftover.values()) {
                                           p.getWorld().dropItem(p.getLocation(), over);
@@ -15714,7 +15672,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                                        "item",
                                        draft.getType().name(),
                                        "amount",
-                                       this.fmtCur(startPrice.doubleValue()),
+                                       this.fmtCur(startPrice),
                                        "buyoutMsg",
                                        buyoutMsg,
                                        "minutes",
@@ -15776,7 +15734,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                         ItemStack draft = this.auctionListingDraft.remove(u);
                         this.auctionListingStartPrice.remove(u);
                         if (draft != null) {
-                           Map<Integer, ItemStack> leftover = p.getInventory().addItem(new ItemStack[]{draft});
+                           Map<Integer, ItemStack> leftover = p.getInventory().addItem(draft);
 
                            for (ItemStack over : leftover.values()) {
                               p.getWorld().dropItem(p.getLocation(), over);
@@ -15799,7 +15757,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private double collectSalesTax(UUID u, double gross) {
-      if (this.cfgTaxEnabled && !(this.cfgTaxSalesRate <= 0.0) && !(gross <= 0.0)) {
+      if (this.cfgTaxEnabled && this.cfgTaxSalesRate > 0.0 && gross > 0.0) {
          double tax = gross * this.cfgTaxSalesRate;
          this.treasury += tax;
          this.taxRevenueTotal += tax;
@@ -15811,7 +15769,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    private double estimateWealthTax(double wealth) {
-      return this.cfgTaxEnabled && !(this.cfgTaxWealthRate <= 0.0) && wealth > this.cfgTaxWealthThreshold
+      return this.cfgTaxEnabled && this.cfgTaxWealthRate > 0.0 && wealth > this.cfgTaxWealthThreshold
          ? (wealth - this.cfgTaxWealthThreshold) * this.cfgTaxWealthRate
          : 0.0;
    }
@@ -15822,7 +15780,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.wealthTaxNextAt = now + this.cfgTaxWealthIntervalHours * 3600000L;
       } else if (now >= this.wealthTaxNextAt) {
          this.wealthTaxNextAt = now + this.cfgTaxWealthIntervalHours * 3600000L;
-         if (this.cfgTaxEnabled && !(this.cfgTaxWealthRate <= 0.0)) {
+         if (this.cfgTaxEnabled && this.cfgTaxWealthRate > 0.0) {
             long activeSince = now - this.cfgTaxWealthActiveDays * 86400000L;
             double total = 0.0;
             int count = 0;
@@ -15834,7 +15792,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                   double bank = this.personalBank.getOrDefault(u, 0.0);
                   double wealth = pocket + bank + this.hiddenAssets(u);
                   double tax = this.estimateWealthTax(wealth);
-                  if (!(tax < 0.01)) {
+                  if (tax >= 0.01) {
                      double fromPocket = Math.min(Math.max(0.0, pocket), tax);
                      if (fromPocket > 0.0 && !this.ecoWithdraw(op, fromPocket).transactionSuccess()) {
                         fromPocket = 0.0;
@@ -15846,7 +15804,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                      }
 
                      double paid = fromPocket + fromBank;
-                     if (!(paid <= 0.0)) {
+                     if (paid > 0.0) {
                         this.treasury += paid;
                         this.taxRevenueTotal += paid;
                         this.taxPaidTotal.merge(u, paid, Double::sum);
@@ -16209,7 +16167,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       };
    }
 
-   private static final String[] SYNC_COUNTER_NAMES = new String[]{"treasury", "tax_revenue", "weekly_trade_volume", "lottery_pool"};
+   private static final String[] SYNC_COUNTER_NAMES = {"treasury", "tax_revenue", "weekly_trade_volume", "lottery_pool"};
    private static final Set<String> SYNC_SKIP_KEYS = Set.of("treasury\u0000_", "tax_state\u0000revenue", "weekly_trade_volume\u0000_", "lottery\u0000pool");
 
    private double[] counterValues() {
@@ -16922,7 +16880,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
 
       ItemMeta meta = item.getItemMeta();
-      String id = meta != null ? (String)meta.getPersistentDataContainer().get(this.invoiceIdKey, PersistentDataType.STRING) : null;
+      String id = meta != null ? meta.getPersistentDataContainer().get(this.invoiceIdKey, PersistentDataType.STRING) : null;
       Invoice inv = id != null ? this.invoices.get(id) : null;
       if (id == null) {
          return;
@@ -18289,6 +18247,6 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
    @FunctionalInterface
    private interface DealFactory<T> {
-      T create(UUID var1, Material var2, double var3, double var5, int var7);
+      T create(UUID id, Material material, double normalPrice, double discountPercent, int stock);
    }
 }
