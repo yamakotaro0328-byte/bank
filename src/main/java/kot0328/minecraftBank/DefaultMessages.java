@@ -404,6 +404,18 @@ final class DefaultMessages {
    m.put("shop.sold", "<green>{owner} さんのショップに</green> <white>{item} ×{count}</white> <green>を売って</green> <gold>{amount}</gold> <green>受け取りました。</green>");
    m.put("shop.owner-sold", "<gold><bold>売れました！</bold></gold> <white>{player} さんが {item} ×{count} を購入</white> <gold>+{amount}</gold>");
    m.put("shop.owner-bought", "<aqua><bold>買い取りました</bold></aqua> <white>{player} さんから {item} ×{count}</white> <gold>-{amount}</gold>");
+   m.put("points.not-enough", "<red>ポイントが足りません（{cost} 必要です）。</red>");
+   m.put("points.failed", "<red>交換できませんでした（国庫の残高不足など）。ポイントは減っていません。</red>");
+   m.put("points.redeemed", "<green>「{reward}」と交換しました。</green> <gray>(-{cost} / 残り {left})</gray>");
+   m.put("discord.not-running", "<gray>Discord連携はこのサーバーでは有効になっていません。</gray>");
+   m.put("discord.code", "<light_purple><bold>Discord連携コード:</bold></light_purple> <white><bold>{code}</bold></white> <gray>— Discordでボットに</gray> <white>/link {code}</white> <gray>と入力してください（10分間有効）。</gray>");
+   m.put("discord.linked", "<green>Discordアカウント「{account}」と連携しました。Discordで /balance や /pay が使えます。</green>");
+   m.put("discord.unlinked", "<yellow>Discordとの連携を解除しました。</yellow>");
+   m.put("discord.dm-on", "<green>入金のお知らせをDiscordのDMで受け取ります。</green>");
+   m.put("discord.dm-off", "<gray>入金のお知らせDMを止めました。（/meco discord dm でON）</gray>");
+   m.put("discord.status-linked", "<green>Discordと連携済みです。</green> <gray>/meco discord unlink で解除、/meco discord dm でお知らせのON/OFF</gray>");
+   m.put("discord.status-unlinked", "<gray>Discordと連携していません。</gray> <white>/meco discord link</white> <gray>でコードを表示します。</gray>");
+   m.put("discord.received", "<gold>{player} さんからDiscord経由で {amount} が届きました。</gold>");
    m.put("sidebar.on", "<green>サイドバーを表示しました。</green>");
    m.put("sidebar.off", "<gray>サイドバーを非表示にしました。（/meco sidebar で再表示）</gray>");
    m.put("sounds.off", "<gray>メニューの効果音をOFFにしました。（/meco sounds でON）</gray>");

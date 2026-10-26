@@ -99,3 +99,51 @@ storage:
 一覧の場所：
 - ゲーム内：マーケットのメニュー →「プレイヤーショップ」
 - Web：`/shops.html`
+
+## ポイント還元
+
+サーバーに払ったお金の一部がポイントとして還元されます。対象は次の支払いです。
+- 行商人・VIPショップでの購入
+- 宝くじ
+- 倉庫の家賃
+- 埋蔵金の調査費
+
+プレイヤー同士のやり取りや、すぐ売り戻せる買い物（資源ショップ・株・オークションの入札）は対象外です。
+
+- **貯める**：`points.rate`（初期値 1%）の割合で還元されます。1日に貯まる上限は `points.daily-cap`（初期値 1,000pt）です。
+- **使う**：`/meco points`、またはマイページの「ポイント交換所」で景品と交換します。
+- **景品**：`points.rewards` に `"名前|必要pt|種類|値"` の形で書きます。種類は次の4つです。
+  - `money`：国庫から支払うお金
+  - `lottery`：宝くじ券（枚数）
+  - `item`：アイテム（`DIAMOND:2` の形）
+  - `command`：コンソールから実行するコマンド（`{player}` がプレイヤー名に置き換わる）
+- **表示**：サイドバー、Webのマイページ、PlaceholderAPI の `%minecraftbank_points%` で表示されます。
+
+## Discord ボット
+
+Discord から残高の確認や送金ができ、入金をDMで知らせます。
+
+1. [Discord Developer Portal](https://discord.com/developers/applications) でアプリを作り、Bot のトークンを発行します。
+2. OAuth2 の URL Generator で `bot` と `applications.commands` にチェックを入れ、サーバーに招待します。
+3. `config.yml` を設定します。
+   - `discord-bot.enabled: true`
+   - `discord-bot.token`：発行したトークン
+   - `discord-bot.guild-id`：サーバーのID。設定するとコマンドがすぐ使えます。空のままだと反映に最大1時間かかります。
+
+連携のしかた：ゲーム内で `/meco discord link` を実行し、表示された6桁のコードを Discord の `/link` に入力します。
+
+| Discord のコマンド | 内容 |
+|---|---|
+| `/balance` | 所持金・預金・総資産と順位・ポイント・信用スコア |
+| `/points` | ポイント残高 |
+| `/pay player amount` | 送金（確認ボタン付き。1日の上限は `discord-bot.pay-daily-limit`） |
+| `/notify enabled` | 入金のお知らせDMのON/OFF |
+| `/unlink` | 連携の解除 |
+
+入金のお知らせDMは、次の入金があったときに届きます。初期設定では、ゲームにいないときだけ届きます（`discord-bot.dm-only-offline`）。
+- オークションの売上
+- 定期送金
+- プレイヤーショップの売上
+- 請求書の支払い
+- 宝くじ当せん
+- Discordからの送金

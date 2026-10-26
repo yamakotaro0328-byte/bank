@@ -34,6 +34,18 @@ class BankUtilTest {
    }
 
    @Test
+   void pointRewardsAreValidated() {
+      assertEquals(new BankUtil.PointReward("1,000円", 1000.0, "money", "1000"), BankUtil.parsePointReward("1,000円|1000|money|1000"));
+      assertEquals(new BankUtil.PointReward("ダイヤ", 500.0, "item", "DIAMOND:2"), BankUtil.parsePointReward("ダイヤ|500|item|DIAMOND:2"));
+      assertEquals(new BankUtil.PointReward("称号", 50.0, "command", "lp user {player} parent add vip"), BankUtil.parsePointReward("称号|50|COMMAND|lp user {player} parent add vip"));
+      assertEquals(null, BankUtil.parsePointReward("壊れた|abc|money|1"));
+      assertEquals(null, BankUtil.parsePointReward("ゼロ|0|money|1"));
+      assertEquals(null, BankUtil.parsePointReward("券|10|lottery|500"));
+      assertEquals(null, BankUtil.parsePointReward("謎|10|teleport|x"));
+      assertEquals(null, BankUtil.parsePointReward("足りない|10|money"));
+   }
+
+   @Test
    void percentTextDropsTrailingZeros() {
       assertEquals("5%", BankUtil.percentText(0.05));
       assertEquals("0.5%", BankUtil.percentText(0.005));

@@ -47,7 +47,10 @@
           </div>
         </div>
       </div>
-      <div class="card kpi"><div class="k-label" data-icon="trophy">解除した実績</div><div class="k-value" id="achievements">-</div></div>
+      <div class="kpis" style="grid-template-columns:1fr 1fr">
+        <div class="card kpi"><div class="k-label" data-icon="trophy">解除した実績</div><div class="k-value" id="achievements">-</div></div>
+        <div class="card kpi"><div class="k-label" data-icon="gift">ポイント</div><div class="k-value" id="points">-</div></div>
+      </div>
     </div>
   </div>
 
@@ -141,6 +144,7 @@
       const [tier, cls] = creditTier(score);
       $('creditTag').replaceChildren(el('span', { class: 'tag ' + cls }, tier));
       fill('achievements', fmt.num(data.achievement_count) + '個');
+      fill('points', fmt.num(data.points || 0) + ' pt');
       renderStocks(data.world_stocks || []);
       renderAuctions(data.auctions || []);
       renderStorage(data.storage || {});

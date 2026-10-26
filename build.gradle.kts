@@ -25,6 +25,9 @@ dependencies {
     }
     compileOnly("me.clip:placeholderapi:2.12.3")
     compileOnly("org.xerial:sqlite-jdbc:3.53.4.0")
+    compileOnly("net.dv8tion:JDA:6.6.0") {
+        exclude(module = "opus-java")
+    }
 
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")

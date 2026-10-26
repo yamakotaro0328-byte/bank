@@ -10,21 +10,27 @@ final class BankUtil {
    private BankUtil() {
    }
 
-   static String ledgerSourceLabel(String raw) {
+   /** "lambda$onCommand$12:5000" -> "onCommand": the method a ledger source points at. */
+   static String sourceMethod(String raw) {
       String method = raw == null ? "?" : raw;
-      int colon = method.indexOf(58);
+      int colon = method.indexOf(':');
       if (colon >= 0) {
          method = method.substring(0, colon);
       }
 
       if (method.startsWith("lambda$")) {
          method = method.substring(7);
-         int dollar = method.indexOf(36);
+         int dollar = method.indexOf('$');
          if (dollar >= 0) {
             method = method.substring(0, dollar);
          }
       }
 
+      return method;
+   }
+
+   static String ledgerSourceLabel(String raw) {
+      String method = sourceMethod(raw);
       return switch (method) {
          case "executeResourceSell" -> "資源ショップ売却";
          case "executeResourceBuy" -> "資源ショップ購入";
@@ -42,6 +48,10 @@ final class BankUtil {
          case "onPlayerChatInput" -> "チャット入力操作";
          case "handleMyActionOnMainThread" -> "Web操作";
          case "executeTrade" -> "プレイヤーショップ";
+         case "discordTransfer" -> "Discordからの送金";
+         case "payFromTreasury" -> "ポイント交換";
+         case "runLotteryDrawIfDue" -> "宝くじ当せん";
+         case "handleInvoiceClick" -> "請求書の支払い";
          default -> method;
       };
    }
@@ -91,6 +101,36 @@ final class BankUtil {
       }
 
       return new ShopSign(selling, Math.floor(price * 100.0) / 100.0, amount);
+   }
+
+   /** A points.rewards entry: "name|cost|type|value" with type money, lottery, item (MATERIAL[:count]) or command. */
+   record PointReward(String name, double cost, String type, String value) {
+   }
+
+   static PointReward parsePointReward(String raw) {
+      String[] p = raw == null ? new String[0] : raw.split("\\|", 4);
+      if (p.length != 4 || p[0].isBlank() || p[3].isBlank()) {
+         return null;
+      }
+
+      try {
+         double cost = parseFiniteDouble(p[1]);
+         String type = p[2].trim().toLowerCase(java.util.Locale.ROOT);
+         String value = p[3].trim();
+         boolean valid = cost > 0.0 && switch (type) {
+            case "money" -> parseFiniteDouble(value) > 0.0;
+            case "lottery" -> Integer.parseInt(value) >= 1 && Integer.parseInt(value) <= 100;
+            case "item" -> {
+               String[] parts = value.split(":");
+               yield parts.length == 1 || Integer.parseInt(parts[1]) >= 1 && Integer.parseInt(parts[1]) <= 2304;
+            }
+            case "command" -> true;
+            default -> false;
+         };
+         return valid ? new PointReward(p[0].trim(), cost, type, value) : null;
+      } catch (NumberFormatException ex) {
+         return null;
+      }
    }
 
    static String plainNumber(double v) {
