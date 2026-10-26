@@ -20,6 +20,20 @@ class BankUtilTest {
    }
 
    @Test
+   void shopSignsAreParsedStrictly() {
+      assertEquals(new BankUtil.ShopSign(true, 100.0, 16), BankUtil.parseShopSign("[ショップ]", "販売 100", "16"));
+      assertEquals(new BankUtil.ShopSign(false, 1234.5, 1), BankUtil.parseShopSign(" [Shop] ", "buy 1,234.5円", ""));
+      assertEquals(new BankUtil.ShopSign(true, 0.01, 64), BankUtil.parseShopSign("[店]", "売 0.019", "64個"));
+      assertEquals(null, BankUtil.parseShopSign("ショップ", "販売 100", "1"));
+      assertEquals(null, BankUtil.parseShopSign("[ショップ]", "販売 NaN", "1"));
+      assertEquals(null, BankUtil.parseShopSign("[ショップ]", "販売 -5", "1"));
+      assertEquals(null, BankUtil.parseShopSign("[ショップ]", "交換 100", "1"));
+      assertEquals(null, BankUtil.parseShopSign("[ショップ]", "販売 100", "0"));
+      assertEquals(null, BankUtil.parseShopSign("[ショップ]", "販売 100", "9999"));
+      assertEquals("プレイヤーショップ", BankUtil.ledgerSourceLabel("executeTrade:12"));
+   }
+
+   @Test
    void percentTextDropsTrailingZeros() {
       assertEquals("5%", BankUtil.percentText(0.05));
       assertEquals("0.5%", BankUtil.percentText(0.005));

@@ -125,7 +125,7 @@ import org.bukkit.util.io.BukkitObjectOutputStream;
 public final class MinecraftBank extends JavaPlugin implements CommandExecutor, TabCompleter, Listener, MinecraftBankAPI {
    private static final String PERM_USE = "bank.use";
    private static final String PERM_ADMIN = "bank.admin";
-   private static Economy econ = null;
+   static Economy econ = null;
    private NamespacedKey lenderKey;
    private NamespacedKey loanSlotKey;
    private NamespacedKey loanPlanKey;
@@ -589,7 +589,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private boolean syncInFlight = false;
    private double[] syncedCounters = null;
    private volatile String ledgerStatsJson = "null";
-   private static final List<String> FEATURE_NAMES = List.of("auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate", "invoice");
+   private static final List<String> FEATURE_NAMES = List.of("auction", "resource", "worldstock", "merchant", "vip", "quest", "lottery", "storage", "loan", "govloan", "insurance", "collateral", "deposit", "personal", "treasure", "trade", "group", "fund", "standing", "donate", "invoice", "playershop");
    private final HashMap<String, Boolean> featureEnabled = new HashMap<>();
    private final HashMap<String, YamlConfiguration> langMessages = new HashMap<>();
    private boolean cfgLanguagePerPlayer = true;
@@ -633,6 +633,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    private NamespacedKey invoiceIdKey;
    private final Component tVipLounge = this.guiTitle("VIPラウンジ", "light_purple");
    private PluginDataStore db;
+   private final PlayerShops playerShops = new PlayerShops(this);
    private FileConfiguration messages;
    private File messagesFile;
    private static final Set<String> MANAGED_DATA_PREFIXES = Set.of(
@@ -774,7 +775,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private String fmtCur(double amount) {
+   String fmtCur(double amount) {
       if (this.cfgCustomMoneyEnabled) {
          double converted = amount / this.cfgCustomMoneyRate;
          String num = Math.abs(converted - Math.round(converted)) < 0.005 ? String.valueOf(Math.round(converted)) : String.format("%.2f", converted);
@@ -929,6 +930,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
          this.buildResourcePack();
          this.getServer().getPluginManager().registerEvents(this, this);
+         this.getServer().getPluginManager().registerEvents(this.playerShops, this);
+         Bukkit.getScheduler().runTaskTimer(this, this.playerShops::rebuildJson, 1200L, 1200L);
          Bukkit.getScheduler().runTaskTimer(this, this::refreshPresentation, 60L, 40L);
          Bukkit.getScheduler().runTaskTimer(this, this::tickEventBar, 20L, 20L);
          long autosaveTicks = Math.max(1, this.cfgAutosaveIntervalMinutes) * 60L * 20L;
@@ -1140,6 +1143,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       c.addDefault("resource-pack.required", this.cfgPackRequired);
       c.addDefault("resource-pack.prompt", this.cfgPackPrompt);
       c.addDefault("resource-pack.custom-sounds", this.cfgPackSounds);
+      c.addDefault("playershop.max-per-player", 20);
       c.addDefault("effects.titles", this.cfgFxTitles);
       c.addDefault("effects.particles", this.cfgFxParticles);
       c.addDefault("effects.fireworks", this.cfgFxFireworks);
@@ -2253,7 +2257,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void fxSparkle(Player p, boolean big) {
+   void fxSparkle(Player p, boolean big) {
       if (this.cfgFxParticles && p != null && p.isOnline()) {
          Location at = p.getLocation().add(0.0, 1.1, 0.0);
          if (big) {
@@ -6778,7 +6782,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
    }
 
    /** Dark frame around the edge, lighter panes inside, so every menu reads as one framed panel. */
-   private void fillGlass(Inventory inv) {
+   void fillGlass(Inventory inv) {
       ItemStack border = this.fillerPane(Material.BLACK_STAINED_GLASS_PANE);
       ItemStack inner = this.fillerPane(Material.GRAY_STAINED_GLASS_PANE);
       int rows = Math.max(1, inv.getSize() / 9);
@@ -6858,6 +6862,10 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
          this.createItem(
             Material.DIAMOND, "<light_purple><bold>\ud83d\udc8e VIPラウンジ</bold></light_purple>", "<gray>信用スコアに応じた会員特典(手数料割引・限定ショップ・日次手当・取引枠拡大)</gray>"
          )
+      );
+      gui.setItem(
+         31,
+         this.createItem(Material.OAK_SIGN, "<gold><bold>プレイヤーショップ</bold></gold>", "<gray>プレイヤーが開いているお店の一覧</gray>", "<dark_gray>商品を入れたチェストに [ショップ] の看板で開店</dark_gray>", "<yellow>クリックで一覧を開く</yellow>")
       );
       gui.setItem(35, this.createItem(Material.IRON_DOOR, "<gray>← 戻る</gray>", "<dark_gray>前の画面に戻ります</dark_gray>"));
       this.fillGlass(gui);
@@ -9576,7 +9584,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       p.openInventory(gui);
    }
 
-   private String resourceDisplayName(Material mat) {
+   String resourceDisplayName(Material mat) {
       return switch (mat) {
          case DIAMOND -> "ダイヤモンド";
          default -> mat.name();
@@ -12036,6 +12044,8 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
                            );
                         } else if (mat == Material.ITEM_FRAME) {
                            this.openAuctionGUI(p);
+                        } else if (mat == Material.OAK_SIGN) {
+                           this.playerShops.openList(p, 0);
                         } else {
                            if (mat != Material.DIAMOND) {
                               return;
@@ -13960,6 +13970,16 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
             this.webDashboardServer.createContext("/bank.css", ex -> this.serveWebResource(ex, "web/bank.css"));
             this.webDashboardServer.createContext("/bank.js", ex -> this.serveWebResource(ex, "web/bank.js"));
             this.webDashboardServer.createContext("/pack.zip", this::handlePackRequest);
+            this.webDashboardServer.createContext("/shops.json", ex -> {
+               try {
+                  this.sendJson(ex, 200, this.playerShops.json());
+               } catch (IOException ioe) {
+                  this.getLogger().warning("[Webダッシュボード] shops.json の送信に失敗: " + ioe.getMessage());
+               } finally {
+                  ex.close();
+               }
+            });
+            this.webDashboardServer.createContext("/shops.html", ex -> this.serveWebResource(ex, "web/shops.html"));
             this.webDashboardServer.createContext("/me/extra.json", this::handleMyExtraJson);
             Bukkit.getScheduler().runTaskTimer(this, this::refreshLedgerStatsCache, 200L, 6000L);
             this.webExecutor = java.util.concurrent.Executors.newFixedThreadPool(4, r -> {
@@ -15756,7 +15776,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return BankUtil.percentText(rate);
    }
 
-   private double collectSalesTax(UUID u, double gross) {
+   double collectSalesTax(UUID u, double gross) {
       if (this.cfgTaxEnabled && this.cfgTaxSalesRate > 0.0 && gross > 0.0) {
          double tax = gross * this.cfgTaxSalesRate;
          this.treasury += tax;
@@ -16000,7 +16020,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private EconomyResponse ecoDeposit(OfflinePlayer p, double amount) {
+   EconomyResponse ecoDeposit(OfflinePlayer p, double amount) {
       EconomyResponse r = econ.depositPlayer(p, amount);
       if (r == null) {
          return new EconomyResponse(amount, 0.0, EconomyResponse.ResponseType.FAILURE, "no response");
@@ -16013,7 +16033,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private EconomyResponse ecoWithdraw(OfflinePlayer p, double amount) {
+   EconomyResponse ecoWithdraw(OfflinePlayer p, double amount) {
       EconomyResponse r = econ.withdrawPlayer(p, amount);
       if (r == null) {
          return new EconomyResponse(amount, 0.0, EconomyResponse.ResponseType.FAILURE, "no response");
@@ -16293,6 +16313,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.invoices.clear();
       this.soundsOff.clear();
       this.sidebarOff.clear();
+      this.playerShops.clear();
       this.activeDebts.clear();
       this.adminAuditLog.clear();
       this.auctionBid.clear();
@@ -17552,6 +17573,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
 
       this.loadUuidSet("sounds_off", this.soundsOff);
       this.loadUuidSet("sidebar_off", this.sidebarOff);
+      this.playerShops.load(this.db);
       this.wealthTaxNextAt = this.db.getLong("tax_state", "wealth_next_at", 0L);
 
       for (String key : this.db.getKeys("resource_price_history")) {
@@ -17619,6 +17641,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
       this.saveUuidSet("sounds_off", this.soundsOff);
       this.saveUuidSet("sidebar_off", this.sidebarOff);
+      this.playerShops.save(this.db);
       this.db.removeSection("tax_paid");
 
       for (Entry<UUID, Double> entry : this.taxPaidTotal.entrySet()) {
@@ -17634,7 +17657,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void addLog(UUID u, String content) {
+   void addLog(UUID u, String content) {
       LinkedList<String> logs = this.transactionLogs.computeIfAbsent(u, k -> new LinkedList<>());
       String time = new SimpleDateFormat("MM/dd HH:mm").format(new Date());
       logs.addFirst("[" + time + "] " + content);
@@ -17818,7 +17841,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private Component mm(String text) {
+   Component mm(String text) {
       return MiniMessage.miniMessage().deserialize(text);
    }
 
@@ -17923,7 +17946,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private static final Set<String> USER_TEXT_PLACEHOLDERS = Set.of("group", "fund", "query", "error");
+   private static final Set<String> USER_TEXT_PLACEHOLDERS = Set.of("group", "fund", "query", "error", "item");
 
    private String getMsg(String key, String... kv) {
       String template = this.messages != null ? this.messages.getString(key) : null;
@@ -17939,7 +17962,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return template;
    }
 
-   private String getMsgFor(Player p, String key, String... kv) {
+   String getMsgFor(Player p, String key, String... kv) {
       YamlConfiguration lang = this.languageFor(p);
       String template = lang != null ? lang.getString(key) : null;
       if (template == null) {
@@ -18037,11 +18060,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       };
    }
 
-   private boolean isFeatureEnabled(String feature) {
+   boolean isFeatureEnabled(String feature) {
       return this.featureEnabled.getOrDefault(feature, true);
    }
 
-   private boolean featureAllowed(Player p, String feature) {
+   boolean featureAllowed(Player p, String feature) {
       if (!this.isFeatureEnabled(feature)) {
          this.msgKey(p, "feature.disabled");
          this.errorSound(p);
@@ -18055,7 +18078,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       }
    }
 
-   private void msgKey(Player p, String key, String... kv) {
+   void msgKey(Player p, String key, String... kv) {
       String text = this.getMsgFor(p, key, kv);
       if (!text.isEmpty()) {
          p.sendMessage(this.mm(text));
@@ -18067,11 +18090,11 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       this.playUiSound(p, "click");
    }
 
-   private void errorSound(Player p) {
+   void errorSound(Player p) {
       this.playUiSound(p, "error");
    }
 
-   private void playUiSound(Player p, String kind) {
+   void playUiSound(Player p, String kind) {
       if (p != null && !this.soundsOff.contains(p.getUniqueId())) {
          String[] def = UI_SOUND_DEFAULTS.get(kind);
          FileConfiguration c = this.getConfig();
@@ -18106,7 +18129,7 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       );
    }
 
-   private ItemStack createItem(Material mat, String name, String... lores) {
+   ItemStack createItem(Material mat, String name, String... lores) {
       ItemStack item = this.createGoodsItem(mat, name, lores);
       ItemMeta meta = item.getItemMeta();
       if (meta != null && GUI_ICONS.containsKey(mat)) {
@@ -18151,12 +18174,12 @@ public final class MinecraftBank extends JavaPlugin implements CommandExecutor, 
       return item;
    }
 
-   private Component guiText(String miniMessage) {
+   Component guiText(String miniMessage) {
       return this.mm(EMOJI.matcher(miniMessage).replaceAll("")).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE);
    }
 
    /** Inventory title: a coloured marker and dark text, readable on the light-grey window. */
-   private Component guiTitle(String text, String accent) {
+   Component guiTitle(String text, String accent) {
       String hex = TITLE_ACCENTS.getOrDefault(accent, "#b07d12");
       return this.mm("<" + hex + ">◆</" + hex + "> <#3a3a3a>" + text + "</#3a3a3a>");
    }

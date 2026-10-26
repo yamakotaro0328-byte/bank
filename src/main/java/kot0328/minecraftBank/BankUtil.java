@@ -41,8 +41,56 @@ final class BankUtil {
          case "onInventoryClick" -> "GUI操作";
          case "onPlayerChatInput" -> "チャット入力操作";
          case "handleMyActionOnMainThread" -> "Web操作";
+         case "executeTrade" -> "プレイヤーショップ";
          default -> method;
       };
+   }
+
+   /** What a shop sign asks for: the shop sells to customers (selling) or buys from them, at price for amount items. */
+   record ShopSign(boolean selling, double price, int amount) {
+   }
+
+   static final int SHOP_MAX_AMOUNT = 576;
+
+   /**
+    * Reads the sign a player writes to open a shop, or null when it is not a shop sign.
+    * Line 1: [ショップ] / [shop]; line 2: "販売 100" or "買取 50"; line 3: items per trade (default 1).
+    */
+   static ShopSign parseShopSign(String header, String priceLine, String amountLine) {
+      String head = header == null ? "" : header.strip().toLowerCase(java.util.Locale.ROOT);
+      if (!head.equals("[ショップ]") && !head.equals("[shop]") && !head.equals("[店]")) {
+         return null;
+      }
+
+      String[] parts = (priceLine == null ? "" : priceLine.strip()).split("\\s+");
+      if (parts.length != 2) {
+         return null;
+      }
+
+      Boolean selling = switch (parts[0].toLowerCase(java.util.Locale.ROOT)) {
+         case "販売", "売", "売る", "sell" -> true;
+         case "買取", "買", "買う", "buy" -> false;
+         default -> null;
+      };
+      if (selling == null) {
+         return null;
+      }
+
+      double price;
+      int amount;
+      try {
+         price = parseFiniteDouble(parts[1].replace(",", "").replace("円", ""));
+         String a = amountLine == null ? "" : amountLine.strip().replace("個", "");
+         amount = a.isEmpty() ? 1 : Integer.parseInt(a);
+      } catch (NumberFormatException ex) {
+         return null;
+      }
+
+      if (price <= 0.0 || price > 1.0E12 || amount < 1 || amount > SHOP_MAX_AMOUNT) {
+         return null;
+      }
+
+      return new ShopSign(selling, Math.floor(price * 100.0) / 100.0, amount);
    }
 
    static String plainNumber(double v) {

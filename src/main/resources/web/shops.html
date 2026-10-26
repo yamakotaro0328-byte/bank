@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ショップ | MinecraftBank</title>
+<link rel="stylesheet" href="/bank.css">
+<script src="/bank.js"></script>
+</head>
+<body data-page="shops">
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">PLAYER SHOPS</div>
+    <h1>プレイヤーショップ</h1>
+    <p class="hero-lead">プレイヤーが開いているお店の一覧です。安いお店、高く買い取ってくれるお店を探せます。</p>
+    <div class="hero-meta" style="margin-top:16px">
+      <span class="pill"><span class="dot live"></span><span id="updated">接続中…</span></span>
+      <span class="pill gold">開店方法: 商品を入れたチェストに看板「[ショップ] / 販売 100 / 16」</span>
+    </div>
+  </div>
+</section>
+
+<main class="container">
+  <div class="kpis overlap" id="tiles"></div>
+
+  <div class="section-title"><h2>お店を探す</h2><p id="count"></p></div>
+  <div class="card">
+    <div class="card-head">
+      <div class="segmented" id="filters" role="group" aria-label="種類"></div>
+      <div class="input-wrap" style="flex:0 1 280px" data-search><input class="input" id="q" type="search" placeholder="品物・店主で検索" aria-label="品物・店主で検索"></div>
+    </div>
+    <div class="card-body flush">
+      <div class="table-wrap">
+        <table class="data" id="table">
+          <thead><tr>
+            <th data-key="item">品物<span class="arrow"></span></th>
+            <th>種類</th>
+            <th data-key="unit" class="r">1個あたり<span class="arrow"></span></th>
+            <th data-key="price" class="r">価格<span class="arrow"></span></th>
+            <th data-key="available" class="r">在庫・買取枠<span class="arrow"></span></th>
+            <th data-key="owner">店主<span class="arrow"></span></th>
+            <th>場所</th>
+          </tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div id="empty"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const { el, icon, fmt, empty } = MB;
+  const $ = (id) => document.getElementById(id);
+  document.querySelector('[data-search]').prepend(icon('search'));
+  let shops = [], mode = 'all', query = '', sortKey = 'item', sortDir = 1;
+
+  function tile(iconName, label, value, sub) {
+    return el('div', { class: 'card kpi accent' }, el('div', { class: 'k-label' }, icon(iconName), label), el('div', { class: 'k-value' }, value), sub ? el('div', { class: 'k-sub' }, sub) : null);
+  }
+
+  function renderFilters() {
+    const opts = [['all', 'すべて'], ['sell', '販売（買える）'], ['buy', '買取（売れる）']];
+    $('filters').replaceChildren(...opts.map(([id, label]) => el('button', {
+      class: 'chip', type: 'button', 'aria-pressed': String(mode === id), onclick: () => { mode = id; renderFilters(); render(); },
+    }, label)));
+  }
+
+  function render() {
+    const q = query.toLowerCase();
+    let rows = shops.filter((s) => (mode === 'all' || (mode === 'sell') === s.selling) && (!q || s.item.toLowerCase().includes(q) || s.owner.toLowerCase().includes(q)));
+    rows = rows.map((s) => ({ ...s, unit: s.price / s.amount }));
+    rows.sort((a, b) => {
+      const av = a[sortKey], bv = b[sortKey];
+      return (typeof av === 'string' ? av.localeCompare(bv, 'ja') : av - bv) * sortDir;
+    });
+    $('count').textContent = `${rows.length} 店`;
+    $('rows').replaceChildren(...rows.map((s) => el('tr', {},
+      el('td', { class: 'strong' }, s.item),
+      el('td', {}, el('span', { class: 'tag ' + (s.selling ? 'good' : 'brand') }, s.selling ? '販売' : '買取')),
+      el('td', { class: 'r strong' }, fmt.yen(s.unit)),
+      el('td', { class: 'r' }, `${s.amount}個 ${fmt.yen(s.price)}`),
+      el('td', { class: 'r' }, s.available < 0 ? el('span', { style: { color: 'var(--ink-3)' } }, '確認中') : s.available >= s.amount ? `${fmt.num(s.available)}個` : el('span', { class: 'tag bad' }, s.selling ? '売り切れ' : '満杯')),
+      el('td', {}, s.owner),
+      el('td', { style: { whiteSpace: 'nowrap', color: 'var(--ink-2)' } }, `${s.world} ${s.x}, ${s.y}, ${s.z}`))));
+    $('empty').replaceChildren(rows.length ? '' : empty(shops.length ? '条件に合うお店がありません' : 'まだお店がありません。チェストに看板を付けて開店しましょう', 'store'));
+    document.querySelectorAll('#table th[data-key]').forEach((th) => {
+      const on = th.dataset.key === sortKey;
+      th.querySelector('.arrow').textContent = on ? (sortDir === 1 ? '▲' : '▼') : '';
+      th.setAttribute('aria-sort', on ? (sortDir === 1 ? 'ascending' : 'descending') : 'none');
+    });
+  }
+
+  document.querySelectorAll('#table th[data-key]').forEach((th) => th.addEventListener('click', () => {
+    if (sortKey === th.dataset.key) sortDir *= -1;
+    else { sortKey = th.dataset.key; sortDir = 1; }
+    render();
+  }));
+  $('q').oninput = (e) => { query = e.target.value.trim(); render(); };
+
+  async function load() {
+    try {
+      const res = await fetch('/shops.json', { cache: 'no-store' });
+      const data = await res.json();
+      shops = data.shops || [];
+      $('updated').textContent = '最終更新 ' + fmt.time(data.generated_at || Date.now());
+      const selling = shops.filter((s) => s.selling).length;
+      const trades = shops.reduce((n, s) => n + (s.trades || 0), 0);
+      const owners = new Set(shops.map((s) => s.owner)).size;
+      $('tiles').replaceChildren(
+        tile('store', '営業中のお店', fmt.num(shops.length) + '店', `${fmt.num(owners)}人の店主`),
+        tile('coin', '販売しているお店', fmt.num(selling) + '店', '品物を買えるお店'),
+        tile('wallet', '買い取っているお店', fmt.num(shops.length - selling) + '店', '品物を売れるお店'),
+        tile('receipt', 'これまでの取引', fmt.num(trades) + '回', '全店舗の合計'));
+      renderFilters();
+      render();
+    } catch (e) {
+      $('updated').textContent = '読み込みに失敗しました';
+    }
+  }
+  load();
+  setInterval(load, 60000);
+})();
+</script>
+</body>
+</html>

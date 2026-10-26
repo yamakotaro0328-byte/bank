@@ -91,6 +91,9 @@ permissions:
   bank.feature.invoice:
     description: invoice 機能を利用できる権限
     default: true
+  bank.feature.playershop:
+    description: プレイヤーショップを開店・利用できる権限
+    default: true
   bank.feature.*:
     description: すべての機能の利用権限
     default: true
@@ -116,6 +119,7 @@ permissions:
       bank.feature.standing: true
       bank.feature.donate: true
       bank.feature.invoice: true
+      bank.feature.playershop: true
   bank.*:
     description: MinecraftBank の全権限をまとめたワイルドカード
     default: op

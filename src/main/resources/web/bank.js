@@ -263,7 +263,7 @@
   // ---------- chrome ----------
   function buildChrome() {
     const q = token ? '?token=' + encodeURIComponent(token) : '';
-    const links = [['home', '/', 'ホーム', 'home'], ['market', '/economy.html', 'マーケット', 'chart']];
+    const links = [['home', '/', 'ホーム', 'home'], ['market', '/economy.html', 'マーケット', 'chart'], ['shops', '/shops.html', 'ショップ', 'store']];
     if (token) links.push(['me', '/me.html' + q, 'マイページ', 'user'], ['book', '/me-plus.html' + q, '家計簿', 'book']);
     const current = document.body.dataset.page || '';
 
